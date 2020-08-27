@@ -164,11 +164,12 @@ class TrainTransformerNER:
     def test(self, test_dataset: str = None):
         LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
         if test_dataset is not None:
-            # test on different dataset
+            LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
             dataset_split, self.label_to_id, language = get_dataset_ner(
                 test_dataset, label_to_id=self.label_to_id, cache_dir=CACHE_DIR)
-            LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
+
         else:
+            LOGGER.info('testing on {}...'.format(self.args.dataset))
             dataset_split = self.dataset_split
             language = self.language
         data_loader = {k: self.__setup_loader(k, dataset_split, language) for k in dataset_split.keys() if k != 'train'}
