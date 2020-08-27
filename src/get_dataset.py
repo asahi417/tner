@@ -30,11 +30,21 @@ __all__ = "get_dataset_ner"
 
 def get_dataset_ner(data_name: str = 'wnut_17',
                     label_to_id: dict = None,
-                    allow_update: bool = True,
                     cache_dir: str = './cache'):
-    """ download dataset file and return dictionary including training/validation split """
-    label_to_id = dict() if label_to_id is None else label_to_id
+    """ download dataset file and return dictionary including training/validation split
+
+    :param data_name: data set name or path to the data
+    :param label_to_id: fixed dictionary of (label: id). If given, ignore other labels
+    :param cache_dir:
+    :return: formatted data, label_to_id
+    """
+    fix_label_dict = True
+    if label_to_id is None:
+        label_to_id = dict()
+        fix_label_dict = False
+
     data_path = os.path.join(cache_dir, data_name)
+    language = 'en'
 
     def decode_file(file_name, _label_to_id: Dict):
         inputs, labels = [], []
@@ -59,6 +69,7 @@ def get_dataset_ner(data_name: str = 'wnut_17',
                     if word in STOPWORDS:
                         continue
                     sentence.append(word)
+
                     # convert tag into unified label set
                     if tag != 'O':  # map tag by custom dictionary
                         location = tag.split('-')[0]
@@ -69,9 +80,12 @@ def get_dataset_ner(data_name: str = 'wnut_17',
                         else:
                             tag = '-'.join([location, fixed_mention[0]])
 
-                    if tag not in _label_to_id.keys():
-                        assert allow_update
+                    # if label dict is fixed, unknown tag type will be ignored
+                    if tag not in _label_to_id.keys() and fix_label_dict:
+                        tag = 'O'
+                    elif tag not in _label_to_id.keys() and not fix_label_dict:
                         _label_to_id[tag] = len(_label_to_id)
+
                     entity.append(_label_to_id[tag])
 
         return _label_to_id, {"data": inputs, "label": labels}
@@ -109,6 +123,7 @@ def get_dataset_ner(data_name: str = 'wnut_17',
             os.system('rm -rf ./IOB2Corpus')
         files_info = {'valid': 'valid.txt', 'train': 'train.txt'}
         data_split_all, label_to_id = decode_all_files(files_info, label_to_id)
+        language = 'ja'
     else:
         # for custom data
         if not os.path.exists(data_path):
@@ -117,10 +132,12 @@ def get_dataset_ner(data_name: str = 'wnut_17',
             files_info = {'train': 'train.txt', 'valid': 'valid.txt', 'test': 'test.txt'}
             data_split_all, label_to_id = decode_all_files(files_info, label_to_id)
 
-    return data_split_all, label_to_id
+    return data_split_all, label_to_id, language
 
 
 if __name__ == '__main__':
     # a, b = get_dataset_ner('conll_2003')
-    a, b = get_dataset_ner('ner-cogent-en')
+    test = {"B-organization": 0, "O": 1, "B-other": 2, "B-person": 3, "I-person": 4, "B-location": 5, "I-organization": 6, "I-other": 7, "I-location": 8}
+    a, b, c = get_dataset_ner('wiki-ja', label_to_id=test, allow_update=False)
+    a, b, c = get_dataset_ner('wiki-ja')
     print(b)

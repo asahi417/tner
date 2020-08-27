@@ -6,6 +6,7 @@ import logging
 from time import time
 from logging.config import dictConfig
 from typing import Dict, List
+from itertools import groupby
 
 import transformers
 import torch
@@ -74,13 +75,13 @@ class TrainTransformerNER:
 
         # dataset
         if self.args.model_statistics is None:
-            self.dataset_split, self.label_to_id = get_dataset_ner(
+            self.dataset_split, self.label_to_id, self.language = get_dataset_ner(
                 self.args.dataset, cache_dir=CACHE_DIR)
             with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
                 json.dump(self.label_to_id, f)
         else:
-            self.dataset_split, self.label_to_id = get_dataset_ner(
-                self.args.dataset, label_to_id=self.args.label_to_id, cache_dir=CACHE_DIR, allow_update=False)
+            self.dataset_split, self.label_to_id, self.language = get_dataset_ner(
+                self.args.dataset, label_to_id=self.args.label_to_id, cache_dir=CACHE_DIR)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
         # model setup
@@ -147,22 +148,30 @@ class TrainTransformerNER:
             LOGGER.info('using `torch.nn.DataParallel`')
         LOGGER.info('running on %i GPUs' % self.n_gpu)
 
-    def __setup_loader(self, data_type: str, dataset_split: Dict):
+    def __setup_loader(self, data_type: str, dataset_split: Dict, language: str):
         assert data_type in dataset_split.keys()
         is_train = data_type == 'train'
         features = self.transforms.encode_plus_all(
             tokens=dataset_split[data_type]['data'],
             labels=dataset_split[data_type]['label'],
-            language=self.args.language,
+            language=language,
             max_length=self.args.max_seq_length if is_train else None)
         data_obj = Dataset(features)
         _batch_size = self.args.batch_size if is_train else self.batch_size_validation
         return torch.utils.data.DataLoader(
             data_obj, num_workers=NUM_WORKER, batch_size=_batch_size, shuffle=is_train, drop_last=is_train)
 
-    def test(self):
+    def test(self, test_dataset: str = None):
         LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
-        data_loader = {k: self.__setup_loader(k, self.dataset_split) for k in self.dataset_split.keys() if k != 'train'}
+        if test_dataset is not None:
+            # test on different dataset
+            dataset_split, self.label_to_id, language = get_dataset_ner(
+                test_dataset, label_to_id=self.label_to_id, cache_dir=CACHE_DIR)
+            LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
+        else:
+            dataset_split = self.dataset_split
+            language = self.language
+        data_loader = {k: self.__setup_loader(k, dataset_split, language) for k in dataset_split.keys() if k != 'train'}
         LOGGER.info('data_loader: %s' % str(list(data_loader.keys())))
         start_time = time()
         for k, v in data_loader.items():
@@ -176,7 +185,7 @@ class TrainTransformerNER:
         start_time = time()
 
         # setup dataset/data loader
-        data_loader = {k: self.__setup_loader(k, self.dataset_split) for k in ['train', 'valid']}
+        data_loader = {k: self.__setup_loader(k, self.dataset_split, self.language) for k in ['train', 'valid']}
         LOGGER.info('data_loader: %s' % str(list(data_loader.keys())))
         LOGGER.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
         try:
