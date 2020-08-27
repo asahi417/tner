@@ -1,0 +1,53 @@
+.overlay {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	text-align: center;
+	display: none;
+	z-index: 1000 !important;
+}
+
+p {
+	margin-bottom: 0px;
+}
+
+.spinner-border {
+	top: 50% !important;
+	position: absolute;
+}
+
+h2 {
+	font-size: 30px;
+	text-align: center;
+	width: 100%;
+	background: #1462dc;
+	padding: 13px;
+	line-height: 30px;
+	color: white;
+}
+
+.input-text {
+	background-color: #FFF !important;
+	height: 200px !important;
+}
+
+.custom-range {
+	margin-top: 5px;
+}
+
+.result-container {
+	max-height: 350px;
+	overflow-x: auto;
+}
+
+.correct {
+	background-color: #fdf79e;
+}
+
+.bold {
+	font-weight: bold;
+}
+
+h5.text-center {
+	background-color: #d1e2ff
+}

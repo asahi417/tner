@@ -1,0 +1,15 @@
+torch==1.4.0
+torchvision
+torchtext
+tokenizers
+pillow==6.2.1
+toml>=0.10.0
+tensorboard>=1.14
+nltk
+transformers
+seqeval
+mecab-python3==0.996.2
+uvicorn
+jinja2
+aiofiles
+fastapi
