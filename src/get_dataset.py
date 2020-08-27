@@ -2,9 +2,7 @@
 import os
 import logging
 from logging.config import dictConfig
-from typing import Dict, List
-
-import torch
+from typing import Dict
 
 
 dictConfig({
@@ -14,50 +12,20 @@ dictConfig({
     "root": {'handlers': ['h'], 'level': logging.DEBUG}})
 LOGGER = logging.getLogger()
 STOPWORDS = ['None', '#']
-__all__ = ("Dataset", "get_dataset_ner", "get_dataset_sentiment")
+# Unified label set across different dataset
 SHARED_NER_LABEL = {
-        "date": ["DATE", "DAT"],
-        "location": ["LOCATION", "LOC", "location"],
-        "organization": ["ORGANIZATION", "ORG", "corporation", "group", "organization"],
-        "person": ["PERSON", "PSN", "person"],
-        "time": ["TIME", "TIM"],
-        "artifact": ["ARTIFACT", "ART", "creative-work", "product", "artifact"],
-        "percent": ["PERCENT", "PNT"], "other": ["OTHER", "MISC"], "money": ["MONEY", "MNY"]
-    }
+    "date": ["DATE", "DAT"],
+    "location": ["LOCATION", "LOC", "location"],
+    "organization": ["ORGANIZATION", "ORG", "corporation", "group", "organization"],
+    "person": ["PERSON", "PSN", "person", "PER"],
+    "time": ["TIME", "TIM"],
+    "artifact": ["ARTIFACT", "ART", "creative-work", "product", "artifact"],
+    "percent": ["PERCENT", "PNT"],
+    "other": ["OTHER", "MISC"],
+    "money": ["MONEY", "MNY"]
+}
 
-
-class Dataset(torch.utils.data.Dataset):
-    """ simple torch.utils.data.Dataset wrapper converting into tensor"""
-    float_tensors = ['attention_mask']
-
-    def __init__(self, data: List):
-        self.data = data
-
-    def __len__(self):
-        return len(self.data)
-
-    def to_tensor(self, name, data):
-        if name in self.float_tensors:
-            return torch.tensor(data, dtype=torch.float32)
-        return torch.tensor(data, dtype=torch.long)
-
-    def __getitem__(self, idx):
-        return {k: self.to_tensor(k, v) for k, v in self.data[idx].items()}
-
-
-def apply_global_label(label_dict):
-    new_label_dict = {}
-    for tag, _id in label_to_id.items():
-        location = tag.split('-')[0]
-        mention = '-'.join(tag.split('-')[1:])
-        fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
-        if len(fixed_mention) == 0:
-            raise ValueError('undefined mention found: {}'.format(mention))
-        if len(fixed_mention) > 1:
-            raise ValueError('duplicated mention found: {}'.format(mention))
-        fixed_mention = fixed_mention[0]
-        new_label_dict['-'.join([location, fixed_mention])] = _id
-    return new_label_dict
+__all__ = "get_dataset_ner"
 
 
 def get_dataset_ner(data_name: str = 'wnut_17',
@@ -68,7 +36,7 @@ def get_dataset_ner(data_name: str = 'wnut_17',
     label_to_id = dict() if label_to_id is None else label_to_id
     data_path = os.path.join(cache_dir, data_name)
 
-    def decode_file(file_name, _label_to_id: Dict, custom_mapper: Dict = None):
+    def decode_file(file_name, _label_to_id: Dict):
         inputs, labels = [], []
         with open(os.path.join(data_path, file_name), 'r') as f:
             sentence, entity = [], []
@@ -88,16 +56,19 @@ def get_dataset_ner(data_name: str = 'wnut_17',
                     word, tag = ls[0], ls[-1]
                     if tag == 'junk':
                         continue
-                    if custom_mapper and tag != 'O':  # map tag by custom dictionary
-                        location, mention = tag.split('-')[0], '-'.join(tag.split('-')[1:])
-                        if mention not in custom_mapper.values():
-                            if mention not in custom_mapper.keys():
-                                tag = 'O'
-                            else:
-                                tag = location + '-' + custom_mapper[mention]
                     if word in STOPWORDS:
                         continue
                     sentence.append(word)
+                    # convert tag into unified label set
+                    if tag != 'O':  # map tag by custom dictionary
+                        location = tag.split('-')[0]
+                        mention = '-'.join(tag.split('-')[1:])
+                        fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
+                        if len(fixed_mention) == 0:
+                            tag = 'O'
+                        else:
+                            tag = '-'.join([location, fixed_mention[0]])
+
                     if tag not in _label_to_id.keys():
                         assert allow_update
                         _label_to_id[tag] = len(_label_to_id)
@@ -105,10 +76,10 @@ def get_dataset_ner(data_name: str = 'wnut_17',
 
         return _label_to_id, {"data": inputs, "label": labels}
 
-    def decode_all_files(files: Dict, _label_to_id, custom_mapper: Dict = None):
+    def decode_all_files(files: Dict, _label_to_id):
         data_split = dict()
         for name, filepath in files.items():
-            _label_to_id, data_dict = decode_file(filepath, _label_to_id=_label_to_id, custom_mapper=custom_mapper)
+            _label_to_id, data_dict = decode_file(filepath, _label_to_id=_label_to_id)
             data_split[name] = data_dict
             LOGGER.info('dataset {}/{}: {} entries'.format(data_name, filepath, len(data_dict['data'])))
         return data_split, _label_to_id
@@ -130,8 +101,6 @@ def get_dataset_ner(data_name: str = 'wnut_17',
         files_info = {'train': 'train.txt.tmp', 'valid': 'dev.txt.tmp', 'test': 'test.txt.tmp'}
         data_split_all, label_to_id = decode_all_files(files_info, label_to_id)
     elif data_name == 'wiki-ja':
-        label_mapper = {"DATE": "DAT", "LOCATION": "LOC", "ORGANIZATION": "ORG", "PERSON": "PSN", "TIME": "TIM",
-                        "ARTIFACT": "ART", "PERCENT": "PNT", "OTHER": "MISC", "MONEY": "MNY"}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
             os.system('git clone https://github.com/Hironsan/IOB2Corpus')
@@ -139,7 +108,7 @@ def get_dataset_ner(data_name: str = 'wnut_17',
             os.system('mv ./IOB2Corpus/ja.wikipedia.conll {}/train.txt'.format(data_path))
             os.system('rm -rf ./IOB2Corpus')
         files_info = {'valid': 'valid.txt', 'train': 'train.txt'}
-        data_split_all, label_to_id = decode_all_files(files_info, label_to_id, custom_mapper=label_mapper)
+        data_split_all, label_to_id = decode_all_files(files_info, label_to_id)
     else:
         # for custom data
         if not os.path.exists(data_path):
@@ -147,8 +116,11 @@ def get_dataset_ner(data_name: str = 'wnut_17',
         else:
             files_info = {'train': 'train.txt', 'valid': 'valid.txt', 'test': 'test.txt'}
             data_split_all, label_to_id = decode_all_files(files_info, label_to_id)
-    if allow_update:
-        return data_split_all, label_to_id
-    else:
-        return data_split_all
 
+    return data_split_all, label_to_id
+
+
+if __name__ == '__main__':
+    # a, b = get_dataset_ner('conll_2003')
+    a, b = get_dataset_ner('ner-cogent-en')
+    print(b)

@@ -22,7 +22,10 @@ __all__ = 'Argument'
 class Argument:
     """ Model training arguments manager """
 
-    def __init__(self, checkpoint: str = None, checkpoint_dir: str = None, **kwargs):
+    def __init__(self,
+                 checkpoint: str = None,
+                 checkpoint_dir: str = None,
+                 **kwargs):
         """  Model training arguments manager
 
          Parameter
@@ -32,8 +35,11 @@ class Argument:
         kwargs: model arguments
         """
         if checkpoint_dir is None:
-            checkpoint_dir = '/'.join(checkpoint.split('/')[:-1])
-            checkpoint = checkpoint.split('/')[-1]
+            if checkpoint is None:
+                checkpoint_dir = './ckpt'
+            else:
+                checkpoint_dir = '/'.join(checkpoint.split('/')[:-1])
+                checkpoint = checkpoint.split('/')[-1]
 
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.checkpoint_dir, self.parameter, self.model_statistics, self.label_to_id = self.version(

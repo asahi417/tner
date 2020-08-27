@@ -1,15 +1,11 @@
-""" NER finetuning on hugginface.transformers """
-import argparse
+""" NER model on hugginface.transformers """
 import os
 import random
 import json
 import logging
-import re
 from time import time
 from logging.config import dictConfig
-from itertools import chain, groupby
-from typing import List, Dict
-from pprint import pprint
+from typing import Dict, List
 
 import transformers
 import torch
@@ -18,8 +14,9 @@ from torch.autograd import detect_anomaly
 from torch.utils.tensorboard import SummaryWriter
 from seqeval.metrics import f1_score, precision_score, recall_score, classification_report, accuracy_score
 
-from get_dataset import Dataset, get_dataset_ner
-from checkpoint_versioning import Argument
+from .get_dataset import get_dataset_ner
+from .checkpoint_versioning import Argument
+from .tokenizer import Transforms
 
 
 dictConfig({
@@ -36,128 +33,23 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 
-def additional_special_tokens(tokenizer):
-    """ get additional special token for beginning/separate/ending, {'input_ids': [0], 'attention_mask': [1]} """
-    encode_first = tokenizer.encode_plus('sent1', 'sent2')
-    # group by block boolean
-    sp_token_mask = [i in tokenizer.all_special_ids for i in encode_first['input_ids']]
-    group = [list(g) for _, g in groupby(sp_token_mask)]
-    length = [len(g) for g in group]
-    group_length = [[sum(length[:n]), sum(length[:n]) + len(g)] for n, g in enumerate(group) if all(g)]
-    assert len(group_length) == 3, 'more than 3 special tokens group: {}'.format(group)
-    sp_token_start = {k: v[group_length[0][0]:group_length[0][1]] for k, v in encode_first.items()}
-    sp_token_sep = {k: v[group_length[1][0]:group_length[1][1]] for k, v in encode_first.items()}
-    sp_token_end = {k: v[group_length[2][0]:group_length[2][1]] for k, v in encode_first.items()}
-    return sp_token_start, sp_token_sep, sp_token_end
+class Dataset(torch.utils.data.Dataset):
+    """ simple torch.utils.data.Dataset wrapper converting into tensor"""
+    float_tensors = ['attention_mask']
 
+    def __init__(self, data: List):
+        self.data = data
 
-class Transforms:
-    """ NER specific transform pipeline"""
+    def __len__(self):
+        return len(self.data)
 
-    def __init__(self, transformer_tokenizer: str):
-        """ NER specific transform pipeline"""
-        self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=CACHE_DIR)
-        self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
-        # find tokenizer-depend prefix
-        self.prefix = self.__sp_token_prefix()
-        # find special tokens to be added
-        self.sp_token_start, _, self.sp_token_end = additional_special_tokens(self.tokenizer)
-        self.sp_token_end['labels'] = [self.pad_ids['labels']] * len(self.sp_token_end['input_ids'])
-        self.sp_token_start['labels'] = [self.pad_ids['labels']] * len(self.sp_token_start['input_ids'])
+    def to_tensor(self, name, data):
+        if name in self.float_tensors:
+            return torch.tensor(data, dtype=torch.float32)
+        return torch.tensor(data, dtype=torch.long)
 
-    def __sp_token_prefix(self):
-        sentence_go_around = ''.join(self.tokenizer.tokenize('get tokenizer specific prefix'))
-        return sentence_go_around[:list(re.finditer('get', sentence_go_around))[0].span()[0]]
-
-    def fixed_encode_en(self, tokens, labels: List = None, max_seq_length: int = 128):
-        """ fixed encoding for language with halfspace in between words """
-        encode = self.tokenizer.encode_plus(
-            ' '.join(tokens), max_length=max_seq_length, pad_to_max_length=True, truncation=True)
-        if labels:
-            assert len(tokens) == len(labels)
-            fixed_labels = list(chain(*[
-                [label] + [self.pad_ids['labels']] * (len(self.tokenizer.tokenize(word)) - 1)
-                for label, word in zip(labels, tokens)]))
-            fixed_labels = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + fixed_labels
-            fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
-            fixed_labels = fixed_labels + [self.pad_ids['labels']] * (max_seq_length - len(fixed_labels))
-            encode['labels'] = fixed_labels
-        return encode
-
-    def fixed_encode_ja(self, tokens, labels: List = None, max_seq_length: int = 128):
-        """ fixed encoding for language without halfspace in between words """
-        dummy = '@'
-        # get special tokens at start/end of sentence based on first token
-        encode_all = self.tokenizer.batch_encode_plus(tokens)
-        # token_ids without prefix/special tokens
-        # `wifi` will be treated as `_wifi` and change the tokenize result, so add dummy on top of the sentence to fix
-        token_ids_all = [[self.tokenizer.convert_tokens_to_ids(_t.replace(self.prefix, '').replace(dummy, ''))
-                          for _t in self.tokenizer.tokenize(dummy+t)
-                          if len(_t.replace(self.prefix, '').replace(dummy, '')) > 0]
-                         for t in tokens]
-
-        for n in range(len(tokens)):
-            if n == 0:
-                encode = {k: v[n][:-len(self.sp_token_end[k])] for k, v in encode_all.items()}
-                if labels:
-                    encode['labels'] = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + [labels[n]]
-                    encode['labels'] += [self.pad_ids['labels']] * (len(encode['input_ids']) - len(encode['labels']))
-            else:
-                encode['input_ids'] += token_ids_all[n]
-                # other attribution without prefix/special tokens
-                tmp_encode = {k: v[n] for k, v in encode_all.items()}
-                s, e = len(self.sp_token_start['input_ids']), -len(self.sp_token_end['input_ids'])
-                input_ids_with_prefix = tmp_encode.pop('input_ids')[s:e]
-                prefix_length = len(input_ids_with_prefix) - len(token_ids_all[n])
-                for k, v in tmp_encode.items():
-                    s, e = len(self.sp_token_start['input_ids']) + prefix_length, -len(self.sp_token_end['input_ids'])
-                    encode[k] += v[s:e]
-                if labels:
-                    encode['labels'] += [labels[n]] + [self.pad_ids['labels']] * (len((token_ids_all[n])) - 1)
-
-        # add special token at the end and padding/truncate accordingly
-        for k in encode.keys():
-            encode[k] = encode[k][:min(len(encode[k]), max_seq_length - len(self.sp_token_end[k]))]
-            encode[k] += self.sp_token_end[k]
-            pad_id = self.pad_ids[k] if k in self.pad_ids.keys() else self.pad_ids['__default__']
-            encode[k] += [pad_id] * (max_seq_length - len(encode[k]))
-        return encode
-
-    def encode_plus_all(self,
-                        tokens: List,
-                        labels: List = None,
-                        language: str = 'en',
-                        max_length: int = None):
-        max_length = self.tokenizer.max_len if max_length is None else max_length
-        # TODO: no padding for prediction
-        shared_param = {'language': language, 'pad_to_max_length': True, 'max_length': max_length}
-        if labels:
-            return [self.encode_plus(*i, **shared_param) for i in zip(tokens, labels)]
-        else:
-            return [self.encode_plus(i, **shared_param) for i in tokens]
-
-    def encode_plus(self, tokens, labels: List = None, language: str = 'en', max_length: int = None,
-                    pad_to_max_length: bool = False):
-        if labels is None:
-            return self.tokenizer.encode_plus(
-                tokens, max_length=max_length, pad_to_max_length=pad_to_max_length, truncation=pad_to_max_length)
-        if language == 'en':
-            return self.fixed_encode_en(tokens, labels, max_length)
-        elif language == 'ja':
-            return self.fixed_encode_ja(tokens, labels, max_length)
-        else:
-            raise ValueError('unknown language: {}'.format(language))
-
-    @property
-    def all_special_ids(self):
-        return self.tokenizer.all_special_ids
-
-    @property
-    def all_special_tokens(self):
-        return self.tokenizer.all_special_tokens
-
-    def tokenize(self, *args, **kwargs):
-        return self.tokenizer.tokenize(*args, **kwargs)
+    def __getitem__(self, idx):
+        return {k: self.to_tensor(k, v) for k, v in self.data[idx].items()}
 
 
 class TrainTransformerNER:
@@ -166,12 +58,12 @@ class TrainTransformerNER:
     def __init__(self,
                  batch_size_validation: int = None,
                  checkpoint: str = None,
-                 checkpoint_dir: str = './ckpt',
+                 checkpoint_dir: str = None,
                  **kwargs):
         LOGGER.info('*** initialize network ***')
 
         # checkpoint version
-        self.args = Argument(checkpoint=checkpoint, checkpoint_dir=checkpoint_dir, **kwargs)
+        self.args = Argument(checkpoint_dir=checkpoint_dir, checkpoint=checkpoint, **kwargs)
         self.batch_size_validation = batch_size_validation if batch_size_validation else self.args.batch_size
 
         # fix random seed
@@ -181,14 +73,14 @@ class TrainTransformerNER:
         torch.cuda.manual_seed_all(self.args.random_seed)
 
         # dataset
-        if self.args.model_statistics:
-            self.label_to_id = self.args.label_to_id
-            self.dataset_split, _ = get_dataset_ner(
-                self.args.dataset, cache_dir=CACHE_DIR, label_to_id=self.label_to_id)
-        else:
-            self.dataset_split, self.label_to_id = get_dataset_ner(self.args.dataset, cache_dir=CACHE_DIR)
+        if self.args.model_statistics is None:
+            self.dataset_split, self.label_to_id = get_dataset_ner(
+                self.args.dataset, cache_dir=CACHE_DIR)
             with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
                 json.dump(self.label_to_id, f)
+        else:
+            self.dataset_split, self.label_to_id = get_dataset_ner(
+                self.args.dataset, label_to_id=self.args.label_to_id, cache_dir=CACHE_DIR, allow_update=False)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
         # model setup
@@ -255,16 +147,6 @@ class TrainTransformerNER:
             LOGGER.info('using `torch.nn.DataParallel`')
         LOGGER.info('running on %i GPUs' % self.n_gpu)
 
-    def test(self):
-        LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
-        data_loader = {k: self.__setup_loader(k, self.dataset_split) for k in self.dataset_split.keys() if k != 'train'}
-        LOGGER.info('data_loader: %s' % str(list(data_loader.keys())))
-        start_time = time()
-        for k, v in data_loader.items():
-            self.__epoch_valid(v, prefix=k)
-            self.release_cache()
-        LOGGER.info('[test completed, %0.2f sec in total]' % (time() - start_time))
-
     def __setup_loader(self, data_type: str, dataset_split: Dict):
         assert data_type in dataset_split.keys()
         is_train = data_type == 'train'
@@ -277,6 +159,16 @@ class TrainTransformerNER:
         _batch_size = self.args.batch_size if is_train else self.batch_size_validation
         return torch.utils.data.DataLoader(
             data_obj, num_workers=NUM_WORKER, batch_size=_batch_size, shuffle=is_train, drop_last=is_train)
+
+    def test(self):
+        LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
+        data_loader = {k: self.__setup_loader(k, self.dataset_split) for k in self.dataset_split.keys() if k != 'train'}
+        LOGGER.info('data_loader: %s' % str(list(data_loader.keys())))
+        start_time = time()
+        for k, v in data_loader.items():
+            self.__epoch_valid(v, prefix=k)
+            self.release_cache()
+        LOGGER.info('[test completed, %0.2f sec in total]' % (time() - start_time))
 
     def train(self):
         LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_train.log')))
@@ -407,11 +299,13 @@ class TrainTransformerNER:
 class TransformerNER:
     """ transformers NER, interface to get prediction from pre-trained checkpoint """
 
-    def __init__(self, checkpoint: str):
+    def __init__(self, checkpoint: str, ):
         LOGGER.info('*** initialize network ***')
 
         # checkpoint version
         self.args = Argument(checkpoint=checkpoint)
+        if self.args.model_statistics is None:
+            raise ValueError('model is not trained')
         self.label_to_id = self.args.label_to_id
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
         self.model = transformers.AutoModelForTokenClassification.from_pretrained(
@@ -478,83 +372,3 @@ class TransformerNER:
                 entities.append(
                     {'entity': _entities, 'sentence': self.transforms.tokenizer.decode(e, skip_special_tokens=True)})
         return entities
-
-
-def get_options():
-    parser = argparse.ArgumentParser(
-        description='finetune transformers to sentiment analysis',
-        formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
-    parser.add_argument('--checkpoint-dir', help='checkpoint directory', default='./ckpt', type=str)
-    parser.add_argument('-d', '--data', help='data conll_2003/wnut_17', default='wnut_17', type=str)
-    parser.add_argument('-t', '--transformer', help='pretrained language model', default='xlm-roberta-base', type=str)
-    parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
-    parser.add_argument('--max-seq-length',
-                        help='max sequence length (use same length as used in pre-training if not provided)',
-                        default=128,
-                        type=int)
-    parser.add_argument('-b', '--batch-size', help='batch size', default=16, type=int)
-    parser.add_argument('--random-seed', help='random seed', default=1234, type=int)
-    parser.add_argument('--lr', help='learning rate', default=1e-5, type=float)
-    parser.add_argument('--total-step', help='total training step', default=13000, type=int)
-    parser.add_argument('--batch-size-validation',
-                        help='batch size for validation (smaller size to save memory)',
-                        default=2,
-                        type=int)
-    parser.add_argument('--warmup-step', help='warmup step (6 percent of total is recommended)', default=700, type=int)
-    parser.add_argument('--weight-decay', help='weight decay', default=1e-7, type=float)
-    parser.add_argument('--early-stop', help='value of accuracy drop for early stop', default=0.1, type=float)
-    parser.add_argument('--test', help='run over testdataset', action='store_true')
-    parser.add_argument('--test-data', help='dataset for test', default=None, type=str)
-    parser.add_argument('--fp16', help='fp16', action='store_true')
-    parser.add_argument('-l', '--language', help='language', default='en', type=str)
-    parser.add_argument('--inference-mode', help='inference mode', action='store_true')
-    return parser.parse_args()
-
-
-if __name__ == '__main__':
-    opt = get_options()
-    if not opt.inference_mode:
-        # train model
-        trainer = TrainTransformerNER(
-            batch_size_validation=opt.batch_size_validation,
-            checkpoint=opt.checkpoint,
-            checkpoint_dir=opt.checkpoint_dir,
-            dataset=opt.data,
-            transformer=opt.transformer,
-            random_seed=opt.random_seed,
-            lr=opt.lr,
-            total_step=opt.total_step,
-            warmup_step=opt.warmup_step,
-            weight_decay=opt.weight_decay,
-            batch_size=opt.batch_size,
-            max_seq_length=opt.max_seq_length,
-            early_stop=opt.early_stop,
-            fp16=opt.fp16,
-            max_grad_norm=opt.max_grad_norm,
-            language=opt.language
-        )
-        if opt.test:
-            trainer.test()
-        else:
-            trainer.train()
-    else:
-        # play around with trained model
-        classifier = TransformerNER(checkpoint=opt.checkpoint)
-        test_sentences = [
-            'I live in United States, but Microsoft asks me to move to Japan.',
-            'I have an Apple computer.',
-            'I like to eat an apple.'
-        ]
-        test_result = classifier.predict(test_sentences)
-        pprint('-- DEMO --')
-        pprint(test_result)
-        pprint('----------')
-        while True:
-            _inp = input('input sentence >>>')
-            if _inp == 'q':
-                break
-            elif _inp == '':
-                continue
-            else:
-                pprint(classifier.predict([_inp]))
