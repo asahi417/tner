@@ -124,7 +124,7 @@ def get_dataset_ner(data_name: str = 'wnut_17',
         files_info = {'valid': 'valid.txt', 'train': 'train.txt'}
         data_split_all, label_to_id = decode_all_files(files_info, label_to_id)
         language = 'ja'
-    elif 'panx' in data_name:
+    # elif 'panx' in data_name:
 
 
     else:
