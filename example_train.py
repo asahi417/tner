@@ -31,7 +31,7 @@ def get_options():
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--test', help='test mode', action='store_true')
     parser.add_argument('--test-data', help='test dataset (if not specified, use trained set)', default=None, type=str)
-    parser.add_argument('--test-ignore-entity', help='test with ignoring entity type', default=None, type=str)
+    parser.add_argument('--test-ignore-entity', help='test with ignoring entity type', action='store_true')
     return parser.parse_args()
 
 
