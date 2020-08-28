@@ -58,7 +58,7 @@ if __name__ == '__main__':
     if opt.test:
         trainer.test(
             test_dataset=opt.test_data,
-            ignore_entity_type=opt.ignore_entity_type
+            ignore_entity_type=opt.test_ignore_entity
         )
     else:
         trainer.train()

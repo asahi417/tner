@@ -7,6 +7,11 @@ cd transformers-ner
 pip install -r requirement.txt
 ```
 
+## Wikiann dataset
+Download [raw dataset]()
+First create a download folder with `mkdir -p ./cache` in the root of this project.
+You then need to manually download panx_dataset (for NER) from [here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
+(note that it will download as AmazonPhotos.zip) to the download directory. Finally, run the following command to download the remaining datasets:
 
 ## Train model
 
