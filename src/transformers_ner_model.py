@@ -161,10 +161,10 @@ class TrainTransformerNER:
         return torch.utils.data.DataLoader(
             data_obj, num_workers=NUM_WORKER, batch_size=_batch_size, shuffle=is_train, drop_last=is_train)
 
-    def test(self, test_dataset: str = None):
+    def test(self, test_dataset: str = None, ignore_entity_type: bool = False):
         if test_dataset is not None:
-            LOGGER.addHandler(
-                logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset))))
+            LOGGER.addHandler(logging.FileHandler(
+                os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset))))
             LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
             dataset_split, self.label_to_id, language = get_dataset_ner(
                 test_dataset, label_to_id=self.label_to_id, cache_dir=CACHE_DIR)
@@ -173,10 +173,11 @@ class TrainTransformerNER:
             dataset_split = self.dataset_split
             language = self.language
         data_loader = {k: self.__setup_loader(k, dataset_split, language) for k in dataset_split.keys() if k != 'train'}
-        LOGGER.info('data_loader: %s' % str(list(data_loader.keys())))
+        LOGGER.info('data_loader: {}'.format(str(list(data_loader.keys()))))
+        LOGGER.info('ignore_entity_type: {}'.format(ignore_entity_type))
         start_time = time()
         for k, v in data_loader.items():
-            self.__epoch_valid(v, prefix=k)
+            self.__epoch_valid(v, prefix=k, ignore_entity_type=ignore_entity_type)
             self.release_cache()
         LOGGER.info('[test completed, %0.2f sec in total]' % (time() - start_time))
 
@@ -260,7 +261,7 @@ class TrainTransformerNER:
                 return True
         return False
 
-    def __epoch_valid(self, data_loader, writer=None, prefix: str='valid'):
+    def __epoch_valid(self, data_loader, writer=None, prefix: str='valid', ignore_entity_type: bool = False):
         """ validation/test, returning flag which is True if early stop condition was applied """
         self.model.eval()
         list_loss, seq_pred, seq_true = [], [], []
@@ -281,6 +282,10 @@ class TrainTransformerNER:
                         _pred_list.append(self.id_to_label[_true[b][s]])
                 assert len(_pred_list) == len(_true_list)
                 if len(_true_list) > 0:
+                    if ignore_entity_type:
+                        # ignore entity type and focus on entity position
+                        _true_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _true_list]
+                        _pred_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _pred_list]
                     seq_true.append(_true_list)
                     seq_pred.append(_pred_list)
         try:

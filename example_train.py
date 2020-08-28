@@ -31,6 +31,7 @@ def get_options():
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--test', help='test mode', action='store_true')
     parser.add_argument('--test-data', help='test dataset (if not specified, use trained set)', default=None, type=str)
+    parser.add_argument('--test-ignore-entity', help='test with ignoring entity type', default=None, type=str)
     return parser.parse_args()
 
 
@@ -55,6 +56,9 @@ if __name__ == '__main__':
         max_grad_norm=opt.max_grad_norm
     )
     if opt.test:
-        trainer.test(opt.test_data)
+        trainer.test(
+            test_dataset=opt.test_data,
+            ignore_entity_type=opt.ignore_entity_type
+        )
     else:
         trainer.train()
