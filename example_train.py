@@ -3,6 +3,8 @@ import argparse
 
 from src import TrainTransformerNER
 
+VALID_DATASET = ['panx_dataset/*', 'conll_2003', 'wnut_17', 'wiki-ja']
+
 
 def get_options():
     parser = argparse.ArgumentParser(
@@ -10,7 +12,7 @@ def get_options():
         formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
     parser.add_argument('--checkpoint-dir', help='checkpoint directory', default=None, type=str)
-    parser.add_argument('-d', '--data', help='data conll_2003, wnut_17, wiki-ja', default='wnut_17', type=str)
+    parser.add_argument('-d', '--data', help='dataset: {}'.format(VALID_DATASET), default='wnut_17', type=str)
     parser.add_argument('-t', '--transformer', help='pretrained language model', default='xlm-roberta-base', type=str)
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
     parser.add_argument('--max-seq-length',

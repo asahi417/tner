@@ -17,7 +17,7 @@ from seqeval.metrics import f1_score, precision_score, recall_score, classificat
 
 from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
-from .tokenizer import Transforms
+from .transformer_ner_tokenizer import Transforms
 
 
 dictConfig({
@@ -26,9 +26,9 @@ dictConfig({
     "handlers": {'h': {'class': 'logging.StreamHandler', 'formatter': 'f', 'level': logging.DEBUG}},
     "root": {'handlers': ['h'], 'level': logging.DEBUG}})
 LOGGER = logging.getLogger()
-NUM_WORKER = int(os.getenv("NUM_WORKER", '4'))
-PROGRESS_INTERVAL = int(os.getenv("PROGRESS_INTERVAL", '100'))
-CACHE_DIR = os.getenv("CACHE_DIR", './cache')
+NUM_WORKER = 4
+PROGRESS_INTERVAL = 100
+CACHE_DIR = './cache'
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -75,13 +75,12 @@ class TrainTransformerNER:
 
         # dataset
         if self.args.model_statistics is None:
-            self.dataset_split, self.label_to_id, self.language = get_dataset_ner(
-                self.args.dataset, cache_dir=CACHE_DIR)
+            self.dataset_split, self.label_to_id, self.language = get_dataset_ner(self.args.dataset)
             with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
                 json.dump(self.label_to_id, f)
         else:
             self.dataset_split, self.label_to_id, self.language = get_dataset_ner(
-                self.args.dataset, label_to_id=self.args.label_to_id, cache_dir=CACHE_DIR)
+                self.args.dataset, label_to_id=self.args.label_to_id)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
         # model setup
@@ -166,8 +165,7 @@ class TrainTransformerNER:
             LOGGER.addHandler(logging.FileHandler(
                 os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset))))
             LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
-            dataset_split, self.label_to_id, language = get_dataset_ner(
-                test_dataset, label_to_id=self.label_to_id, cache_dir=CACHE_DIR)
+            dataset_split, self.label_to_id, language = get_dataset_ner(test_dataset, label_to_id=self.label_to_id)
         else:
             LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
             dataset_split = self.dataset_split
