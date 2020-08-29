@@ -114,7 +114,7 @@ class Argument:
                 json.dump(parameter, _f)
             new_checkpoint = self.md5(os.path.join(checkpoint_dir, 'tmp.json'))
             if 'dataset' in parameter.keys():
-                new_checkpoint = '_'.join([parameter['dataset'], new_checkpoint])
+                new_checkpoint = '_'.join([parameter['dataset'].replace('/', '_'), new_checkpoint])
             new_checkpoint_dir = os.path.join(checkpoint_dir, new_checkpoint)
             os.makedirs(new_checkpoint_dir, exist_ok=True)
             shutil.move(os.path.join(checkpoint_dir, 'tmp.json'), os.path.join(new_checkpoint_dir, 'parameter.json'))
