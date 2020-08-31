@@ -120,12 +120,10 @@ class Transforms:
         if labels is None:
             return self.tokenizer.encode_plus(
                 tokens, max_length=max_length, pad_to_max_length=pad_to_max_length, truncation=pad_to_max_length)
-        if language == 'en':
-            return self.fixed_encode_en(tokens, labels, max_length)
-        elif language == 'ja':
+        if language == 'ja':
             return self.fixed_encode_ja(tokens, labels, max_length)
         else:
-            raise ValueError('unknown language: {}'.format(language))
+            return self.fixed_encode_en(tokens, labels, max_length)
 
     @property
     def all_special_ids(self):
