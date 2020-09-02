@@ -267,8 +267,6 @@ class TrainTransformerNER:
                       ignore_entity_type: bool = False):
         """ validation/test, returning flag which is True if early stop condition was applied """
         self.model.eval()
-        print(unseen_entity_set)
-        input()
         list_loss, seq_pred, seq_true = [], [], []
         for encode in data_loader:
             encode = {k: v.to(self.device) for k, v in encode.items()}
@@ -283,11 +281,11 @@ class TrainTransformerNER:
                 _pred_list, _true_list = [], []
                 for s in range(len(_true[b])):
                     if _true[b][s] != PAD_TOKEN_LABEL_ID:
-                        _true_list.append(self.id_to_label[_pred[b][s]])
+                        _true_list.append(self.id_to_label[_true[b][s]])
                         if unseen_entity_set is None:
-                            _pred_list.append(self.id_to_label[_true[b][s]])
+                            _pred_list.append(self.id_to_label[_pred[b][s]])
                         else:
-                            __pred = self.id_to_label[_true[b][s]]
+                            __pred = self.id_to_label[_pred[b][s]]
                             print(__pred)
                             if __pred in unseen_entity_set:
                                 print('replaced')
