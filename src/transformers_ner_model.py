@@ -167,6 +167,7 @@ class TrainTransformerNER:
             LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
             dataset_split, self.label_to_id, language, unseen_entity_set = get_dataset_ner(
                 test_dataset, label_to_id=self.label_to_id)
+            self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
         else:
             LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
             dataset_split = self.dataset_split
