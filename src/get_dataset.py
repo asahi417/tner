@@ -262,6 +262,8 @@ def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None):
             raise ValueError('unknown dataset: %s' % data_name)
         else:
             files_info = {'train': 'train.txt', 'valid': 'valid.txt', 'test': 'test.txt'}
+        if 'ja' in data_name:
+            language = 'ja'
 
     fix_label_dict = True
     if label_to_id is None:

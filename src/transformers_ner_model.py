@@ -288,8 +288,10 @@ class TrainTransformerNER:
                             _pred_list.append(self.id_to_label[_true[b][s]])
                         else:
                             __pred = self.id_to_label[_true[b][s]]
-                            mention = '-'.join(__pred.split('-')[1:])
-                            if mention in unseen_entity_set:
+                            print(__pred)
+                            if __pred in unseen_entity_set:
+                                print('replaced')
+                                input()
                                 _pred_list.append('O')
                             else:
                                 _pred_list.append(__pred)
