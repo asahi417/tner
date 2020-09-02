@@ -80,7 +80,7 @@ class TrainTransformerNER:
                 json.dump(self.label_to_id, f)
         else:
             self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
-                self.args.dataset, label_to_id=self.args.label_to_id)
+                self.args.dataset, label_to_id=self.args.label_to_id, fix_label_dict=True)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
         # model setup
@@ -165,7 +165,8 @@ class TrainTransformerNER:
             LOGGER.addHandler(logging.FileHandler(
                 os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset.replace('/', '_')))))
             LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
-            dataset_split, _, language, unseen_entity_set = get_dataset_ner(test_dataset, label_to_id=self.label_to_id)
+            dataset_split, self.label_to_id, language, unseen_entity_set = get_dataset_ner(
+                test_dataset, label_to_id=self.label_to_id)
         else:
             LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
             dataset_split = self.dataset_split

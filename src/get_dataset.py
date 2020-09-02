@@ -149,7 +149,7 @@ def conll_formatting(file_token: str, file_tag: str, output_file: str):
             f.write('\n')
 
 
-def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None):
+def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None, fix_label_dict: bool = False):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
@@ -265,11 +265,7 @@ def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None):
         if 'ja' in data_name:
             language = 'ja'
 
-    fix_label_dict = True
-    if label_to_id is None:
-        label_to_id = dict()
-        fix_label_dict = False
-
+    label_to_id = dict() if label_to_id is None else label_to_id
     data_split_all, unseen_entity_set, label_to_id = decode_all_files(
         files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first)
 

@@ -1,39 +1,44 @@
 # Named Entity Recognition
 Finetuning [transformers](https://github.com/huggingface/transformers) on Named Entity Recognition (NER).
 
+## Get started
 ```bash
 git clone https://github.com/asahi417/transformers-ner
 cd transformers-ner
 pip install -r requirement.txt
 ```
 
-## Wikiann dataset
-Download [raw dataset]()
+- Wikiann dataset
 First create a download folder with `mkdir -p ./cache` in the root of this project.
 You then need to manually download panx_dataset (for NER) from [here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
 (note that it will download as AmazonPhotos.zip) to the download directory. Finally, run the following command to download the remaining datasets:
 
-## Train model
+## Scripts
+### Train model
 
 ```bash
 python example_train.py \
     --checkpoint-dir ./ckpt \
-    -d conll_2013
+    -d ontonote5
 ```
 
-## Test model on dataset
+### Test model
 ```bash
 python example_train.py \
     --test \
-    -c {path-to-checkpoint-dir} \
+    -c {path-to-checkpoint}
 ```
 
-## Run APP
-```
-uvicorn app:app --reload --log-level debug
+### Run APP
+```bash
+export MODEL_CKPT={path-to-checkpoint}
+uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
 
 ## Result
+### Domain transfer 
+
+- English
 
 | Dataset    | OntoNote5   | Conll 2003  | Pan-en       | Movie | Restaurant |
 |------------|-------------|-------------|--------------|-------|------------|
@@ -42,6 +47,10 @@ uvicorn app:app --reload --log-level debug
 | Pan-en     |             |             | 0.84 (0.83)  |       |            |
 | Movie      |             |             |              | 0.70  |            |
 | Restaurant |             |             |              |       | 0.79       |
+
+- Japanese
+
+### Cross-lingual transfer
 
 ## Misc
 - Cross-domain transfer test
@@ -114,6 +123,22 @@ python example_train.py --test -c ./ckpt/panx_dataset_ja
 python example_train.py --test -c ./ckpt/panx_dataset_ja --test-ignore-entity
 python example_train.py --test -c ./ckpt/ner-cogent-ja
 python example_train.py --test -c ./ckpt/ner-cogent-ja --test-ignore-entity
+
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data ner-cogent-ja
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_news_ja
+
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data ner-cogent-ja --test-ignore-entity
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja --test-ignore-entity
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_news_ja --test-ignore-entity
+
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset_ja
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_news_ja
+
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset_ja --test-ignore-entity
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja --test-ignore-entity
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_news_ja --test-ignore-entity
 ```
 
 - Cross-lingual transfer test
