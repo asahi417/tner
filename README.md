@@ -69,22 +69,22 @@ python example_train.py --test -c ./ckpt/panx_dataset_en --test-ignore-entity
 python example_train.py --test -c ./ckpt/ontonote5 --test-data conll_2003 
 python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_movie_trivia
 python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_restaurant
-python example_train.py --test -c ./ckpt/ontonote5 --test-data panx_dataset_en 
+python example_train.py --test -c ./ckpt/ontonote5 --test-data panx_dataset/en 
 
 python example_train.py --test -c ./ckpt/conll_2003 --test-data ontonote5 
 python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_movie_trivia
 python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_restaurant
-python example_train.py --test -c ./ckpt/conll_2003 --test-data panx_dataset_en 
+python example_train.py --test -c ./ckpt/conll_2003 --test-data panx_dataset/en 
 
 python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data ontonote5 
 python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data conll_2003
 python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data mit_restaurant
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data panx_dataset_en 
+python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data panx_dataset/en 
 
 python example_train.py --test -c ./ckpt/mit_restaurant --test-data ontonote5 
 python example_train.py --test -c ./ckpt/mit_restaurant --test-data conll_2003
 python example_train.py --test -c ./ckpt/mit_restaurant --test-data mit_movie_trivia
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data panx_dataset_en 
+python example_train.py --test -c ./ckpt/mit_restaurant --test-data panx_dataset/en 
 
 python example_train.py --test -c ./ckpt/panx_dataset_en --test-data ontonote5 
 python example_train.py --test -c ./ckpt/panx_dataset_en --test-data conll_2003
@@ -95,22 +95,22 @@ python example_train.py --test -c ./ckpt/panx_dataset_en --test-data mit_restaur
 python example_train.py --test -c ./ckpt/ontonote5 --test-data conll_2003 --test-ignore-entity 
 python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_movie_trivia --test-ignore-entity
 python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_restaurant --test-ignore-entity
-python example_train.py --test -c ./ckpt/ontonote5 --test-data panx_dataset_en --test-ignore-entity
+python example_train.py --test -c ./ckpt/ontonote5 --test-data panx_dataset/en --test-ignore-entity
 
 python example_train.py --test -c ./ckpt/conll_2003 --test-data ontonote5 --test-ignore-entity
 python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_movie_trivia --test-ignore-entity
 python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_restaurant --test-ignore-entity
-python example_train.py --test -c ./ckpt/conll_2003 --test-data panx_dataset_en --test-ignore-entity
+python example_train.py --test -c ./ckpt/conll_2003 --test-data panx_dataset/en --test-ignore-entity
 
 python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data ontonote5 --test-ignore-entity
 python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data conll_2003 --test-ignore-entity
 python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data mit_restaurant --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data panx_dataset_en --test-ignore-entity
+python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data panx_dataset/en --test-ignore-entity
 
 python example_train.py --test -c ./ckpt/mit_restaurant --test-data ontonote5 --test-ignore-entity
 python example_train.py --test -c ./ckpt/mit_restaurant --test-data conll_2003 --test-ignore-entity
 python example_train.py --test -c ./ckpt/mit_restaurant --test-data mit_movie_trivia --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data panx_dataset_en --test-ignore-entity
+python example_train.py --test -c ./ckpt/mit_restaurant --test-data panx_dataset/en --test-ignore-entity
 
 python example_train.py --test -c ./ckpt/panx_dataset_en --test-data ontonote5 --test-ignore-entity
 python example_train.py --test -c ./ckpt/panx_dataset_en --test-data conll_2003 --test-ignore-entity
@@ -132,11 +132,11 @@ python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data ner-cogent-
 python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja --test-ignore-entity
 python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_news_ja --test-ignore-entity
 
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset_ja
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset/ja
 python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja
 python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_news_ja
 
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset_ja --test-ignore-entity
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset/ja --test-ignore-entity
 python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja --test-ignore-entity
 python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_news_ja --test-ignore-entity
 ```
@@ -145,8 +145,9 @@ python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_news_ja 
 ```bash
 python example_train.py --test -c ./ckpt/panx_dataset_ru
 python example_train.py --test -c ./ckpt/panx_dataset_ru --test-ignore-entity
-python example_train.py --test -c ./ckpt/ner-cogent-ja
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-ignore-entity
+python example_train.py --test -c ./ckpt/ner-cogent-en
+python example_train.py --test -c ./ckpt/ner-cogent-en --test-ignore-entity
+
 
 python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data panx_dataset_en
 python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data panx_dataset_ru
