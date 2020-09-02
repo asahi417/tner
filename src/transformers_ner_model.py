@@ -325,7 +325,7 @@ class TrainTransformerNER:
 class TransformerNER:
     """ transformers NER, interface to get prediction from pre-trained checkpoint """
 
-    def __init__(self, checkpoint: str, ):
+    def __init__(self, checkpoint: str):
         LOGGER.info('*** initialize network ***')
 
         # checkpoint version
