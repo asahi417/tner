@@ -3,7 +3,7 @@ import argparse
 
 from src import TrainTransformerNER
 
-VALID_DATASET = ['panx_dataset/*', 'conll_2003', 'wnut_17', 'wiki-ja']
+VALID_DATASET = ['panx_dataset/*', 'conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant']
 
 
 def get_options():

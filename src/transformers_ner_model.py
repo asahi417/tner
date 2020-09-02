@@ -170,6 +170,7 @@ class TrainTransformerNER:
             LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
             dataset_split = self.dataset_split
             language = self.language
+            unseen_entity_set = None
         data_loader = {k: self.__setup_loader(k, dataset_split, language) for k in dataset_split.keys() if k != 'train'}
         LOGGER.info('data_loader: {}'.format(str(list(data_loader.keys()))))
         LOGGER.info('ignore_entity_type: {}'.format(ignore_entity_type))
