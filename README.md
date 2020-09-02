@@ -39,7 +39,10 @@ uvicorn app:app --reload --log-level debug
 ## Misc
 
 ```bash
-python example_train.py --test -c ./ckpt/panx_dataset_en_base 
+
+pan-en/conll/movie/restaurant/(cogent-en)
+
+python example_train.py --test -c ./ckpt/panx_dataset_en_base
 python example_train.py --test -c ./ckpt/panx_dataset_en_base --test-ignore-entity
 python example_train.py --test -c ./ckpt/panx_dataset_en_base --test-data panx_dataset/ja
 python example_train.py --test -c ./ckpt/panx_dataset_en_base --test-ignore-entity --test-data panx_dataset/ja
