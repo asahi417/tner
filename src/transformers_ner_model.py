@@ -269,15 +269,13 @@ class TrainTransformerNER:
                       ignore_entity_type: bool = False):
         """ validation/test, returning flag which is True if early stop condition was applied """
         self.model.eval()
-        list_loss, seq_pred, seq_true = [], [], []
+        seq_pred, seq_true = [], []
         for encode in data_loader:
             encode = {k: v.to(self.device) for k, v in encode.items()}
+            labels_tensor = encode.pop('labels')
             model_outputs = self.model(**encode)
-            loss, logit = model_outputs[0:2]
-            if self.n_gpu > 1:
-                loss = torch.sum(loss)
-            list_loss.append(loss.cpu().detach().item())
-            _true = encode['labels'].cpu().detach().int().tolist()
+            logit = model_outputs[0]
+            _true = labels_tensor.cpu().detach().int().tolist()
             _pred = torch.max(logit, 2)[1].cpu().detach().int().tolist()
             for b in range(len(_true)):
                 _pred_list, _true_list = [], []
@@ -309,7 +307,6 @@ class TrainTransformerNER:
             writer.add_scalar('%s/recall' % prefix, recall_score(seq_true, seq_pred), self.__epoch)
             writer.add_scalar('%s/precision' % prefix, precision_score(seq_true, seq_pred), self.__epoch)
             writer.add_scalar('%s/accuracy' % prefix, accuracy_score(seq_true, seq_pred), self.__epoch)
-            writer.add_scalar('%s/loss' % prefix, float(sum(list_loss) / len(list_loss)), self.__epoch)
         if prefix == 'valid':
             score = f1_score(seq_true, seq_pred)
             if self.__best_val_score is None or score > self.__best_val_score:
