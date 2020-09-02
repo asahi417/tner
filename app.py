@@ -9,8 +9,7 @@ from src import TransformerNER
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-MODEL_CKPT = os.getenv('MODEL_CKPT', 'conll_2003_15db7244e38c1c4ab75e28a5c9419031')
-CKPT_DIR = os.getenv("CKPT_DIR", './ckpt')
+MODEL_CKPT = os.getenv('MODEL_CKPT', './ckpt/ontonote5')
 MODEL = TransformerNER(checkpoint=MODEL_CKPT)
 
 
