@@ -227,9 +227,6 @@ def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None, fix_la
             os.system(
                 'wget -O {0}/test_news.txt https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt'.
                 format(data_path))
-            os.system(
-                'wget -O {0}/test_wiki.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
-                format(data_path))
     elif data_name == 'wiki_news_ja':
         files_info = {'test': 'test.txt'}
         language = 'ja'

@@ -119,6 +119,13 @@ python example_train.py --test -c ./ckpt/panx_dataset_en --test-data mit_restaur
 ```
 
 ```bash
+
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja
+python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja --test-ignore-entity
+python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja --test-ignore-entity
+
+
 python example_train.py --test -c ./ckpt/panx_dataset_ja
 python example_train.py --test -c ./ckpt/panx_dataset_ja --test-ignore-entity
 python example_train.py --test -c ./ckpt/ner-cogent-ja
