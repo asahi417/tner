@@ -219,7 +219,7 @@ def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None, fix_la
             os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/wnut17train.conll'  | tr '\t' ' ' > {}/train.txt.tmp".format(data_path))
             os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/emerging.dev.conll' | tr '\t' ' ' > {}/dev.txt.tmp".format(data_path))
             os.system("curl -L 'https://raw.githubusercontent.com/leondz/emerging_entities_17/master/emerging.test.annotated' | tr '\t' ' ' > {}/test.txt.tmp".format(data_path))
-    elif data_name == 'wiki_news':
+    elif data_name == 'wiki_ja':
         files_info = {'test': 'test.txt'}
         language = 'ja'
         if not os.path.exists(data_path):
