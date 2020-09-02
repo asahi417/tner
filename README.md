@@ -33,6 +33,10 @@ python example_train.py \
 uvicorn app:app --reload --log-level debug
 ```
 
+## Result
+
+
+## Misc
 
 ```bash
 python example_train.py --test -c ./ckpt/panx_dataset_en_base 

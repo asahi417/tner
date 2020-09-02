@@ -4,6 +4,7 @@ import logging
 import zipfile
 from logging.config import dictConfig
 from typing import Dict
+from itertools import chain
 
 from .mecab_wrapper import MeCabWrapper
 
@@ -68,7 +69,8 @@ __all__ = "get_dataset_ner"
 
 
 def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool=False):
-    inputs, labels = [], []
+    inputs, labels, seen_entity = [], [], []
+    # seen_entity = list(label_to_id.keys())
     with open(os.path.join(data_path, file_name), 'r') as f:
         sentence, entity = [], []
         for n, line in enumerate(f):
@@ -112,21 +114,30 @@ def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dic
 
                 entity.append(label_to_id[tag])
 
-    return label_to_id, {"data": inputs, "label": labels}
+    id_to_label = {v: k for k, v in label_to_id.items()}
+    unseen_entity_id = set(label_to_id.values()) - set(list(chain(*labels)))
+    unseen_entity_label = {id_to_label[i] for i in unseen_entity_id}
+    return label_to_id, unseen_entity_label, {"data": inputs, "label": labels}
 
 
 def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool=False):
     data_split = dict()
+    unseen_entity = None
     for name, filepath in files.items():
-        label_to_id, data_dict = decode_file(
+        label_to_id, unseen_entity_set, data_dict = decode_file(
             filepath, data_path=data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict,
             entity_first=entity_first)
+        if unseen_entity is None:
+            unseen_entity = unseen_entity_set
+        else:
+            unseen_entity = unseen_entity.intersection(unseen_entity_set)
         data_split[name] = data_dict
         LOGGER.info('dataset {0}/{1}: {2} entries'.format(data_path, filepath, len(data_dict['data'])))
-    return data_split, label_to_id
+    return data_split, unseen_entity, label_to_id
 
 
 def conll_formatting(file_token: str, file_tag: str, output_file: str):
+    """ convert a separate ner/token file into single ner Conll 2003 format """
     tokens = [i.split(' ') for i in open(file_token, 'r').read().split('\n')]
     tags = [i.split(' ') for i in open(file_tag, 'r').read().split('\n')]
     with open(output_file, 'w') as f:
@@ -138,15 +149,13 @@ def conll_formatting(file_token: str, file_tag: str, output_file: str):
             f.write('\n')
 
 
-def get_dataset_ner(data_name: str = 'wnut_17',
-                    label_to_id: dict = None):
+def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
     :param label_to_id: fixed dictionary of (label: id). If given, ignore other labels
     :return: formatted data, label_to_id
     """
-
     data_path = os.path.join(CACHE_DIR, data_name)
     post_process_mecab = False
     entity_first = False
@@ -210,15 +219,23 @@ def get_dataset_ner(data_name: str = 'wnut_17',
             os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/wnut17train.conll'  | tr '\t' ' ' > {}/train.txt.tmp".format(data_path))
             os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/emerging.dev.conll' | tr '\t' ' ' > {}/dev.txt.tmp".format(data_path))
             os.system("curl -L 'https://raw.githubusercontent.com/leondz/emerging_entities_17/master/emerging.test.annotated' | tr '\t' ' ' > {}/test.txt.tmp".format(data_path))
-    elif data_name == 'wiki_ja':
-        files_info = {'test_wiki': 'test_wiki.txt', 'test_news': 'test_news.txt'}
+    elif data_name == 'wiki_news_ja':
+        files_info = {'test': 'test.txt'}
         language = 'ja'
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('git clone https://github.com/Hironsan/IOB2Corpus')
             os.system(
                 'wget -O {0}/test_news.txt https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt'.
                 format(data_path))
+            os.system(
+                'wget -O {0}/test_wiki.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
+                format(data_path))
+    elif data_name == 'wiki_news_ja':
+        files_info = {'test': 'test.txt'}
+        language = 'ja'
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+
             os.system(
                 'wget -O {0}/test_wiki.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
                 format(data_path))
@@ -251,7 +268,7 @@ def get_dataset_ner(data_name: str = 'wnut_17',
         label_to_id = dict()
         fix_label_dict = False
 
-    data_split_all, label_to_id = decode_all_files(
+    data_split_all, unseen_entity_set, label_to_id = decode_all_files(
         files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first)
 
     if post_process_mecab:
@@ -268,4 +285,4 @@ def get_dataset_ner(data_name: str = 'wnut_17',
             v['data'] = data
             v['label'] = label
 
-    return data_split_all, label_to_id, language
+    return data_split_all, label_to_id, language, unseen_entity_set

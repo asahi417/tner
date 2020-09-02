@@ -75,11 +75,11 @@ class TrainTransformerNER:
 
         # dataset
         if self.args.model_statistics is None:
-            self.dataset_split, self.label_to_id, self.language = get_dataset_ner(self.args.dataset)
+            self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(self.args.dataset)
             with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
                 json.dump(self.label_to_id, f)
         else:
-            self.dataset_split, self.label_to_id, self.language = get_dataset_ner(
+            self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
                 self.args.dataset, label_to_id=self.args.label_to_id)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
@@ -165,7 +165,7 @@ class TrainTransformerNER:
             LOGGER.addHandler(logging.FileHandler(
                 os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset.replace('/', '_')))))
             LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
-            dataset_split, self.label_to_id, language = get_dataset_ner(test_dataset, label_to_id=self.label_to_id)
+            dataset_split, _, language, unseen_entity_set = get_dataset_ner(test_dataset, label_to_id=self.label_to_id)
         else:
             LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
             dataset_split = self.dataset_split
@@ -175,7 +175,7 @@ class TrainTransformerNER:
         LOGGER.info('ignore_entity_type: {}'.format(ignore_entity_type))
         start_time = time()
         for k, v in data_loader.items():
-            self.__epoch_valid(v, prefix=k, ignore_entity_type=ignore_entity_type)
+            self.__epoch_valid(v, prefix=k, ignore_entity_type=ignore_entity_type, unseen_entity_set=unseen_entity_set)
             self.release_cache()
         LOGGER.info('[test completed, %0.2f sec in total]' % (time() - start_time))
 
@@ -259,7 +259,12 @@ class TrainTransformerNER:
                 return True
         return False
 
-    def __epoch_valid(self, data_loader, writer=None, prefix: str='valid', ignore_entity_type: bool = False):
+    def __epoch_valid(self,
+                      data_loader,
+                      writer=None,
+                      prefix: str='valid',
+                      unseen_entity_set: set=None,
+                      ignore_entity_type: bool = False):
         """ validation/test, returning flag which is True if early stop condition was applied """
         self.model.eval()
         list_loss, seq_pred, seq_true = [], [], []
@@ -277,7 +282,14 @@ class TrainTransformerNER:
                 for s in range(len(_true[b])):
                     if _true[b][s] != PAD_TOKEN_LABEL_ID:
                         _true_list.append(self.id_to_label[_pred[b][s]])
-                        _pred_list.append(self.id_to_label[_true[b][s]])
+                        if unseen_entity_set is None:
+                            _pred_list.append(self.id_to_label[_true[b][s]])
+                        else:
+                            __pred = self.id_to_label[_true[b][s]]
+                            if __pred in unseen_entity_set:
+                                _pred_list.append('O')
+                            else:
+                                _pred_list.append(__pred)
                 assert len(_pred_list) == len(_true_list)
                 if len(_true_list) > 0:
                     if ignore_entity_type:
