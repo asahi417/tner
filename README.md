@@ -41,7 +41,7 @@ Rows are test dataset and columns are training dataset.
 ### Domain transfer 
 - English
 
-| Dataset    | OntoNote5   | Conll 2003  | Pan-en       | Movie | Restaurant |
+| train\test | OntoNote5   | Conll 2003  | Pan-en       | Movie | Restaurant |
 |------------|-------------|-------------|--------------|-------|------------|
 | OntoNote5  | 0.87 (0.89) | 0.52 (0.52) | 0.40 (0.41)  | 0.19  | 0.01       |
 | Conll 2003 | 0.34 (0.34) | 0.95 (0.91) | 0.53 (0.52)  | 0.00  | 0.00       |
@@ -51,7 +51,7 @@ Rows are test dataset and columns are training dataset.
 
 - English (ignore entity type)
 
-| Dataset    | OntoNote5   | Conll 2003  | Pan-en       | Movie | Restaurant |
+| train\test | OntoNote5   | Conll 2003  | Pan-en       | Movie | Restaurant |
 |------------|-------------|-------------|--------------|-------|------------|
 | OntoNote5  | 0.91 (0.91) | 0.58 (0.58) | 0.46 (0.46)  | 0.20  | 0.01       |
 | Conll 2003 | 0.61 (0.61) | 0.98 (0.96) | 0.62 (0.61)  | 0.00  | 0.00       |
@@ -61,46 +61,46 @@ Rows are test dataset and columns are training dataset.
 
 - Japanese
 
-| Dataset   | Pan-ja      | cogent-ja   |
-|-----------|-------------|-------------|
-| Pan-ja    | 0.83 (0.83) | 0.29 (0.28) |
-| cogent-ja | 0.50 (0.50) | 0.78 (0.80) |
+| train\test | Pan-ja      | cogent-ja   |
+|------------|-------------|-------------|
+| Pan-ja     | 0.83 (0.83) | 0.29 (0.28) |
+| cogent-ja  | 0.50 (0.50) | 0.78 (0.80) |
 
 - Japanese (ignore entity type)
 
-| Dataset   | Pan-ja      | cogent-ja   |
-|-----------|-------------|-------------|
-| Pan-ja    | 0.88 (0.88) | 0.34 (0.33) |
-| cogent-ja |             | 0.87 (0.87) |
+| train\test | Pan-ja      | cogent-ja   |
+|------------|-------------|-------------|
+| Pan-ja     | 0.88 (0.88) | 0.34 (0.33) |
+| cogent-ja  | 0.60 (0.60) | 0.87 (0.87) |
 
 ### Cross-lingual transfer
 
 - wikipedia 
 
-| Dataset | Pan-en      | Pan-ja      | Pan-ru      |
-|---------|-------------|-------------|-------------|
-| Pan-en  | 0.84 (0.83) | 0.37 (0.37) | 0.66 (0.65) |
-| Pan-ja  | 0.54 (0.53) | 0.83 (0.83) | 0.54 (0.53) |
-| Pan-ru  | 0.55 (0.55) | 0.43 (0.43) | 0.89 (0.88) |
+| train\test | Pan-en      | Pan-ja      | Pan-ru      |
+|------------|-------------|-------------|-------------|
+| Pan-en     | 0.84 (0.83) | 0.37 (0.37) | 0.66 (0.65) |
+| Pan-ja     | 0.54 (0.53) | 0.83 (0.83) | 0.54 (0.53) |
+| Pan-ru     | 0.55 (0.55) | 0.43 (0.43) | 0.89 (0.88) |
 
 - wikipedia (ignore entity type)
 
-| Dataset | Pan-en      | Pan-ja      | Pan-ru      |
-|---------|-------------|-------------|-------------|
-| Pan-en  | 0.93 (0.93) | 0.44 (0.44) | 0.82 (0.81) |
-| Pan-ja  | 0.62 (0.62) | 0.88 (0.88) | 0.62 (0.62) |
-| Pan-ru  | 0.71 (0.71) | 0.57 (0.57) | 0.94 (0.94) |
+| train\test | Pan-en      | Pan-ja      | Pan-ru      |
+|------------|-------------|-------------|-------------|
+| Pan-en     | 0.93 (0.93) | 0.44 (0.44) | 0.82 (0.81) |
+| Pan-ja     | 0.62 (0.62) | 0.88 (0.88) | 0.62 (0.62) |
+| Pan-ru     | 0.71 (0.71) | 0.57 (0.57) | 0.94 (0.94) |
 
 - News
 
-| Dataset   | cogent-en   | cogent-ja   |
-|-----------|-------------|-------------|
-| cogent-en | 0.83 (0.89) | 0.25 (0.25) |
-| cogent-ja | 0.51 (0.62) | 0.79 (0.80) |
+| train\test | cogent-en   | cogent-ja   |
+|------------|-------------|-------------|
+| cogent-en  | 0.83 (0.89) | 0.25 (0.25) |
+| cogent-ja  | 0.51 (0.62) | 0.79 (0.80) |
 
 - News (ignore entity type)
 
-| Dataset   | cogent-en   | cogent-ja   |
-|-----------|-------------|-------------|
-| cogent-en | 0.84 (0.93) | 0.30 (0.31) |
-| cogent-ja | 0.62 (0.73) | 0.87 (0.87) |
+| train\test | cogent-en   | cogent-ja   |
+|------------|-------------|-------------|
+| cogent-en  | 0.84 (0.93) | 0.30 (0.31) |
+| cogent-ja  | 0.62 (0.73) | 0.87 (0.87) |
