@@ -36,129 +36,71 @@ uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
 
 ## Result
-### Domain transfer 
+Rows are test dataset and columns are training dataset.
 
+### Domain transfer 
 - English
 
 | Dataset    | OntoNote5   | Conll 2003  | Pan-en       | Movie | Restaurant |
 |------------|-------------|-------------|--------------|-------|------------|
-| OntoNote5  | 0.87 (0.89) |             |              |       |            |
-| Conll 2003 |             | 0.95 (0.91) |              |       |            |
-| Pan-en     |             |             | 0.84 (0.83)  |       |            |
-| Movie      |             |             |              | 0.70  |            |
-| Restaurant |             |             |              |       | 0.79       |
+| OntoNote5  | 0.87 (0.89) | 0.52 (0.52) | 0.40 (0.41)  | 0.19  | 0.01       |
+| Conll 2003 | 0.34 (0.34) | 0.95 (0.91) | 0.53 (0.52)  | 0.00  | 0.00       |
+| Pan-en     | 0.19 (0.20) | 0.51 (0.52) | 0.84 (0.83)  | 0.00  | 0.02       |
+| Movie      | 0.02 (0.02) | 0.00 (0.00) | 0.00 (0.00)  | 0.70  | 0.00       |
+| Restaurant | 0.02 (0.02) | 0.13 (0.14) | 0.14 (0.12)  | 0.00  | 0.79       |
+
+- English (ignore entity type)
+
+| Dataset    | OntoNote5   | Conll 2003  | Pan-en       | Movie | Restaurant |
+|------------|-------------|-------------|--------------|-------|------------|
+| OntoNote5  | 0.91 (0.91) | 0.58 (0.58) | 0.46 (0.46)  | 0.20  | 0.01       |
+| Conll 2003 | 0.61 (0.61) | 0.98 (0.96) | 0.62 (0.61)  | 0.00  | 0.00       |
+| Pan-en     | 0.41 (0.41) | 0.72 (0.73) | 0.93 (0.93)  | 0.00  | 0.08       |
+| Movie      | 0.02 (0.02) | 0.00 (0.00) | 0.00 (0.00)  | 0.73  | 0.00       |
+| Restaurant | 0.15 (0.15) | 0.20 (0.20) | 0.19 (0.18)  | 0.00  | 0.83       |
 
 - Japanese
 
+| Dataset   | Pan-ja      | cogent-ja   |
+|-----------|-------------|-------------|
+| Pan-ja    | 0.83 (0.83) | 0.29 (0.28) |
+| cogent-ja | 0.50 (0.50) | 0.78 (0.80) |
+
+- Japanese (ignore entity type)
+
+| Dataset   | Pan-ja      | cogent-ja   |
+|-----------|-------------|-------------|
+| Pan-ja    | 0.88 (0.88) | 0.34 (0.33) |
+| cogent-ja |             | 0.87 (0.87) |
+
 ### Cross-lingual transfer
 
-## Misc
-- Cross-domain transfer test
-```bash
-python example_train.py --test -c ./ckpt/ontonote5 
-python example_train.py --test -c ./ckpt/ontonote5 --test-ignore-entity
-python example_train.py --test -c ./ckpt/conll_2003 
-python example_train.py --test -c ./ckpt/conll_2003 --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_movie_trivia 
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_restaurant
-python example_train.py --test -c ./ckpt/mit_restaurant --test-ignore-entity
-python example_train.py --test -c ./ckpt/panx_dataset_en
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-ignore-entity
+- wikipedia 
 
-python example_train.py --test -c ./ckpt/ontonote5 --test-data conll_2003 
-python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_movie_trivia
-python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_restaurant
-python example_train.py --test -c ./ckpt/ontonote5 --test-data panx_dataset/en 
+| Dataset | Pan-en      | Pan-ja      | Pan-ru      |
+|---------|-------------|-------------|-------------|
+| Pan-en  | 0.84 (0.83) | 0.37 (0.37) | 0.66 (0.65) |
+| Pan-ja  | 0.54 (0.53) | 0.83 (0.83) | 0.54 (0.53) |
+| Pan-ru  | 0.55 (0.55) | 0.43 (0.43) | 0.89 (0.88) |
 
-python example_train.py --test -c ./ckpt/conll_2003 --test-data ontonote5 
-python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_movie_trivia
-python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_restaurant
-python example_train.py --test -c ./ckpt/conll_2003 --test-data panx_dataset/en 
+- wikipedia (ignore entity type)
 
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data ontonote5 
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data conll_2003
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data mit_restaurant
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data panx_dataset/en 
+| Dataset | Pan-en      | Pan-ja      | Pan-ru      |
+|---------|-------------|-------------|-------------|
+| Pan-en  | 0.93 (0.93) | 0.44 (0.44) | 0.82 (0.81) |
+| Pan-ja  | 0.62 (0.62) | 0.88 (0.88) | 0.62 (0.62) |
+| Pan-ru  | 0.71 (0.71) | 0.57 (0.57) | 0.94 (0.94) |
 
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data ontonote5 
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data conll_2003
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data mit_movie_trivia
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data panx_dataset/en 
+- News
 
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data ontonote5 
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data conll_2003
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data mit_movie_trivia
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data mit_restaurant 
+| Dataset   | cogent-en   | cogent-ja   |
+|-----------|-------------|-------------|
+| cogent-en | 0.83 (0.89) | 0.25 (0.25) |
+| cogent-ja | 0.51 (0.62) | 0.79 (0.80) |
 
+- News (ignore entity type)
 
-python example_train.py --test -c ./ckpt/ontonote5 --test-data conll_2003 --test-ignore-entity 
-python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_movie_trivia --test-ignore-entity
-python example_train.py --test -c ./ckpt/ontonote5 --test-data mit_restaurant --test-ignore-entity
-python example_train.py --test -c ./ckpt/ontonote5 --test-data panx_dataset/en --test-ignore-entity
-
-python example_train.py --test -c ./ckpt/conll_2003 --test-data ontonote5 --test-ignore-entity
-python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_movie_trivia --test-ignore-entity
-python example_train.py --test -c ./ckpt/conll_2003 --test-data mit_restaurant --test-ignore-entity
-python example_train.py --test -c ./ckpt/conll_2003 --test-data panx_dataset/en --test-ignore-entity
-
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data ontonote5 --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data conll_2003 --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data mit_restaurant --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_movie_trivia --test-data panx_dataset/en --test-ignore-entity
-
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data ontonote5 --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data conll_2003 --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data mit_movie_trivia --test-ignore-entity
-python example_train.py --test -c ./ckpt/mit_restaurant --test-data panx_dataset/en --test-ignore-entity
-
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data ontonote5 --test-ignore-entity
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data conll_2003 --test-ignore-entity
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data mit_movie_trivia --test-ignore-entity
-python example_train.py --test -c ./ckpt/panx_dataset_en --test-data mit_restaurant --test-ignore-entity
-```
-
-```bash
-
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja --test-ignore-entity
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja --test-ignore-entity
-
-
-python example_train.py --test -c ./ckpt/panx_dataset_ja
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-ignore-entity
-python example_train.py --test -c ./ckpt/ner-cogent-ja
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-ignore-entity
-
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data ner-cogent-ja
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_news_ja
-
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data ner-cogent-ja --test-ignore-entity
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_ja --test-ignore-entity
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data wiki_news_ja --test-ignore-entity
-
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset/ja
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_news_ja
-
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data panx_dataset/ja --test-ignore-entity
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_ja --test-ignore-entity
-python example_train.py --test -c ./ckpt/ner-cogent-ja --test-data wiki_news_ja --test-ignore-entity
-```
-
-- Cross-lingual transfer test
-```bash
-python example_train.py --test -c ./ckpt/panx_dataset_ru
-python example_train.py --test -c ./ckpt/panx_dataset_ru --test-ignore-entity
-python example_train.py --test -c ./ckpt/ner-cogent-en
-python example_train.py --test -c ./ckpt/ner-cogent-en --test-ignore-entity
-
-
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data panx_dataset_en
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data panx_dataset_ru
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data panx_dataset_ru
-
-python example_train.py --test -c ./ckpt/panx_dataset_ja --test-data panx_dataset_en --test-ignore-entity
-```
+| Dataset   | cogent-en   | cogent-ja   |
+|-----------|-------------|-------------|
+| cogent-en | 0.84 (0.93) | 0.30 (0.31) |
+| cogent-ja | 0.62 (0.73) | 0.87 (0.87) |
