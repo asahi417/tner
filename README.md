@@ -82,7 +82,7 @@ python ./example_train.py \
 ```
 Checkpoint files are automatically organized depends on the hyperparameters.
 
-- Wikiann dataset
+***WikiAnn dataset***  
 To train a model on [WikiAnn dataset](https://www.aclweb.org/anthology/P17-1178.pdf),
 first create a download folder with `mkdir -p ./cache` in the root of this project if it's not created yet.
 You then need to manually download panx_dataset (for NER) from
