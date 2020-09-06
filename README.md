@@ -21,7 +21,7 @@ uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
 One can specify model checkpoint by `export MODEL_CKPT={path to checkpoint directory}`, which produced by following training script.
 
-## Model Training/Testing
+## Model Training
 Here's a benchmark, where all the models are trained on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) for 3 epochs.
 
 | Dataset    | Language | # Type | # Sent (train/val/test) | F1 (val) | F1 (test) | 
@@ -111,17 +111,6 @@ You then need to manually download panx_dataset (for NER) from
 
 ```shell script
 python ./example_train.py -d panx_dataset/ja
-```
-
-### model testing examples
-The script provides testing functionality, which facilitate cross-domain testing. For instance,
-a model checkpoint trained on OntoNote5 can be tested on ConLL 2003 easily by  
- 
-```shell script
-python example_train.py \
-    --test \
-    -c ./ckpt/ontonote5 \
-    --test-dataset conll_2003
 ```
 
 
