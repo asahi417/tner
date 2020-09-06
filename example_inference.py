@@ -5,9 +5,7 @@ from src import TransformerNER
 
 
 def get_options():
-    parser = argparse.ArgumentParser(
-        description='finetune transformers to sentiment analysis',
-        formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description='command line test',)
     parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
     return parser.parse_args()
 

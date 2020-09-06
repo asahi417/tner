@@ -7,9 +7,7 @@ VALID_DATASET = ['panx_dataset/*', 'conll_2003', 'wnut_17', 'ontonote5', 'mit_mo
 
 
 def get_options():
-    parser = argparse.ArgumentParser(
-        description='Fine-tune transformers on NER dataset',
-        formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description='Fine-tune transformers on NER dataset')
     parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
     parser.add_argument('--checkpoint-dir', help='checkpoint directory', default=None, type=str)
     parser.add_argument('-d', '--data', help='dataset: {}'.format(VALID_DATASET), default='wnut_17', type=str)
