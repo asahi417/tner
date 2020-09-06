@@ -83,14 +83,14 @@ optional arguments:
 
 Here's a benchmark, where all the models are trained on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) for 3 epochs.
 
-| Dataset    | Language | # Type | # Sent (train/val/test) | F1          | F1 (ignore type) | 
-|------------|----------|--------|-------------------------|-------------|------------------| 
-| OntoNote 5 | English  | 18     | 59,924/8,582/8,262      | 0.87 (0.89) | 0.91 (0.91)      | 
-| Conll 2003 | English  | 4      | 14,041/3,250/3,453      | 0.95 (0.91) | 0.98 (0.96)      | 
-| Movie      | English  | 12     | 7,816/1,953             | 0.7         | 0.73             | 
-| Restaurant | English  | 8      | 7,660/1,521             | 0.79        | 0.83             | 
-| PanX/en    | English  | 4      | 20,000/10,000/10,000    | 0.84 (0.83) | 0.93 (0.93)      | 
-| PanX/ja    | Japanese | 4      | 20,000/10,000/10,000    | 0.83 (0.83) | 0.88 (0.88)      | 
+| Dataset    | Language | # Type | # Sent (train/val/test) | F1 (val) | F1 (test) | 
+|------------|----------|--------|-------------------------|----------|-----------| 
+| OntoNote 5 | English  | 18     | 59,924/8,582/8,262      | 0.87     | 0.89      | 
+| CoNLL 2003 | English  | 4      | 14,041/3,250/3,453      | 0.95     | 0.91      | 
+| PanX/en    | English  | 4      | 20,000/10,000/10,000    | 0.84     | 0.83      | 
+| PanX/ja    | Japanese | 4      | 20,000/10,000/10,000    | 0.83     | 0.83      | 
+| Restaurant | English  | 8      | 7,660/1,521             | 0.79     | -         | 
+| Movie      | English  | 12     | 7,816/1,953             | 0.7      | -         | 
 
 ### model training examples
 You can reproduce the default checkpoint by 
