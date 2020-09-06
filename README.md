@@ -22,6 +22,7 @@ uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 One can specify model checkpoint by `export MODEL_CKPT={path to checkpoint directory}`, which produced by following training script.
 
 ## Model Training/Testing
+Here's a benchmark, where all the models are trained on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) for 3 epochs.
 
 | Dataset    | Language | # Type | # Sent (train/val/test) | F1 (val) | F1 (test) | 
 |------------|----------|--------|-------------------------|----------|-----------| 
@@ -31,7 +32,6 @@ One can specify model checkpoint by `export MODEL_CKPT={path to checkpoint direc
 | PanX/ja    | Japanese | 4      | 20,000/10,000/10,000    | 0.83     | 0.83      | 
 | Restaurant | English  | 8      | 7,660/1,521             | 0.79     | -         | 
 | Movie      | English  | 12     | 7,816/1,953             | 0.7      | -         | 
-Table: (\#tab:tab-comp) Comparison rows and cells
 
 You can train a model on various public dataset such as
 [OntoNote5](https://www.aclweb.org/anthology/N06-2015.pdf),
@@ -92,11 +92,7 @@ optional arguments:
   --test-ignore-entity  test with ignoring entity type
 ```
 
-
-
-
-
-### model training examples
+***Model training examples***  
 You can reproduce the default checkpoint by 
 ```shell script
 python ./example_train.py \
