@@ -2,8 +2,8 @@ var entity
 var html
 var sentence
 var i
-var return_probability
-var model_ckpt
+var start
+var end
 
 jQuery(document).ready(function () {
     var slider_sentences = $('#max_len')
@@ -34,23 +34,7 @@ jQuery(document).ready(function () {
                 $('.overlay').hide()
             }
         }).done(function (jsondata, textStatus, jqXHR) {
-
-            entity = jsondata['entity']
-            sentence = jsondata['sentence']
-            model_ckpt = jsondata['model_ckpt']
-            return_probability = jsondata['return_probability']
-            html = `<p class="bold">Model ID: ${model_ckpt} </p> <br>`
-            html += `<p class="bold">${sentence} </p> <br>`
-
-            i = 0
-            for (i = 0; i < entity.length; i++) {
-                if (return_probability == true)
-                    html += `<p class="bold">${i+1}. ${entity[i]['type']}: ${entity[i]['mention']} (probability: ${entity[i]['probability']}) </p>`
-                else
-                    html += `<p class="bold">${i+1}. ${entity[i]['type']}: ${entity[i]['mention']} </p>`
-            }
-
-            $('#result').html(html)
+            $('#result').html(jsondata['html'])
 
         }).fail(function (jsondata, textStatus, jqXHR) {
             console.log(jsondata)

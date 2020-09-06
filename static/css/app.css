@@ -51,3 +51,8 @@ h2 {
 h5.text-center {
 	background-color: #d1e2ff
 }
+
+mark {
+  background: #1462dc;
+  color: white;
+}

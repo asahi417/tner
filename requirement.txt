@@ -13,3 +13,4 @@ uvicorn
 jinja2
 aiofiles
 fastapi
+matplotlib==3.3.1
