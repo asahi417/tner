@@ -22,7 +22,7 @@ and unzip the file, so that you have a default checkpoint folder `./ckpt/default
 ```shell script
 uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
-One can specify model checkpoint by `export MODEL_CKPT={path to checkpoint directory}`, which produced by following training script.
+One can also specify model checkpoint by `export MODEL_CKPT={path to checkpoint directory}`, which produced by following training script.
 
 ## Model Training
 Here's a benchmark, where all the models are trained on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) for 3 epochs.
