@@ -1,4 +1,7 @@
 # Named Entity Recognition
+
+![](./asset/api.gif)
+
 This is a collection of scripts to fine-tuning pre-trained language models on Named-Entity-Recognition (NER) with [transformers](https://github.com/huggingface/transformers).
 It also provides a quick App to test NER model with an interface, which is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
 Default checkpoint is fine-tuned on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf), so can be tested on any language.
@@ -11,7 +14,6 @@ pip install -r requirement.txt
 ```
 
 ## Application
-![](./asset/api.gif)
 
 1. Download [default model checkpoint file](https://drive.google.com/file/d/19SLaL_KMDXvI15oPlNRd6ZCNEdmypU7s/view?usp=sharing), 
 and unzip the file, so that you have a default checkpoint folder `./ckpt/default`.
