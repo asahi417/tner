@@ -3,18 +3,13 @@ import os
 import hashlib
 import json
 import shutil
-import logging
 from glob import glob
-from logging.config import dictConfig
 
 import torch
 
-dictConfig({
-    "version": 1,
-    "formatters": {'f': {'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'}},
-    "handlers": {'h': {'class': 'logging.StreamHandler', 'formatter': 'f', 'level': logging.DEBUG}},
-    "root": {'handlers': ['h'], 'level': logging.DEBUG}})
-LOGGER = logging.getLogger()
+from .util import get_logger
+
+LOGGER = get_logger()
 
 __all__ = 'Argument'
 

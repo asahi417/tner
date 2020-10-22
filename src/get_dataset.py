@@ -1,21 +1,17 @@
-""" Fetch dataset for NLP task """
+""" Fetch/format NER dataset """
 import os
-import logging
 import zipfile
-from logging.config import dictConfig
 from typing import Dict
 from itertools import chain
 
 from .mecab_wrapper import MeCabWrapper
+from .util import get_logger
 
-dictConfig({
-    "version": 1,
-    "formatters": {'f': {'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'}},
-    "handlers": {'h': {'class': 'logging.StreamHandler', 'formatter': 'f', 'level': logging.DEBUG}},
-    "root": {'handlers': ['h'], 'level': logging.DEBUG}})
-LOGGER = logging.getLogger()
+LOGGER = get_logger()
 STOPWORDS = ['None', '#']
-# Unified label set across different dataset
+CACHE_DIR = './cache'
+os.makedirs(CACHE_DIR, exist_ok=True)
+# Shared label set across different dataset
 SHARED_NER_LABEL = {
     "location": ["LOCATION", "LOC", "location", "Location"],
     "organization": ["ORGANIZATION", "ORG", "organization"],
@@ -62,13 +58,10 @@ SHARED_NER_LABEL = {
     "event": ["EVENT"]
 }
 
-
-CACHE_DIR = './cache'
-os.makedirs(CACHE_DIR, exist_ok=True)
 __all__ = "get_dataset_ner"
 
 
-def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool=False):
+def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False):
     inputs, labels, seen_entity = [], [], []
     # seen_entity = list(label_to_id.keys())
     with open(os.path.join(data_path, file_name), 'r') as f:
@@ -120,7 +113,7 @@ def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dic
     return label_to_id, unseen_entity_label, {"data": inputs, "label": labels}
 
 
-def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool=False):
+def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False):
     data_split = dict()
     unseen_entity = None
     for name, filepath in files.items():
@@ -154,6 +147,7 @@ def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None, fix_la
 
     :param data_name: data set name or path to the data
     :param label_to_id: fixed dictionary of (label: id). If given, ignore other labels
+    :param fix_label_dict: not augment label_to_id based on dataset if True
     :return: formatted data, label_to_id
     """
     data_path = os.path.join(CACHE_DIR, data_name)

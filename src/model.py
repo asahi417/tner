@@ -4,7 +4,6 @@ import random
 import json
 import logging
 from time import time
-from logging.config import dictConfig
 from typing import Dict, List
 from itertools import groupby
 
@@ -18,14 +17,9 @@ from seqeval.metrics import f1_score, precision_score, recall_score, classificat
 from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
 from .tokenizer import Transforms
+from .util import get_logger
 
-
-dictConfig({
-    "version": 1,
-    "formatters": {'f': {'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'}},
-    "handlers": {'h': {'class': 'logging.StreamHandler', 'formatter': 'f', 'level': logging.DEBUG}},
-    "root": {'handlers': ['h'], 'level': logging.DEBUG}})
-LOGGER = logging.getLogger()
+LOGGER = get_logger()
 NUM_WORKER = 4
 PROGRESS_INTERVAL = 100
 CACHE_DIR = './cache'
@@ -265,8 +259,8 @@ class TrainTransformerNER:
     def __epoch_valid(self,
                       data_loader,
                       writer=None,
-                      prefix: str='valid',
-                      unseen_entity_set: set=None,
+                      prefix: str = 'valid',
+                      unseen_entity_set: set = None,
                       ignore_entity_type: bool = False):
         """ validation/test, returning flag which is True if early stop condition was applied """
         self.model.eval()
