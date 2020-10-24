@@ -1,11 +1,12 @@
-torch==1.4.0
 pillow==6.2.1
-toml==0.10.0
-transformers==2.11.0
-seqeval==0.0.12
 mecab-python3==0.996.2
 uvicorn==0.11.8
 jinja2==2.11.2
 aiofiles==0.5.0
 fastapi==0.61.0
 matplotlib==3.3.1
+toml
+tensorboard
+torch
+transformers
+seqeval
