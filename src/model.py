@@ -55,14 +55,40 @@ class TrainTransformerNER:
     """ finetune transformers NER """
 
     def __init__(self,
+                 dataset: str,
                  batch_size_validation: int = None,
                  checkpoint: str = None,
                  checkpoint_dir: str = None,
-                 **kwargs):
+                 transformer: str = 'xlm-roberta-base',
+                 random_seed: int = 1234,
+                 lr: float = 1e-5,
+                 total_step: int = 13000,
+                 warmup_step: int = 700,
+                 weight_decay: float = 1e-7,
+                 batch_size: int = 16,
+                 max_seq_length: int = 128,
+                 early_stop: float = None,
+                 fp16: bool = False,
+                 max_grad_norm: float = 1.0):
         LOGGER.info('*** initialize network ***')
 
         # checkpoint version
-        self.args = Argument(checkpoint_dir=checkpoint_dir, checkpoint=checkpoint, **kwargs)
+        self.args = Argument(
+            dataset=dataset,
+            checkpoint_dir=checkpoint_dir,
+            checkpoint=checkpoint,
+            transformer=transformer,
+            random_seed=random_seed,
+            lr=lr,
+            total_step=total_step,
+            warmup_step=warmup_step,
+            weight_decay=weight_decay,
+            batch_size=batch_size,
+            max_seq_length=max_seq_length,
+            early_stop=early_stop,
+            fp16=fp16,
+            max_grad_norm=max_grad_norm)
+
         self.batch_size_validation = batch_size_validation if batch_size_validation else self.args.batch_size
 
         # fix random seed
