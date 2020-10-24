@@ -1,6 +1,7 @@
 from src import get_dataset_ner
 
+VALID_DATASET = ['conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant']
 
 if __name__ == '__main__':
-    get_dataset_ner('ontonote5')
-    get_dataset_ner('conll_2003')
+    for t in VALID_DATASET:
+        get_dataset_ner(t)

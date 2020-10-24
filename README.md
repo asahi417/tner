@@ -1,20 +1,25 @@
 
 ![](./asset/api.gif)
 
-# Named Entity Recognition
-This is a collection of scripts to fine-tuning pre-trained language models on Named-Entity-Recognition (NER) with [transformers](https://github.com/huggingface/transformers).
-It also provides a quick App to test NER model with an interface, which is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
-Default checkpoint is fine-tuned on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf), so can be tested on any language.
-
+# Transformer NER  
+***Transformer NER*** is a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER) performance specifically. 
+The following features are supported:
+- Script to finetune LMs distributed by [transformers](https://github.com/huggingface/transformers), on various publicly available NER dataset.
+- Script to produce benchmark of in-domain/cross-domain span-F1 score over the dataset. 
+- Interactive web app to visualize model prediction (shown above).
+- Command line tool to get model prediction
+ 
 ## Get started
+Clone and install libraries.
 ```shell script
 git clone https://github.com/asahi417/transformers-ner
 cd transformers-ner
 pip install -r requirement.txt
 ```
 
-## Application
+Default checkpoint is fine-tuned on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf), so can be tested on any language.
 
+## Application
 1. Download [default model checkpoint file](https://drive.google.com/file/d/19SLaL_KMDXvI15oPlNRd6ZCNEdmypU7s/view?usp=sharing), 
 and unzip the file, so that you have a default checkpoint folder `./ckpt/default`.
 2. Run the app, and open your browser http://0.0.0.0:8000    
@@ -27,14 +32,18 @@ One can also specify model checkpoint by `export MODEL_CKPT={path to checkpoint 
 ## Model Training
 Here's a benchmark, where all the models are trained on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) for 3 epochs.
 
-| Dataset    | Language | # Type | # Sent (train/val/test) | F1 (val) | F1 (test) | 
-|------------|----------|--------|-------------------------|----------|-----------| 
-| OntoNote 5 | English  | 18     | 59,924/8,582/8,262      | 0.87     | 0.89      | 
-| CoNLL 2003 | English  | 4      | 14,041/3,250/3,453      | 0.95     | 0.91      | 
-| PanX/en    | English  | 4      | 20,000/10,000/10,000    | 0.84     | 0.83      | 
-| PanX/ja    | Japanese | 4      | 20,000/10,000/10,000    | 0.83     | 0.83      | 
-| Restaurant | English  | 8      | 7,660/1,521             | 0.79     | -         | 
-| Movie      | English  | 12     | 7,816/1,953             | 0.7      | -         | 
+| Dataset    | Language | # Type | # Sent (train/val/test) | F1 (val) | F1 (test) | SoTA F1 (test) | 
+|------------|----------|--------|-------------------------|----------|-----------|-----------------| 
+| OntoNote 5 | English  | 18     | 59,924/8,582/8,262      | 0.87     | 0.89      | 0.9207 ([BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf)) |
+| CoNLL 2003 | English  | 4      | 14,041/3,250/3,453      | 0.95     | 0.91      | 0.943 ([LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)) |
+| PanX (en)  | English  | 4      | 20,000/10,000/10,000    | 0.84     | 0.83      | 0.848 ([mBERT](https://arxiv.org/pdf/2005.00052.pdf)) | 
+| PanX (ja)  | Japanese | 4      | 20,000/10,000/10,000    | 0.83     | 0.83      | 0.733 ([XLM-R](https://arxiv.org/pdf/2005.00052.pdf)) |
+| PanX (ru)  | Russian  | 4      | 20,000/10,000/10,000    | 0.89     | 0.89      | - |
+| Restaurant | English  | 8      | 7,660/1,521             | 0.79     | -         | - |
+| Movie      | English  | 12     | 7,816/1,953             | 0.7      | -         | - |
+
+- SOTA reported at the time of Oct, 2020.
+- F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
 
 You can train a model on various public dataset such as
 [OntoNote5](https://www.aclweb.org/anthology/N06-2015.pdf),
@@ -116,6 +125,8 @@ You then need to manually download panx_dataset (for NER) from
 python ./example_train.py -d panx_dataset/ja
 ```
 
+## Acknowledgement
+The App interface is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
 
 
 

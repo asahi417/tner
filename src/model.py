@@ -4,28 +4,26 @@ import random
 import json
 import logging
 from time import time
-from logging.config import dictConfig
 from typing import Dict, List
 from itertools import groupby
+
 
 import transformers
 import torch
 from torch import nn
 from torch.autograd import detect_anomaly
-from torch.utils.tensorboard import SummaryWriter
 from seqeval.metrics import f1_score, precision_score, recall_score, classification_report, accuracy_score
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except ImportError:
+    SummaryWriter = None
 
 from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
 from .tokenizer import Transforms
+from .util import get_logger
 
-
-dictConfig({
-    "version": 1,
-    "formatters": {'f': {'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'}},
-    "handlers": {'h': {'class': 'logging.StreamHandler', 'formatter': 'f', 'level': logging.DEBUG}},
-    "root": {'handlers': ['h'], 'level': logging.DEBUG}})
-LOGGER = logging.getLogger()
+LOGGER = get_logger()
 NUM_WORKER = 4
 PROGRESS_INTERVAL = 100
 CACHE_DIR = './cache'
@@ -184,7 +182,10 @@ class TrainTransformerNER:
 
     def train(self):
         LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_train.log')))
-        writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
+        if SummaryWriter:
+            writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
+        else:
+            writer = None
         start_time = time()
 
         # setup dataset/data loader
@@ -224,7 +225,8 @@ class TrainTransformerNER:
             'optimizer_state_dict': self.optimizer.state_dict(),
             'scheduler_state_dict': self.scheduler.state_dict()
         }, os.path.join(self.args.checkpoint_dir, 'model.pt'))
-        writer.close()
+        if SummaryWriter:
+            writer.close()
         LOGGER.info('ckpt saved at %s' % self.args.checkpoint_dir)
 
     def __epoch_train(self, data_loader, writer):
@@ -250,8 +252,9 @@ class TrainTransformerNER:
             # log instantaneous accuracy, loss, and learning rate
             inst_loss = loss.cpu().detach().item()
             inst_lr = self.optimizer.param_groups[0]['lr']
-            writer.add_scalar('train/loss', inst_loss, self.__step)
-            writer.add_scalar('train/learning_rate', inst_lr, self.__step)
+            if writer:
+                writer.add_scalar('train/loss', inst_loss, self.__step)
+                writer.add_scalar('train/learning_rate', inst_lr, self.__step)
             if self.__step % PROGRESS_INTERVAL == 0:
                 LOGGER.info('[epoch %i] * (training step %i) loss: %.3f, lr: %0.8f'
                             % (self.__epoch, self.__step, inst_loss, inst_lr))
@@ -265,8 +268,8 @@ class TrainTransformerNER:
     def __epoch_valid(self,
                       data_loader,
                       writer=None,
-                      prefix: str='valid',
-                      unseen_entity_set: set=None,
+                      prefix: str = 'valid',
+                      unseen_entity_set: set = None,
                       ignore_entity_type: bool = False):
         """ validation/test, returning flag which is True if early stop condition was applied """
         self.model.eval()
