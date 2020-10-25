@@ -4,11 +4,11 @@
 
 ***Transformer NER***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
 The following features are supported:
-- [Modules to finetune LMs](#train-model)
+- [Modules to finetune LMs](#train-model) (see in [google colab](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing))
     - various dataset option
     - organizing checkpoints by hyperparameter configuration
     - tensorboard visualization
-- [Script to evaluate model which enables](#evaluate-on-inout-of-domain-f1-score-withwithout-entity-type) 
+- [Script to evaluate model which enables](#evaluate-on-inout-of-domain-f1-score-withwithout-entity-type)  (see in [google colab](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)) 
     - **in-domain/cross-domain/cross-lingual** span-F1 score across datasets
     - **entity position F1 score** (reduce the prediction and true label to be entity-agnostic, to see entity position detection performance, 
     see the [baseline result](#result)) 
@@ -25,7 +25,10 @@ pip install -r requirement.txt
 
 ## Model Training/Evaluation
 
-![](asset/tb_valid.png)
+<p align="center">
+  <img src="./asset/tb_valid.png" width="800">
+  <br><i>Fig 1: Tensorboard visualization</i>
+</p>
 
 ### Train model
 Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER! 
