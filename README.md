@@ -112,8 +112,53 @@ As a baseline, we finetuned [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-
 evaluate it on in-domain/cross-domain/cross-lingual setting.
 We set the configuration used here as the default value in the [training script](example_train_eval.py).
 
+***In-domain span F1 score***
+
+|   Dataset  | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
+|:----------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
+| OntoNote 5 |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
+| CoNLL 2003 |     0.95 |      0.91 |           0.94 | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       |
+| PanX (en)  |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
+| PanX (ja)  |     0.83 |      0.83 |           0.73 | [XLM-R](https://arxiv.org/pdf/2005.00052.pdf)        |
+| PanX (ru)  |     0.89 |      0.89 |        -       |                           -                          |
+| Restaurant |     -    |      0.79 |        -       |                           -                          |
+| Movie      |     -    |      0.70 |        -       |                           -                          |
+
+***In-domain span F1 score (ignore entity type)***
+
+|   Dataset  | F1 (val, ignore type) | F1 (test, ignore type) |
+|:----------:|:---------------------:|:----------------------:|
+| OntoNote 5 |                  0.91 |                   0.91 |
+| CoNLL 2003 |                  0.98 |                   0.98 |
+| PanX (en)  |                  0.93 |                   0.93 |
+| PanX (ja)  |                  0.88 |                   0.88 |
+| PanX (ru)  |                  0.94 |                   0.94 |
+| Restaurant | -                     |                   0.83 |
+| Movie      | -                     |                   0.73 |
+
+***Cross-domain span F1 score (ignore entity type)***
+
+|       train\test      | OntoNote  (News, blog) | Conll (News) | wiki/en | Movie | Restaurant |
+|:---------------------:|:----------------------:|:------------:|:-------:|:-----:|:----------:|
+| OntoNote (News, blog) |                   0.91 |         0.58 |    0.46 |   0.2 |       0.01 |
+|      Conll (News)     |                   0.61 |         0.96 |    0.61 |     0 |          0 |
+|        wiki/en        |                   0.41 |         0.73 |    0.93 |     0 |       0.08 |
+|         Movie         |                   0.02 |            0 |       0 |  0.73 |          0 |
+|       Restaurant      |                   0.15 |          0.2 |    0.18 |     0 |       0.83 |
+
+***Cross-lingual span F1 score***
+
+| train\test | wiki/en | wiki/ja | wiki/ru |
+|:----------:|:-------:|:-------:|:-------:|
+|   wiki/en  |    0.83 |    0.37 |    0.65 |
+|   wiki/ja  |    0.53 |    0.83 |    0.53 |
+|   wiki/ru  |    0.55 |    0.43 |    0.88 |
+
+
+Notes:  
 - SOTA reported at the time of Oct, 2020.
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
+- For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
 
 ## Web App
 To play around with NER model, we provide a quick web App. 
