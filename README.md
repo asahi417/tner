@@ -1,7 +1,8 @@
 
+# Transformer NER  
+
 ![](./asset/api.gif)
 
-# Transformer NER  
 ***Transformer NER*** is a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER) performance specifically. 
 The following features are supported:
 - Script to finetune LMs distributed by [transformers](https://huggingface.co/models)
@@ -21,10 +22,10 @@ pip install -r requirement.txt
 ```
 
 ## Model Training/Evaluation
-### Training
 
 ![](asset/tb_valid.png)
 
+### Training
 Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER! 
 
 ```python
@@ -67,7 +68,7 @@ Each checkpoint consists of following files:
 - `*.log`: process log
 
 ### Evaluation
-
+Once a model was trained on any dataset, you can start  
 
 ## Model
 ## App
