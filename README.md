@@ -54,15 +54,14 @@ trainer.train()
 ```
 As a choice of NER dataset, following data sources are supported.   
 
-|                                   Name                                  |         Genre        |    Language   | Entity types |       Data size      |
-|:-----------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|
-|        [ontonote5](https://www.aclweb.org/anthology/N06-2015.pdf)       | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 |
-|       [conll_2003](https://www.aclweb.org/anthology/W03-0419.pdf)       |         News         |    English    |            4 |   14,041/3,250/3,453 |
-| [panx/en, panx/ja, etc](https://www.aclweb.org/anthology/P17-1178.pdf)  |       Wikipedia      | 282 languages |            3 | 20,000/10,000/10,000 |
-|     [mit_restaurant](https://groups.csail.mit.edu/sls/downloads/)       |   Restaurant review  |    English    |            8 |          7,660/1,521 |
-|       [mit_movie_trivia](https://groups.csail.mit.edu/sls/downloads/)   |     Movie review     |    English    |           12 |          7,816/1,953 |
-|       [wnut_17](https://noisy-text.github.io/2017/pdf/WNUT18.pdf)       |         Tweet        |    English    |            6 |       1000/1008/1287 |
-
+|                                   Name                                           |         Genre        |    Language   | Entity types |       Data size      |
+|:--------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|
+| OntoNote 5 ([`ontonote5`](https://www.aclweb.org/anthology/N06-2015.pdf))          | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 |
+| CoNLL 2003 ([`conll_2003`](https://www.aclweb.org/anthology/W03-0419.pdf))         |         News         |    English    |            4 |   14,041/3,250/3,453 |
+| WNUT 2017 ([`wnut_17`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))          |         Tweet        |    English    |            6 |       1,000/1,008/1,287 |
+| WikiAnn ([`panx/en`, `panx/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf)) |       Wikipedia      | 282 languages |            3 | 20,000/10,000/10,000 |
+| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))   |   Restaurant review  |    English    |            8 |          7,660/1,521 |
+| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))      |     Movie review     |    English    |           12 |          7,816/1,953 |
 
 Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hyperparameter combination>`
 (eg, `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`). Each checkpoint consists of following files:
@@ -76,7 +75,7 @@ For more conclude examples, take a look below:
 - [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
 - [example_train_eval.py](example_train_eval.py)
 
-***WikiAnn (panx) dataset***  
+***WikiAnn dataset***  
 All the dataset should be fetched automatically but not `panx/*` dataset, as you need 
 first create a cache folder with `mkdir -p ./cache` in the root of this project if it's not created yet.
 You then need to manually download data from
@@ -117,45 +116,47 @@ We set the configuration used here as the default value in the [training script]
 
 ***In-domain span F1 score***
 
-|   Dataset  | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
-|:----------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
-| OntoNote 5 |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
-| CoNLL 2003 |     0.95 |      0.91 |           0.94 | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       |
-| PanX (en)  |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
-| PanX (ja)  |     0.83 |      0.83 |           0.73 | [XLM-R](https://arxiv.org/pdf/2005.00052.pdf)        |
-| PanX (ru)  |     0.89 |      0.89 |        -       |                           -                          |
-| Restaurant |     -    |      0.79 |        -       |                           -                          |
-| Movie      |     -    |      0.70 |        -       |                           -                          |
+|   Dataset          | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
+|:------------------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
+| `ontonote5`        |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
+| `conll_2003`       |     0.95 |      0.91 |           0.94 | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       |
+| `wnut_17`          |      |       |           0.50 | [CrossWeigh](https://www.aclweb.org/anthology/D19-1519.pdf)  |
+| `panx/en`          |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
+| `panx/ja`          |     0.83 |      0.83 |           0.73 | [XLM-R](https://arxiv.org/pdf/2005.00052.pdf)        |
+| `panx/ru`          |     0.89 |      0.89 |        -       |                           -                          |
+| `mit_restaurant`   |     -    |      0.79 |        -       |                           -                          |
+| `mit_movie_trivia` |     -    |      0.70 |        -       |                           -                          |
 
 ***In-domain span F1 score (ignore entity type)***
 
-|   Dataset  | F1 (val, ignore type) | F1 (test, ignore type) |
-|:----------:|:---------------------:|:----------------------:|
-| OntoNote 5 |                  0.91 |                   0.91 |
-| CoNLL 2003 |                  0.98 |                   0.98 |
-| PanX (en)  |                  0.93 |                   0.93 |
-| PanX (ja)  |                  0.88 |                   0.88 |
-| PanX (ru)  |                  0.94 |                   0.94 |
-| Restaurant | -                     |                   0.83 |
-| Movie      | -                     |                   0.73 |
+|   Dataset    | F1 (val, ignore type) | F1 (test, ignore type) |
+|:------------:|:---------------------:|:----------------------:|
+| `ontonote5`  |                  0.91 |                   0.91 |
+| `conll_2003` |                  0.98 |                   0.98 |
+| `wnut_17`    |      |       | 
+| `panx/en`    |                  0.93 |                   0.93 |
+| `panx/ja`    |                  0.88 |                   0.88 |
+| `panx/ru`    |                  0.94 |                   0.94 |
+| `mit_restaurant`   | -                     |                   0.83 |
+| `mit_movie_trivia` | -                     |                   0.73 |
 
 ***Cross-domain span F1 score (ignore entity type)***
 
-|       train\test      | OntoNote  (News, blog) | Conll (News) | wiki/en | Movie | Restaurant |
-|:---------------------:|:----------------------:|:------------:|:-------:|:-----:|:----------:|
-| OntoNote (News, blog) |                   0.91 |         0.58 |    0.46 |   0.2 |       0.01 |
-|      Conll (News)     |                   0.61 |         0.96 |    0.61 |     0 |          0 |
-|        wiki/en        |                   0.41 |         0.73 |    0.93 |     0 |       0.08 |
-|         Movie         |                   0.02 |            0 |       0 |  0.73 |          0 |
-|       Restaurant      |                   0.15 |          0.2 |    0.18 |     0 |       0.83 |
+|       train\test         | `ontonote5` | `conll_2003` | `panx/en` | `mit_movie_trivia` | `mit_restaurant` |
+|:------------------------:|:----------------------:|:------------:|:-------:|:-----:|:----------:|
+| `ontonote5`  |                 0.91 |         0.58 |    0.46 |   0.2 |       0.01 |
+| `conll_2003` |                   0.61 |         0.96 |    0.61 |     0 |          0 |
+| `panx/en`    |                   0.41 |         0.73 |    0.93 |     0 |       0.08 |
+| `mit_movie_trivia` |                   0.02 |            0 |       0 |  0.73 |          0 |
+| `mit_restaurant`   |                   0.15 |          0.2 |    0.18 |     0 |       0.83 |
 
 ***Cross-lingual span F1 score***
 
-| train\test | wiki/en | wiki/ja | wiki/ru |
+| train\test | `panx/en` | `panx/ja` | `panx/ru` |
 |:----------:|:-------:|:-------:|:-------:|
-|   wiki/en  |    0.83 |    0.37 |    0.65 |
-|   wiki/ja  |    0.53 |    0.83 |    0.53 |
-|   wiki/ru  |    0.55 |    0.43 |    0.88 |
+| `panx/en`  |    0.83 |    0.37 |    0.65 |
+| `panx/ja`  |    0.53 |    0.83 |    0.53 |
+| `panx/ru`  |    0.55 |    0.43 |    0.88 |
 
 
 Notes:  
