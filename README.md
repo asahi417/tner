@@ -12,8 +12,8 @@ The following features are supported:
     - **in-domain/cross-domain/cross-lingual** span-F1 score across datasets
     - **entity position F1 score** (reduce the prediction and true label to be entity-agnostic, to see entity position detection performance, 
     see the [baseline result](#result)) 
-- [Web app](#web-app) to visualize model prediction (shown above).
-- Command line tool to get model prediction.
+- [Web app](#web-app) to visualize model prediction.
+- [Command line tool to get model prediction.](#model-inference-interface)
  
 ## Get Started
 Clone and install libraries.
@@ -54,14 +54,14 @@ trainer.train()
 ```
 As a choice of NER dataset, following data sources are supported.   
 
-|                                   Name                                           |         Genre        |    Language   | Entity types |       Data size      |
-|:--------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|
-| OntoNote 5 ([`ontonote5`](https://www.aclweb.org/anthology/N06-2015.pdf))          | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 |
-| CoNLL 2003 ([`conll_2003`](https://www.aclweb.org/anthology/W03-0419.pdf))         |         News         |    English    |            4 |   14,041/3,250/3,453 |
-| WNUT 2017 ([`wnut_17`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))          |         Tweet        |    English    |            6 |       1,000/1,008/1,287 |
-| WikiAnn ([`panx/en`, `panx/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf)) |       Wikipedia      | 282 languages |            3 | 20,000/10,000/10,000 |
-| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))   |   Restaurant review  |    English    |            8 |          7,660/1,521 |
-| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))      |     Movie review     |    English    |           12 |          7,816/1,953 |
+|                                   Name                                           |         Genre        |    Language   | Entity types |       Data size      | Lower-cased |
+|:--------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
+| OntoNote 5 ([`ontonote5`](https://www.aclweb.org/anthology/N06-2015.pdf))          | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 | No | 
+| CoNLL 2003 ([`conll_2003`](https://www.aclweb.org/anthology/W03-0419.pdf))         |         News         |    English    |            4 |   14,041/3,250/3,453 | No |
+| WNUT 2017 ([`wnut_17`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))          |         Tweet        |    English    |            6 |       1,000/1,008/1,287 | No |
+| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf)) |       Wikipedia      | 282 languages |            3 | 20,000/10,000/10,000 | No |
+| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))   |   Restaurant review  |    English    |            8 |          7,660/1,521 | Yes |
+| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))      |     Movie review     |    English    |           12 |          7,816/1,953 | Yes |
 
 Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hyperparameter combination>`
 (eg, `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`). Each checkpoint consists of following files:
@@ -69,14 +69,14 @@ Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hy
 - `label_to_id.json`: dictionary to map prediction id to label
 - `model.pt`: pytorch model weight file
 - `parameter.json`: model hyperparameters
-- `*.log`: process log
+- `logger_train.log`: training log
 
 For more conclude examples, take a look below:  
 - [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
 - [example_train_eval.py](example_train_eval.py)
 
 ***WikiAnn dataset***  
-All the dataset should be fetched automatically but not `panx/*` dataset, as you need 
+All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need 
 first create a cache folder with `mkdir -p ./cache` in the root of this project if it's not created yet.
 You then need to manually download data from
 [here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
@@ -104,68 +104,93 @@ trainer.test(test_dataset='conll_2003')
 trainer.test(test_dataset='conll_2003', ignore_entity_type=True)
 ```
 
-Evaluation process create `*.log` file where includes all the report under the checkpoint directory.
+Evaluation process create `logger_test.<dataname>.log` file where includes all the report under the checkpoint directory.
 For more conclude examples, take a look below:  
 - [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
 - [example_train_eval.py](example_train_eval.py)
 
 ### Result
-As a baseline, we finetuned [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) on each dataset and
+We finetune [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) on each dataset and
 evaluate it on in-domain/cross-domain/cross-lingual setting.
-We set the configuration used here as the default value in the [training script](example_train_eval.py).
 
-***In-domain span F1 score***
+Firstly, we report our baseline on each dataset, where the metrics are quite close to current SoTA. 
 
 |   Dataset          | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
 |:------------------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
 | `ontonote5`        |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
 | `conll_2003`       |     0.95 |      0.91 |           0.94 | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       |
-| `wnut_17`          |      |       |           0.50 | [CrossWeigh](https://www.aclweb.org/anthology/D19-1519.pdf)  |
-| `panx/en`          |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
-| `panx/ja`          |     0.83 |      0.83 |           0.73 | [XLM-R](https://arxiv.org/pdf/2005.00052.pdf)        |
-| `panx/ru`          |     0.89 |      0.89 |        -       |                           -                          |
+| `wnut_17`          |     0.63 |      0.53 |           0.50 | [CrossWeigh](https://www.aclweb.org/anthology/D19-1519.pdf)  |
+| `panx_dataset/en`  |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
+| `panx_dataset/ja`  |     0.83 |      0.83 |           0.73 | [XLM-R](https://arxiv.org/pdf/2005.00052.pdf)        |
+| `panx_dataset/ru`  |     0.89 |      0.89 |        -       |                           -                          |
 | `mit_restaurant`   |     -    |      0.79 |        -       |                           -                          |
 | `mit_movie_trivia` |     -    |      0.70 |        -       |                           -                          |
 
-***In-domain span F1 score (ignore entity type)***
+We also report models' entity-detection ability by ignoring entity-type and reduce the prediction/labels to uni-entity task.
+If we break down NER task into *entity detection* and *type classification*,
+these scores are the upper bound of entity classification for each model.
+In any datasets, the discrepancy in between two scores is not large,
+which implies model's high capacity of entity type classification.   
 
-|   Dataset    | F1 (val, ignore type) | F1 (test, ignore type) |
-|:------------:|:---------------------:|:----------------------:|
-| `ontonote5`  |                  0.91 |                   0.91 |
-| `conll_2003` |                  0.98 |                   0.98 |
-| `wnut_17`    |      |       | 
-| `panx/en`    |                  0.93 |                   0.93 |
-| `panx/ja`    |                  0.88 |                   0.88 |
-| `panx/ru`    |                  0.94 |                   0.94 |
+|   Dataset          | F1 (val, ignore type) | F1 (test, ignore type) |
+|:------------------:|:---------------------:|:----------------------:|
+| `ontonote5`        |                  0.91 |                   0.91 |
+| `conll_2003`       |                  0.98 |                   0.98 |
+| `wnut_17`          |                  0.73 |                   0.63 | 
+| `panx_dataset/en`  |                  0.93 |                   0.93 |
+| `panx_dataset/ja`  |                  0.88 |                   0.88 |
+| `panx_dataset/ru`  |                  0.94 |                   0.94 |
 | `mit_restaurant`   | -                     |                   0.83 |
 | `mit_movie_trivia` | -                     |                   0.73 |
 
-***Cross-domain span F1 score (ignore entity type)***
+Now, we are interested in how each model, trained on different dataset, differs in capturing entity given a sentence. 
+Cross-domain comparison in NER is not so straightforward as in either number of entity type or definition of entity can 
+be different depending on each dataset.
+Instead of NER metric comparison, we focus on entity detection ability in different models.
 
-|       train\test         | `ontonote5` | `conll_2003` | `panx/en` | `mit_movie_trivia` | `mit_restaurant` |
-|:------------------------:|:----------------------:|:------------:|:-------:|:-----:|:----------:|
-| `ontonote5`  |                 0.91 |         0.58 |    0.46 |   0.2 |       0.01 |
-| `conll_2003` |                   0.61 |         0.96 |    0.61 |     0 |          0 |
-| `panx/en`    |                   0.41 |         0.73 |    0.93 |     0 |       0.08 |
-| `mit_movie_trivia` |                   0.02 |            0 |       0 |  0.73 |          0 |
-| `mit_restaurant`   |                   0.15 |          0.2 |    0.18 |     0 |       0.83 |
+|       train\test   | `ontonote5` | `conll_2003` | `wnut_17` | `panx_dataset/en` | `mit_movie_trivia` | `mit_restaurant` |
+|:------------------:|:-----------:|:------------:|:---------:|:-----------------:|:------------------:|:----------------:|
+| `ontonote5`        |        0.91 |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
+| `conll_2003`       |        0.61 |         0.96 |       0.5 |              0.61 |                  0 |                0 |
+| `wnut_17`          |        0.52 |         0.69 |      0.63 |                   |                  0 |             0.09 |
+| `panx_dataset/en`  |        0.41 |         0.73 |           |              0.93 |                  0 |             0.08 |
+| `mit_movie_trivia` |        0.02 |            0 |           |                 0 |               0.73 |                0 |
+| `mit_restaurant`   |        0.15 |          0.2 |           |              0.18 |                  0 |             0.83 |
 
-***Cross-lingual span F1 score***
+Here, one can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task. 
 
-| train\test | `panx/en` | `panx/ja` | `panx/ru` |
-|:----------:|:-------:|:-------:|:-------:|
-| `panx/en`  |    0.83 |    0.37 |    0.65 |
-| `panx/ja`  |    0.53 |    0.83 |    0.53 |
-| `panx/ru`  |    0.55 |    0.43 |    0.88 |
+Finally, we show cross-lingual transfer result on `panx_dataset`.
+
+| train\test         | `panx_dataset/en` | `panx_dataset/ja` | `panx_dataset/ru` |
+|:------------------:|:-------:|:-------:|:-------:|
+| `panx_dataset/en`  |    0.83 |    0.37 |    0.65 |
+| `panx_dataset/ja`  |    0.53 |    0.83 |    0.53 |
+| `panx_dataset/ru`  |    0.55 |    0.43 |    0.88 |
 
 
 Notes:  
-- SOTA reported at the time of Oct, 2020.
+- Configuration can be found in [training script](example_train_eval.py).
+- SoTA reported at the time of Oct, 2020.
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
 - For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
 
+### Model inference interface
+To get an inference from finetuned model can be done as below.
+
+```python
+from src import TransformerNER
+classifier = TransformerNER(checkpoint='path-to-checkpoint-folder')
+test_sentences = [
+    'I live in United States, but Microsoft asks me to move to Japan.',
+    'I have an Apple computer.',
+    'I like to eat an apple.'
+]
+classifier.predict(test_sentences)
+```
+
+
 ## Web App
-To play around with NER model, we provide a quick web App. 
+To play around with NER model, we provide a quick [web App](./asset/api.gif). 
 1. [Train a model](#train-model) or download [default model checkpoint file](https://drive.google.com/file/d/19SLaL_KMDXvI15oPlNRd6ZCNEdmypU7s/view?usp=sharing),
 `xlm-roberta-base` finetuned on `ontonote5`,
 and unzip it (now you should have `./ckpt/default`).
