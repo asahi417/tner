@@ -12,7 +12,7 @@ The following features are supported:
 - Interactive web app to visualize model prediction (shown above).
 - Command line tool to get model prediction.
  
-## Get started
+## Get Started
 Clone and install libraries.
 ```shell script
 git clone https://github.com/asahi417/transformers-ner
@@ -20,14 +20,19 @@ cd transformers-ner
 pip install -r requirement.txt
 ```
 
-## Model training
-Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER. 
+## Model Training/Evaluation
+### Training
+
+![](asset/tb_valid.png)
+
+Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER! 
 
 ```python
 from src import TrainTransformerNER
 trainer = TrainTransformerNER(
-        dataset="conll_2003",  # NER dataset name
-        transformer="xlm-roberta-base",  # transformers model name 
+        dataset="ontonote5",  # NER dataset name
+        transformer="xlm-roberta-base",  # transformers model name
+        checkpoint_dir="./ckpt",  
         random_seed=1234,
         lr=1e-5,
         total_step=13000,
@@ -52,15 +57,19 @@ As a choice of NER dataset, following data sources are supported.
 |       [mit_movie_trivia](https://groups.csail.mit.edu/sls/downloads/)   |     Movie review     |    English    |           12 |          7,816/1,953 |
 |       [wnut_17](https://noisy-text.github.io/2017/pdf/WNUT18.pdf)       |         Tweet        |    English    |            6 |       1000/1008/1287 |
 
-Model checkpoint files are stored in `./ckpt` as a separate files depending on its hyperparameter setting. Each checkpoint contains
-- `model.pt`: model weight
-- `label_to_id.json`: dictionary to map the prediction index to label
-- `parameter.json`: hyperparameter
-- 
 
-- ***tensorboard visualization***
- 
+Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hyperparameter combination>` (eg, `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`).
+Each checkpoint consists of following files:
+- `events.out.tfevents.*`: tensorboard file for monitoring the learning proecss
+- `label_to_id.json`: dictionary to map prediction id to label
+- `model.pt`: pytorch model weight file
+- `parameter.json`: model hyperparameters
+- `*.log`: process log
 
+### Evaluation
+
+
+## Model
 ## App
 Default checkpoint is fine-tuned on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf), so can be tested on any language.
 
