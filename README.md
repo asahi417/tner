@@ -26,7 +26,7 @@ pip install -r requirement.txt
 ## Model Training/Evaluation
 
 <p align="center">
-  <img src="./asset/tb_valid.png" width="800">
+  <img src="./asset/tb_valid.png" width="600">
   <br><i>Fig 1: Tensorboard visualization</i>
 </p>
 
