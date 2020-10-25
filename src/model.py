@@ -55,7 +55,7 @@ class TrainTransformerNER:
     """ finetune transformers NER """
 
     def __init__(self,
-                 dataset: str,
+                 dataset: str = None,
                  batch_size_validation: int = None,
                  checkpoint: str = None,
                  checkpoint_dir: str = None,

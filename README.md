@@ -4,10 +4,13 @@
 # Transformer NER  
 ***Transformer NER*** is a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER) performance specifically. 
 The following features are supported:
-- Script to finetune LMs distributed by [transformers](https://github.com/huggingface/transformers), on various publicly available NER dataset.
-- Script to produce benchmark of in-domain/cross-domain span-F1 score over the dataset. 
+- Script to finetune LMs distributed by [transformers](https://huggingface.co/models)
+    - [various dataset option](#model-training) 
+    - organizing checkpoints by hyperparameter configuration
+    - tensorboard visualization
+- Script to produce benchmark of in-domain/cross-domain span-F1 score over the dataset.
 - Interactive web app to visualize model prediction (shown above).
-- Command line tool to get model prediction
+- Command line tool to get model prediction.
  
 ## Get started
 Clone and install libraries.
@@ -17,6 +20,48 @@ cd transformers-ner
 pip install -r requirement.txt
 ```
 
+## Model training
+Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER. 
+
+```python
+from src import TrainTransformerNER
+trainer = TrainTransformerNER(
+        dataset="conll_2003",  # NER dataset name
+        transformer="xlm-roberta-base",  # transformers model name 
+        random_seed=1234,
+        lr=1e-5,
+        total_step=13000,
+        warmup_step=700,
+        weight_decay=1e-7,
+        batch_size=16,
+        batch_size_validation=2,
+        max_seq_length=128,
+        fp16=False,
+        max_grad_norm=1.0
+    )
+trainer.train()
+```
+As a choice of NER dataset, following data sources are supported.   
+
+|                                   Name                                  |         Genre        |    Language   | Entity types |       Data size      |
+|:-----------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|
+|        [ontonote5](https://www.aclweb.org/anthology/N06-2015.pdf)       | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 |
+|       [conll_2003](https://www.aclweb.org/anthology/W03-0419.pdf)       |         News         |    English    |            4 |   14,041/3,250/3,453 |
+| [panx/en, panx/ja, etc](https://www.aclweb.org/anthology/P17-1178.pdf)  |       Wikipedia      | 282 languages |            3 | 20,000/10,000/10,000 |
+|     [mit_restaurant](https://groups.csail.mit.edu/sls/downloads/)       |   Restaurant review  |    English    |            8 |          7,660/1,521 |
+|       [mit_movie_trivia](https://groups.csail.mit.edu/sls/downloads/)   |     Movie review     |    English    |           12 |          7,816/1,953 |
+|       [wnut_17](https://noisy-text.github.io/2017/pdf/WNUT18.pdf)       |         Tweet        |    English    |            6 |       1000/1008/1287 |
+
+Model checkpoint files are stored in `./ckpt` as a separate files depending on its hyperparameter setting. Each checkpoint contains
+- `model.pt`: model weight
+- `label_to_id.json`: dictionary to map the prediction index to label
+- `parameter.json`: hyperparameter
+- 
+
+- ***tensorboard visualization***
+ 
+
+## App
 Default checkpoint is fine-tuned on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf), so can be tested on any language.
 
 ## Application
