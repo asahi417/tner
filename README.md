@@ -1,16 +1,18 @@
-
 # Transformer NER  
 
 ![](./asset/api.gif)
 
-***Transformer NER*** is a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER) performance specifically. 
+***Transformer NER***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
 The following features are supported:
-- Script to finetune LMs distributed by [transformers](https://huggingface.co/models)
-    - [various dataset option](#model-training) 
+- [Modules to finetune LMs](#train-model)
+    - various dataset option
     - organizing checkpoints by hyperparameter configuration
     - tensorboard visualization
-- Script to produce benchmark of in-domain/cross-domain span-F1 score over the dataset.
-- Interactive web app to visualize model prediction (shown above).
+- [Script to evaluate model which enables](#evaluate-on-inout-of-domain-f1-score-withwithout-entity-type) 
+    - **in-domain/cross-domain/cross-lingual** span-F1 score across datasets
+    - **entity position F1 score** (reduce the prediction and true label to be entity-agnostic, to see entity position detection performance, 
+    see the [baseline result](#result)) 
+- [Web app](#web-app) to visualize model prediction (shown above).
 - Command line tool to get model prediction.
  
 ## Get Started
@@ -25,7 +27,7 @@ pip install -r requirement.txt
 
 ![](asset/tb_valid.png)
 
-### Training
+### Train model
 Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER! 
 
 ```python
@@ -59,125 +61,71 @@ As a choice of NER dataset, following data sources are supported.
 |       [wnut_17](https://noisy-text.github.io/2017/pdf/WNUT18.pdf)       |         Tweet        |    English    |            6 |       1000/1008/1287 |
 
 
-Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hyperparameter combination>` (eg, `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`).
-Each checkpoint consists of following files:
+Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hyperparameter combination>`
+(eg, `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`). Each checkpoint consists of following files:
 - `events.out.tfevents.*`: tensorboard file for monitoring the learning proecss
 - `label_to_id.json`: dictionary to map prediction id to label
 - `model.pt`: pytorch model weight file
 - `parameter.json`: model hyperparameters
 - `*.log`: process log
 
-### Evaluation
-Once a model was trained on any dataset, you can start  
+For more conclude examples, take a look below:  
+- [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+- [example_train_eval.py](example_train_eval.py)
 
-## Model
-## App
-Default checkpoint is fine-tuned on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf), so can be tested on any language.
+***WikiAnn (panx) dataset***  
+All the dataset should be fetched automatically but not `panx/*` dataset, as you need 
+first create a cache folder with `mkdir -p ./cache` in the root of this project if it's not created yet.
+You then need to manually download data from
+[here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
+(note that it will download as `AmazonPhotos.zip`) to the cache folder.
 
-## Application
-1. Download [default model checkpoint file](https://drive.google.com/file/d/19SLaL_KMDXvI15oPlNRd6ZCNEdmypU7s/view?usp=sharing), 
-and unzip the file, so that you have a default checkpoint folder `./ckpt/default`.
-2. Run the app, and open your browser http://0.0.0.0:8000    
 
-```shell script
-uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
+### Evaluate on in/out of domain F1 score with/without entity type
+Once a model was trained on any dataset, you can start test it on other dataset to see 
+**cross-domain/cross-lingual** transferring ability as well as in domain accuracy.
+In a same manner, **entity position accuracy** can be produced.
+Here, let's suppose that your model was trained on `ontonote5`, and checkpoint files are in `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`. 
+
+```python
+from src import TrainTransformerNER
+# model instance initialization with the checkpoint 
+trainer = TrainTransformerNER(checkpoint='./ckp/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
+
+# test in domain accuracy (just on the valid/test set of the dataset where the model trained on) 
+trainer.test()
+
+# test out of domain accuracy
+trainer.test(test_dataset='conll_2003')
+
+# test entity span accuracy
+trainer.test(test_dataset='conll_2003', ignore_entity_type=True)
 ```
-One can also specify model checkpoint by `export MODEL_CKPT={path to checkpoint directory}`, which produced by following training script.
 
-## Model Training
-Here's a benchmark, where all the models are trained on [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) for 3 epochs.
+Evaluation process create `*.log` file where includes all the report under the checkpoint directory.
+For more conclude examples, take a look below:  
+- [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+- [example_train_eval.py](example_train_eval.py)
 
-| Dataset    | Language | # Type | # Sent (train/val/test) | F1 (val) | F1 (test) | SoTA F1 (test) | 
-|------------|----------|--------|-------------------------|----------|-----------|-----------------| 
-| OntoNote 5 | English  | 18     | 59,924/8,582/8,262      | 0.87     | 0.89      | 0.9207 ([BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf)) |
-| CoNLL 2003 | English  | 4      | 14,041/3,250/3,453      | 0.95     | 0.91      | 0.943 ([LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)) |
-| PanX (en)  | English  | 4      | 20,000/10,000/10,000    | 0.84     | 0.83      | 0.848 ([mBERT](https://arxiv.org/pdf/2005.00052.pdf)) | 
-| PanX (ja)  | Japanese | 4      | 20,000/10,000/10,000    | 0.83     | 0.83      | 0.733 ([XLM-R](https://arxiv.org/pdf/2005.00052.pdf)) |
-| PanX (ru)  | Russian  | 4      | 20,000/10,000/10,000    | 0.89     | 0.89      | - |
-| Restaurant | English  | 8      | 7,660/1,521             | 0.79     | -         | - |
-| Movie      | English  | 12     | 7,816/1,953             | 0.7      | -         | - |
+### Result
+As a baseline, we finetuned [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) on each dataset and
+evaluate it on in-domain/cross-domain/cross-lingual setting.
+We set the configuration used here as the default value in the [training script](example_train_eval.py).
 
 - SOTA reported at the time of Oct, 2020.
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
 
-You can train a model on various public dataset such as
-[OntoNote5](https://www.aclweb.org/anthology/N06-2015.pdf),
-[CoNLL 2003](https://www.aclweb.org/anthology/W03-0419.pdf),
-[WikiAnn (PanX dataset)](https://www.aclweb.org/anthology/P17-1178.pdf),
-[Restaurant Rating](https://groups.csail.mit.edu/sls/downloads/),
-[Movie Review](https://groups.csail.mit.edu/sls/downloads/), and
-[WNUT2017](https://noisy-text.github.io/2017/pdf/WNUT18.pdf) 
-by following script. 
+## Web App
+To play around with NER model, we provide a quick web App. 
+1. [Train a model](#train-model) or download [default model checkpoint file](https://drive.google.com/file/d/19SLaL_KMDXvI15oPlNRd6ZCNEdmypU7s/view?usp=sharing),
+`xlm-roberta-base` finetuned on `ontonote5`,
+and unzip it (now you should have `./ckpt/default`).
+If you use your own checkpoint, set the path to the checkpoint folder by `export MODEL_CKPT=<path-to-your-checkpoint-folder>`.  
+
+2. Run the app, and open your browser http://0.0.0.0:8000    
 
 ```shell script
-usage: example_train.py [-h] [-c CHECKPOINT] [--checkpoint-dir CHECKPOINT_DIR]
-                        [-d DATA] [-t TRANSFORMER]
-                        [--max_grad_norm MAX_GRAD_NORM]
-                        [--max-seq-length MAX_SEQ_LENGTH] [-b BATCH_SIZE]
-                        [--random-seed RANDOM_SEED] [--lr LR]
-                        [--total-step TOTAL_STEP]
-                        [--batch-size-validation BATCH_SIZE_VALIDATION]
-                        [--warmup-step WARMUP_STEP]
-                        [--weight-decay WEIGHT_DECAY]
-                        [--early-stop EARLY_STOP] [--fp16] [--test]
-                        [--test-data TEST_DATA] [--test-ignore-entity]
-
-Fine-tune transformers on NER dataset
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -c CHECKPOINT, --checkpoint CHECKPOINT
-                        checkpoint to load
-  --checkpoint-dir CHECKPOINT_DIR
-                        checkpoint directory
-  -d DATA, --data DATA  dataset: ['panx_dataset/*', 'conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant']
-  -t TRANSFORMER, --transformer TRANSFORMER
-                        pretrained language model
-  --max_grad_norm MAX_GRAD_NORM
-                        Max gradient norm.
-  --max-seq-length MAX_SEQ_LENGTH
-                        max sequence length (use same length as used in pre-training if not provided)
-  -b BATCH_SIZE, --batch-size BATCH_SIZE
-                        batch size
-  --random-seed RANDOM_SEED
-                        random seed
-  --lr LR               learning rate
-  --total-step TOTAL_STEP
-                        total training step
-  --batch-size-validation BATCH_SIZE_VALIDATION
-                        batch size for validation (smaller size to save memory)
-  --warmup-step WARMUP_STEP
-                        warmup step (6 percent of total is recommended)
-  --weight-decay WEIGHT_DECAY
-                        weight decay
-  --early-stop EARLY_STOP
-                        value of accuracy drop for early stop
-  --fp16                fp16
-  --test                test mode
-  --test-data TEST_DATA
-                        test dataset (if not specified, use trained set)
-  --test-ignore-entity  test with ignoring entity type
-```
-
-***Model training examples***  
-You can reproduce the default checkpoint by 
-```shell script
-python ./example_train.py \
-    -t xlm-roberta-base \
-    -d ontonote5 \
-    --max-seq-length 128
-```
-Checkpoint files are automatically organized depends on the hyperparameters.
-
-***WikiAnn dataset***  
-To train a model on [WikiAnn dataset](https://www.aclweb.org/anthology/P17-1178.pdf),
-first create a download folder with `mkdir -p ./cache` in the root of this project if it's not created yet.
-You then need to manually download panx_dataset (for NER) from
-[here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
-(note that it will download as AmazonPhotos.zip) to the download directory. You now can train a model on it by
-
-```shell script
-python ./example_train.py -d panx_dataset/ja
+uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
 
 ## Acknowledgement
