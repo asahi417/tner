@@ -113,7 +113,7 @@ For more conclude examples, take a look below:
 We finetune [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) on each dataset and
 evaluate it on in-domain/cross-domain/cross-lingual setting.
 
-Firstly, we report our baseline on each dataset, where the metrics are quite close to current SoTA. 
+Firstly, we report our baseline on each dataset, where the metrics are quite close to, or even outperform current SoTA. 
 
 |   Dataset              | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
 |:----------------------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
@@ -150,12 +150,12 @@ Instead of NER metric comparison, we focus on entity detection ability in differ
 
 |       Train\Test       | `ontonote5` | `conll_2003` | `wnut_17` | `panx_dataset/en` | `mit_movie_trivia` | `mit_restaurant` |
 |:----------------------:|:-----------:|:------------:|:---------:|:-----------------:|:------------------:|:----------------:|
-| **`ontonote5`**        |        0.91 |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
-| **`conll_2003`**       |        0.61 |         0.96 |       0.5 |              0.61 |                  0 |                0 |
-| **`wnut_17`**          |        0.52 |         0.69 |      0.63 |              0.53 |                  0 |             0.09 |
-| **`panx_dataset/en`**  |        0.41 |         0.73 |           |              0.93 |                  0 |             0.08 |
-| **`mit_movie_trivia`** |        0.02 |            0 |           |                 0 |               0.73 |                0 |
-| **`mit_restaurant`**   |        0.15 |          0.2 |           |              0.18 |                  0 |             0.83 |
+| **`ontonote5`**        |      _0.91_ |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
+| **`conll_2003`**       |        0.61 |       _0.96_ |       0.5 |              0.61 |                  0 |                0 |
+| **`wnut_17`**          |        0.52 |         0.69 |    _0.63_ |              0.53 |                  0 |             0.09 |
+| **`panx_dataset/en`**  |        0.41 |         0.73 |           |            _0.93_ |                  0 |             0.08 |
+| **`mit_movie_trivia`** |        0.02 |            0 |           |                 0 |             _0.73_ |                0 |
+| **`mit_restaurant`**   |        0.15 |          0.2 |           |              0.18 |                  0 |           _0.83_ |
 
 Here, one can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task. 
 
@@ -163,9 +163,9 @@ Finally, we show cross-lingual transfer result on `panx_dataset`.
 
 | Train\Test             | `panx_dataset/en` | `panx_dataset/ja` | `panx_dataset/ru` |
 |:----------------------:|:-------:|:-------:|:-------:|
-| **`panx_dataset/en`**  |    0.83 |    0.37 |    0.65 |
-| **`panx_dataset/ja`**  |    0.53 |    0.83 |    0.53 |
-| **`panx_dataset/ru`**  |    0.55 |    0.43 |    0.88 |
+| **`panx_dataset/en`**  |  _0.83_ |    0.37 |    0.65 |
+| **`panx_dataset/ja`**  |    0.53 |  _0.83_ |    0.53 |
+| **`panx_dataset/ru`**  |    0.55 |    0.43 |  _0.88_ |
 
 
 Notes:  
