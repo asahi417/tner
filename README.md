@@ -115,16 +115,16 @@ evaluate it on in-domain/cross-domain/cross-lingual setting.
 
 Firstly, we report our baseline on each dataset, where the metrics are quite close to current SoTA. 
 
-|   Dataset          | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
-|:------------------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
-| `ontonote5`        |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
-| `conll_2003`       |     0.95 |      0.91 |           0.94 | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       |
-| `wnut_17`          |     0.63 |      0.53 |           0.50 | [CrossWeigh](https://www.aclweb.org/anthology/D19-1519.pdf)  |
-| `panx_dataset/en`  |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
-| `panx_dataset/ja`  |     0.83 |      0.83 |           0.73 | [XLM-R](https://arxiv.org/pdf/2005.00052.pdf)        |
-| `panx_dataset/ru`  |     0.89 |      0.89 |        -       |                           -                          |
-| `mit_restaurant`   |     -    |      0.79 |        -       |                           -                          |
-| `mit_movie_trivia` |     -    |      0.70 |        -       |                           -                          |
+|   Dataset              | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
+|:----------------------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
+| **`ontonote5`**        |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
+| **`conll_2003`**       |     0.95 |      0.91 |           0.94 | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       |
+| **`wnut_17`**          |     0.63 |      0.53 |           0.50 | [CrossWeigh](https://www.aclweb.org/anthology/D19-1519.pdf)  |
+| **`panx_dataset/en`**  |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
+| **`panx_dataset/ja`**  |     0.83 |      0.83 |           0.73 | [XLM-R](https://arxiv.org/pdf/2005.00052.pdf)        |
+| **`panx_dataset/ru`**  |     0.89 |      0.89 |        -       |                           -                          |
+| **`mit_restaurant`**   |     -    |      0.79 |        -       |                           -                          |
+| **`mit_movie_trivia`** |     -    |      0.70 |        -       |                           -                          |
 
 We also report models' entity-detection ability by ignoring entity-type and reduce the prediction/labels to uni-entity task.
 If we break down NER task into *entity detection* and *type classification*,
@@ -132,40 +132,40 @@ these scores are the upper bound of entity classification for each model.
 In any datasets, the discrepancy in between two scores is not large,
 which implies model's high capacity of entity type classification.   
 
-|   Dataset          | F1 (val, ignore type) | F1 (test, ignore type) |
-|:------------------:|:---------------------:|:----------------------:|
-| `ontonote5`        |                  0.91 |                   0.91 |
-| `conll_2003`       |                  0.98 |                   0.98 |
-| `wnut_17`          |                  0.73 |                   0.63 | 
-| `panx_dataset/en`  |                  0.93 |                   0.93 |
-| `panx_dataset/ja`  |                  0.88 |                   0.88 |
-| `panx_dataset/ru`  |                  0.94 |                   0.94 |
-| `mit_restaurant`   | -                     |                   0.83 |
-| `mit_movie_trivia` | -                     |                   0.73 |
+|   Dataset              | F1 (val, ignore type) | F1 (test, ignore type) |
+|:----------------------:|:---------------------:|:----------------------:|
+| **`ontonote5`**        |                  0.91 |                   0.91 |
+| **`conll_2003`**       |                  0.98 |                   0.98 |
+| **`wnut_17`**          |                  0.73 |                   0.63 | 
+| **`panx_dataset/en`**  |                  0.93 |                   0.93 |
+| **`panx_dataset/ja`**  |                  0.88 |                   0.88 |
+| **`panx_dataset/ru`**  |                  0.94 |                   0.94 |
+| **`mit_restaurant`**   | -                     |                   0.83 |
+| **`mit_movie_trivia`** | -                     |                   0.73 |
 
 Now, we are interested in how each model, trained on different dataset, differs in capturing entity given a sentence. 
 Cross-domain comparison in NER is not so straightforward as in either number of entity type or definition of entity can 
 be different depending on each dataset.
 Instead of NER metric comparison, we focus on entity detection ability in different models.
 
-|       train\test   | `ontonote5` | `conll_2003` | `wnut_17` | `panx_dataset/en` | `mit_movie_trivia` | `mit_restaurant` |
-|:------------------:|:-----------:|:------------:|:---------:|:-----------------:|:------------------:|:----------------:|
-| `ontonote5`        |        0.91 |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
-| `conll_2003`       |        0.61 |         0.96 |       0.5 |              0.61 |                  0 |                0 |
-| `wnut_17`          |        0.52 |         0.69 |      0.63 |                   |                  0 |             0.09 |
-| `panx_dataset/en`  |        0.41 |         0.73 |           |              0.93 |                  0 |             0.08 |
-| `mit_movie_trivia` |        0.02 |            0 |           |                 0 |               0.73 |                0 |
-| `mit_restaurant`   |        0.15 |          0.2 |           |              0.18 |                  0 |             0.83 |
+|       Train\Test       | `ontonote5` | `conll_2003` | `wnut_17` | `panx_dataset/en` | `mit_movie_trivia` | `mit_restaurant` |
+|:----------------------:|:-----------:|:------------:|:---------:|:-----------------:|:------------------:|:----------------:|
+| **`ontonote5`**        |        0.91 |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
+| **`conll_2003`**       |        0.61 |         0.96 |       0.5 |              0.61 |                  0 |                0 |
+| **`wnut_17`**          |        0.52 |         0.69 |      0.63 |              0.53 |                  0 |             0.09 |
+| **`panx_dataset/en`**  |        0.41 |         0.73 |           |              0.93 |                  0 |             0.08 |
+| **`mit_movie_trivia`** |        0.02 |            0 |           |                 0 |               0.73 |                0 |
+| **`mit_restaurant`**   |        0.15 |          0.2 |           |              0.18 |                  0 |             0.83 |
 
 Here, one can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task. 
 
 Finally, we show cross-lingual transfer result on `panx_dataset`.
 
-| train\test         | `panx_dataset/en` | `panx_dataset/ja` | `panx_dataset/ru` |
-|:------------------:|:-------:|:-------:|:-------:|
-| `panx_dataset/en`  |    0.83 |    0.37 |    0.65 |
-| `panx_dataset/ja`  |    0.53 |    0.83 |    0.53 |
-| `panx_dataset/ru`  |    0.55 |    0.43 |    0.88 |
+| Train\Test             | `panx_dataset/en` | `panx_dataset/ja` | `panx_dataset/ru` |
+|:----------------------:|:-------:|:-------:|:-------:|
+| **`panx_dataset/en`**  |    0.83 |    0.37 |    0.65 |
+| **`panx_dataset/ja`**  |    0.53 |    0.83 |    0.53 |
+| **`panx_dataset/ru`**  |    0.55 |    0.43 |    0.88 |
 
 
 Notes:  
