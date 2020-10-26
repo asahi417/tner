@@ -1,6 +1,6 @@
 """ Model training/evaluation script
-eg)
-To train a model
+
+eg) To train a model
 ```
 python ./example_train_eval.py \
     -t xlm-roberta-base \
@@ -8,10 +8,14 @@ python ./example_train_eval.py \
     --max-seq-length 128
 ```
 
-To evaluate a model
+eg) To evaluate a model
 ```
-python ./example_train_eval.py -c <path-to-checkpoint> --test --test-data conll_2003 --test-ignore-entity
+python ./example_train_eval.py -c <path-to-checkpoint> --test \
+    --test-data conll_2003 \
+    --test-ignore-entity \
+    --test-greedy-baseline
 ```
+
 """
 import argparse
 
@@ -46,6 +50,9 @@ def get_options():
     parser.add_argument('--test', help='test mode', action='store_true')
     parser.add_argument('--test-data', help='test dataset (if not specified, use trained set)', default=None, type=str)
     parser.add_argument('--test-ignore-entity', help='test with ignoring entity type', action='store_true')
+    parser.add_argument('--test-greedy-baseline',
+                        help='test with greedy entity selection, the most frequent entity in the training set',
+                        action='store_true')
     return parser.parse_args()
 
 
@@ -72,7 +79,8 @@ if __name__ == '__main__':
     if opt.test:
         trainer.test(
             test_dataset=opt.test_data,
-            ignore_entity_type=opt.test_ignore_entity
+            ignore_entity_type=opt.test_ignore_entity,
+            greedy_baseline=opt.test_greedy_baseline
         )
     else:
         trainer.train()

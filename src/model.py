@@ -5,7 +5,7 @@ import json
 import logging
 from time import time
 from typing import Dict, List
-from itertools import groupby
+from itertools import groupby, chain
 
 
 import transformers
@@ -184,7 +184,14 @@ class TrainTransformerNER:
         return torch.utils.data.DataLoader(
             data_obj, num_workers=NUM_WORKER, batch_size=_batch_size, shuffle=is_train, drop_last=is_train)
 
-    def test(self, test_dataset: str = None, ignore_entity_type: bool = False):
+    def test(self,
+             test_dataset: str = None,
+             ignore_entity_type: bool = False,
+             greedy_baseline: bool = False):
+        """
+        ignore_entity_type: entity position detection
+        greedy_baseline: rely on model's prediction but use most frequent entity type in training set as the entity
+        """
         if test_dataset is not None:
             LOGGER.addHandler(logging.FileHandler(
                 os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset.replace('/', '_')))))
@@ -197,12 +204,29 @@ class TrainTransformerNER:
             dataset_split = self.dataset_split
             language = self.language
             unseen_entity_set = None
+        if greedy_baseline:
+            b_labels = {k: v for k, v in self.label_to_id.items() if 'B' in k}
+            labels_flatten = list(chain(*dataset_split['train']['label']))
+            entity_n = sorted([
+                ('-'.join(self.id_to_label[v].split('-')[1:]), sum(i == v for i in labels_flatten))
+                for k, v in b_labels.items()],
+                              key=lambda x: x[1], reverse=True)
+            top_entity, top_n = entity_n[0]
+        else:
+            top_entity, top_n = None, None
+
         data_loader = {k: self.__setup_loader(k, dataset_split, language) for k in dataset_split.keys() if k != 'train'}
         LOGGER.info('data_loader: {}'.format(str(list(data_loader.keys()))))
         LOGGER.info('ignore_entity_type: {}'.format(ignore_entity_type))
+        LOGGER.info('greedy_baseline: {}'.format(greedy_baseline))
         start_time = time()
         for k, v in data_loader.items():
-            self.__epoch_valid(v, prefix=k, ignore_entity_type=ignore_entity_type, unseen_entity_set=unseen_entity_set)
+            self.__epoch_valid(
+                v,
+                prefix=k,
+                ignore_entity_type=ignore_entity_type,
+                unseen_entity_set=unseen_entity_set,
+                greedy_entity_type=top_entity)
             self.release_cache()
         LOGGER.info('[test completed, %0.2f sec in total]' % (time() - start_time))
 
@@ -296,7 +320,8 @@ class TrainTransformerNER:
                       writer=None,
                       prefix: str = 'valid',
                       unseen_entity_set: set = None,
-                      ignore_entity_type: bool = False):
+                      ignore_entity_type: bool = False,
+                      greedy_entity_type: int = None):
         """ validation/test, returning flag which is True if early stop condition was applied """
         self.model.eval()
         seq_pred, seq_true = [], []
@@ -326,6 +351,9 @@ class TrainTransformerNER:
                         # ignore entity type and focus on entity position
                         _true_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _true_list]
                         _pred_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _pred_list]
+                    elif greedy_entity_type is not None:
+                        _pred_list = [i if i == 'O' else '-'.join([i.split('-')[0], greedy_entity_type])
+                                      for i in _pred_list]
                     seq_true.append(_true_list)
                     seq_pred.append(_pred_list)
         try:
