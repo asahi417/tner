@@ -154,8 +154,8 @@ Instead of NER metric comparison, we focus on entity detection ability in differ
 | **`conll_2003`**       |        0.61 |       _0.96_ |       0.5 |              0.61 |                  0 |                0 |
 | **`wnut_17`**          |        0.52 |         0.69 |    _0.63_ |              0.53 |                  0 |             0.09 |
 | **`panx_dataset/en`**  |        0.41 |         0.73 |           |            _0.93_ |                  0 |             0.08 |
-| **`mit_movie_trivia`** |        0.02 |            0 |           |                 0 |             _0.73_ |                0 |
-| **`mit_restaurant`**   |        0.15 |          0.2 |           |              0.18 |                  0 |           _0.83_ |
+| **`mit_movie_trivia`** |        0.02 |            0 |         0 |                 0 |             _0.73_ |                0 |
+| **`mit_restaurant`**   |        0.15 |          0.2 |      0.09 |              0.18 |                  0 |           _0.83_ |
 
 Here, one can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task. 
 
@@ -191,7 +191,7 @@ classifier.predict(test_sentences)
 
 ## Web App
 To play around with NER model, we provide a quick [web App](./asset/api.gif). 
-1. [Train a model](#train-model) or download [default model checkpoint file](https://drive.google.com/file/d/19SLaL_KMDXvI15oPlNRd6ZCNEdmypU7s/view?usp=sharing),
+1. [Train a model](#train-model) or download [default model checkpoint file](https://drive.google.com/file/d/1zhXuSeHVXL4_WqcblroaUrGkHFGSY0Is/view?usp=sharing),
 `xlm-roberta-base` finetuned on `ontonote5`,
 and unzip it (now you should have `./ckpt/default`).
 If you use your own checkpoint, set the path to the checkpoint folder by `export MODEL_CKPT=<path-to-your-checkpoint-folder>`.  
