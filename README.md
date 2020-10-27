@@ -1,6 +1,6 @@
 # Transformer NER  
 
-![](./asset/api.gif)
+![](./asset/api.png)
 
 ***Transformer NER***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
 The following features are supported:
