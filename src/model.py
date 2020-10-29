@@ -230,7 +230,7 @@ class TrainTransformerNER:
             self.release_cache()
         LOGGER.info('[test completed, %0.2f sec in total]' % (time() - start_time))
 
-    def train(self):
+    def train(self, skip_validation: bool = False):
         LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_train.log')))
         if SummaryWriter:
             writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
@@ -242,13 +242,15 @@ class TrainTransformerNER:
         data_loader = {k: self.__setup_loader(k, self.dataset_split, self.language) for k in ['train', 'valid']}
         LOGGER.info('data_loader: %s' % str(list(data_loader.keys())))
         LOGGER.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
+        if_early_stop = False
         try:
             with detect_anomaly():
                 while True:
                     if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
                     self.release_cache()
-                    if_early_stop = self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
-                    self.release_cache()
+                    if not skip_validation:
+                        if_early_stop = self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
+                        self.release_cache()
                     if if_training_finish or if_early_stop:
                         break
                     self.__epoch += 1
