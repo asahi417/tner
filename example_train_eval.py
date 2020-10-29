@@ -47,6 +47,7 @@ def get_options():
     parser.add_argument('--weight-decay', help='weight decay', default=1e-7, type=float)
     parser.add_argument('--early-stop', help='value of accuracy drop for early stop', default=0.1, type=float)
     parser.add_argument('--fp16', help='fp16', action='store_true')
+    parser.add_argument('--skip-validation', help='test with ignoring entity type', action='store_true')
     parser.add_argument('--test', help='test mode', action='store_true')
     parser.add_argument('--test-data', help='test dataset (if not specified, use trained set)', default=None, type=str)
     parser.add_argument('--test-ignore-entity', help='test with ignoring entity type', action='store_true')
@@ -83,4 +84,4 @@ if __name__ == '__main__':
             greedy_baseline=opt.test_greedy_baseline
         )
     else:
-        trainer.train()
+        trainer.train(skip_validation=opt.skip_validation)
