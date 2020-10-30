@@ -47,7 +47,9 @@ def get_options():
     parser.add_argument('--weight-decay', help='weight decay', default=1e-7, type=float)
     parser.add_argument('--early-stop', help='value of accuracy drop for early stop', default=0.1, type=float)
     parser.add_argument('--fp16', help='fp16', action='store_true')
-    parser.add_argument('--skip-validation', help='test with ignoring entity type', action='store_true')
+    parser.add_argument('--skip-validation', help='train without validation', action='store_true')
+    parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
+    parser.add_argument('--test-lower-case', help='lower case all the test data', action='store_true')
     parser.add_argument('--test', help='test mode', action='store_true')
     parser.add_argument('--test-data', help='test dataset (if not specified, use trained set)', default=None, type=str)
     parser.add_argument('--test-ignore-entity', help='test with ignoring entity type', action='store_true')
@@ -75,13 +77,15 @@ if __name__ == '__main__':
         max_seq_length=opt.max_seq_length,
         early_stop=opt.early_stop,
         fp16=opt.fp16,
-        max_grad_norm=opt.max_grad_norm
+        max_grad_norm=opt.max_grad_norm,
+        lower_case=opt.lower_case
     )
     if opt.test:
         trainer.test(
             test_dataset=opt.test_data,
             ignore_entity_type=opt.test_ignore_entity,
-            greedy_baseline=opt.test_greedy_baseline
+            greedy_baseline=opt.test_greedy_baseline,
+            lower_case=opt.test_lower_case
         )
     else:
         trainer.train(skip_validation=opt.skip_validation)

@@ -69,7 +69,8 @@ class TrainTransformerNER:
                  max_seq_length: int = 128,
                  early_stop: float = None,
                  fp16: bool = False,
-                 max_grad_norm: float = 1.0):
+                 max_grad_norm: float = 1.0,
+                 lower_case: bool = False):
         LOGGER.info('*** initialize network ***')
 
         # checkpoint version
@@ -87,7 +88,8 @@ class TrainTransformerNER:
             max_seq_length=max_seq_length,
             early_stop=early_stop,
             fp16=fp16,
-            max_grad_norm=max_grad_norm)
+            max_grad_norm=max_grad_norm,
+            lower_case=lower_case)
 
         self.batch_size_validation = batch_size_validation if batch_size_validation else self.args.batch_size
 
@@ -99,12 +101,13 @@ class TrainTransformerNER:
 
         # dataset
         if self.args.model_statistics is None:
-            self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(self.args.dataset)
+            self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
+                self.args.dataset, lower_case=self.args.lower_case)
             with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
                 json.dump(self.label_to_id, f)
         else:
             self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
-                self.args.dataset, label_to_id=self.args.label_to_id, fix_label_dict=True)
+                self.args.dataset, label_to_id=self.args.label_to_id, fix_label_dict=True, lower_case=self.args.lower_case)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
         # model setup
@@ -187,7 +190,8 @@ class TrainTransformerNER:
     def test(self,
              test_dataset: str = None,
              ignore_entity_type: bool = False,
-             greedy_baseline: bool = False):
+             greedy_baseline: bool = False,
+             lower_case: bool = False):
         """
         ignore_entity_type: entity position detection
         greedy_baseline: rely on model's prediction but use most frequent entity type in training set as the entity
@@ -197,7 +201,7 @@ class TrainTransformerNER:
                 os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset.replace('/', '_')))))
             LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
             dataset_split, self.label_to_id, language, unseen_entity_set = get_dataset_ner(
-                test_dataset, label_to_id=self.label_to_id)
+                test_dataset, label_to_id=self.label_to_id, lower_case=lower_case)
             self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
         else:
             LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
@@ -248,7 +252,7 @@ class TrainTransformerNER:
                 while True:
                     if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
                     self.release_cache()
-                    if not skip_validation:
+                    if if_training_finish or not skip_validation:
                         if_early_stop = self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
                         self.release_cache()
                     if if_training_finish or if_early_stop:
@@ -260,7 +264,7 @@ class TrainTransformerNER:
         except KeyboardInterrupt:
             LOGGER.info('*** KeyboardInterrupt ***')
 
-        if self.__best_val_score is None:
+        if self.__best_val_score:
             self.args.remove_ckpt()
             exit('nothing to be saved')
 

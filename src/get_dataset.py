@@ -142,7 +142,11 @@ def conll_formatting(file_token: str, file_tag: str, output_file: str):
             f.write('\n')
 
 
-def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None, fix_label_dict: bool = False):
+def get_dataset_ner(
+        data_name: str = 'wnut_17',
+        label_to_id: dict = None,
+        fix_label_dict: bool = False,
+        lower_case: bool = False):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
@@ -272,5 +276,13 @@ def get_dataset_ner(data_name: str = 'wnut_17', label_to_id: dict = None, fix_la
                 label.append(_label)
             v['data'] = data
             v['label'] = label
+
+    if lower_case:
+        LOGGER.info('convert into lower cased...')
+        data_split_all = {
+            k: {
+                'data': [[ii.lower() for ii in i] for i in v['data']],
+                'label': v['label']
+             } for k, v in data_split_all.items()}
 
     return data_split_all, label_to_id, language, unseen_entity_set
