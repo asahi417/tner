@@ -1,8 +1,8 @@
-# Transformer NER  
+# Transformers NER  
 
 ![](./asset/api.png)
 
-***Transformer NER***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
+***Transformers NER***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
 The following features are supported:
 - [Modules to finetune LMs](#train-model) (see in [google colab](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing))
     - various dataset option

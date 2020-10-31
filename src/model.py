@@ -7,16 +7,12 @@ from time import time
 from typing import Dict, List
 from itertools import groupby, chain
 
-
 import transformers
 import torch
 from torch import nn
 from torch.autograd import detect_anomaly
 from seqeval.metrics import f1_score, precision_score, recall_score, classification_report, accuracy_score
-try:
-    from torch.utils.tensorboard import SummaryWriter
-except ImportError:
-    SummaryWriter = None
+from torch.utils.tensorboard import SummaryWriter
 
 from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
@@ -238,10 +234,7 @@ class TrainTransformerNER:
 
     def train(self, skip_validation: bool = False):
         LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_train.log')))
-        if SummaryWriter:
-            writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
-        else:
-            writer = None
+        writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
         start_time = time()
 
         # setup dataset/data loader
@@ -279,8 +272,7 @@ class TrainTransformerNER:
             'optimizer_state_dict': self.optimizer.state_dict(),
             'scheduler_state_dict': self.scheduler.state_dict()
         }, os.path.join(self.args.checkpoint_dir, 'model.pt'))
-        if SummaryWriter:
-            writer.close()
+        writer.close()
         LOGGER.info('ckpt saved at %s' % self.args.checkpoint_dir)
 
     def __epoch_train(self, data_loader, writer):

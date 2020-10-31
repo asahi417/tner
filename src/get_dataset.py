@@ -148,7 +148,7 @@ def get_dataset_ner(
         fix_label_dict: bool = False,
         lower_case: bool = False):
     if 'all' in data_name:
-        return get_dataset_ner_merged(data_name)
+        return get_dataset_ner_merged(data_name, label_to_id, fix_label_dict, lower_case)
     else:
         return get_dataset_ner_single(data_name, label_to_id, fix_label_dict, lower_case)
 
@@ -163,6 +163,7 @@ def get_dataset_ner_single(
     :param data_name: data set name or path to the data
     :param label_to_id: fixed dictionary of (label: id). If given, ignore other labels
     :param fix_label_dict: not augment label_to_id based on dataset if True
+    :param lower_case: convert to lower case
     :return: formatted data, label_to_id
     """
     data_path = os.path.join(CACHE_DIR, data_name)
@@ -299,7 +300,11 @@ def get_dataset_ner_single(
     return data_split_all, label_to_id, language, unseen_entity_set
 
 
-def get_dataset_ner_merged(merge_type: str = 'all_english'):
+def get_dataset_ner_merged(
+        merge_type: str = 'all_english',
+        label_to_id: dict = None,
+        fix_label_dict: bool = False,
+        lower_case: bool = False):
     if merge_type == 'all_english':
         data_list = ['conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant', 'panx_dataset/en']
         language = 'en'
@@ -308,13 +313,16 @@ def get_dataset_ner_merged(merge_type: str = 'all_english'):
         language = 'en'
     else:
         raise ValueError('no data found: {}'.format(merge_type))
-    label_to_id = {}
     data = []
+    unseen_entity_set = None
     for d in data_list:
-        data_split_all, label_to_id, _, _ = \
-            get_dataset_ner(d, label_to_id=label_to_id)
+        data_split_all, label_to_id, _, _unseen_entity_set = \
+            get_dataset_ner(d, label_to_id=label_to_id, fix_label_dict=fix_label_dict, lower_case=lower_case)
         data.append(data_split_all['train'])
-
+        if unseen_entity_set:
+            unseen_entity_set = unseen_entity_set.intersection(_unseen_entity_set)
+        else:
+            unseen_entity_set = _unseen_entity_set
     unified_data = {
         'train': {
             'data': list(chain(*[d['data'] for d in data])),

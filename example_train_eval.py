@@ -21,7 +21,10 @@ import argparse
 
 from src import TrainTransformerNER
 
-VALID_DATASET = ['panx_dataset/*', 'conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant']
+VALID_DATASET = [
+    'panx_dataset/*', 'conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant',
+    'all_english', 'all_english_no_lower_case'
+]
 
 
 def get_options():
