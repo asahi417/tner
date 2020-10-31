@@ -175,7 +175,8 @@ class TrainTransformerNER:
         LOGGER.info('running on %i GPUs' % self.n_gpu)
 
     def __setup_loader(self, data_type: str, dataset_split: Dict, language: str):
-        assert data_type in dataset_split.keys()
+        if data_type not in dataset_split.keys():
+            return None
         is_train = data_type == 'train'
         features = self.transforms.encode_plus_all(
             tokens=dataset_split[data_type]['data'],
@@ -225,6 +226,7 @@ class TrainTransformerNER:
         LOGGER.info('greedy_baseline: {}'.format(greedy_baseline))
         start_time = time()
         for k, v in data_loader.items():
+            assert v is not None, '{} data split is not found'.format(k)
             self.__epoch_valid(
                 v,
                 prefix=k,
@@ -252,7 +254,7 @@ class TrainTransformerNER:
                 while True:
                     if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
                     self.release_cache()
-                    if if_training_finish or not skip_validation:
+                    if (if_training_finish or not skip_validation) and data_loader['valid']:
                         if_early_stop = self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
                         self.release_cache()
                     if if_training_finish or if_early_stop:
@@ -263,10 +265,6 @@ class TrainTransformerNER:
 
         except KeyboardInterrupt:
             LOGGER.info('*** KeyboardInterrupt ***')
-
-        if self.__best_val_score:
-            self.args.remove_ckpt()
-            exit('nothing to be saved')
 
         LOGGER.info('[training completed, %0.2f sec in total]' % (time() - start_time))
         if self.n_gpu > 1:

@@ -1,7 +1,7 @@
 """ Fetch/format NER dataset """
 import os
 import zipfile
-from typing import Dict
+from typing import Dict, List
 from itertools import chain
 
 from .mecab_wrapper import MeCabWrapper
@@ -147,6 +147,17 @@ def get_dataset_ner(
         label_to_id: dict = None,
         fix_label_dict: bool = False,
         lower_case: bool = False):
+    if 'all' in data_name:
+        return get_dataset_ner_merged(data_name)
+    else:
+        return get_dataset_ner_single(data_name, label_to_id, fix_label_dict, lower_case)
+
+
+def get_dataset_ner_single(
+        data_name: str = 'wnut_17',
+        label_to_id: dict = None,
+        fix_label_dict: bool = False,
+        lower_case: bool = False):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
@@ -286,3 +297,28 @@ def get_dataset_ner(
              } for k, v in data_split_all.items()}
 
     return data_split_all, label_to_id, language, unseen_entity_set
+
+
+def get_dataset_ner_merged(merge_type: str = 'all_english'):
+    if merge_type == 'all_english':
+        data_list = ['conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant', 'panx_dataset/en']
+        language = 'en'
+    elif merge_type == 'all_english_no_lower_case':
+        data_list = ['conll_2003', 'wnut_17', 'ontonote5', 'panx_dataset/en']
+        language = 'en'
+    else:
+        raise ValueError('no data found: {}'.format(merge_type))
+    label_to_id = {}
+    data = []
+    for d in data_list:
+        data_split_all, label_to_id, _, _ = \
+            get_dataset_ner(d, label_to_id=label_to_id)
+        data.append(data_split_all['train'])
+
+    unified_data = {
+        'train': {
+            'data': list(chain(*[d['data'] for d in data])),
+            'label': list(chain(*[d['label'] for d in data]))
+        }
+    }
+    return unified_data, label_to_id, language, {}
