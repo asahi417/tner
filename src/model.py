@@ -247,7 +247,7 @@ class TrainTransformerNER:
                 while True:
                     if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
                     self.release_cache()
-                    if (if_training_finish or not skip_validation) and data_loader['valid']:
+                    if not skip_validation and data_loader['valid']:
                         if_early_stop = self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
                         self.release_cache()
                     if if_training_finish or if_early_stop:
