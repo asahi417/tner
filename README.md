@@ -1,4 +1,4 @@
-# `tner`: Transformers NER  
+# T-NER: Transformers NER  
 
 ![](./asset/api.png)
 
