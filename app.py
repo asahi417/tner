@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from matplotlib import cm, colors  # for colormap https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html
-from tner import TransformerNER
+from tner import TransformersNER
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -15,7 +15,7 @@ MODEL_CKPT = os.getenv('MODEL_CKPT', './ckpt/default')
 if MODEL_CKPT == '':
     MODEL = None
 else:
-    MODEL = TransformerNER(checkpoint=MODEL_CKPT)
+    MODEL = TransformersNER(checkpoint=MODEL_CKPT)
 DUMMY = {
     'sentence': 'Jacob Collier lives in London',
     'entity': [

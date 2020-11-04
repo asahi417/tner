@@ -40,7 +40,7 @@ Pick up a model from [pretrained LM list](https://huggingface.co/models), and ru
 
 ```python
 import tner
-trainer = tner.TrainTransformerNER(
+trainer = tner.TrainTransformersNER(
         dataset="ontonote5",  # NER dataset name
         transformer="xlm-roberta-base",  # transformers model name
         checkpoint_dir="./ckpt",  
@@ -97,7 +97,7 @@ Here, let's suppose that your model was trained on `ontonote5`, and checkpoint f
 ```python
 import tner
 # model instance initialization with the checkpoint 
-trainer = tner.TrainTransformerNER(checkpoint='./ckp/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
+trainer = tner.TrainTransformersNER(checkpoint='./ckp/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
 
 # test in domain accuracy (just on the valid/test set of the dataset where the model trained on) 
 trainer.test()
@@ -184,7 +184,7 @@ To get an inference from finetuned model can be done as below.
 
 ```python
 import tner
-classifier = tner.TransformerNER(checkpoint='path-to-checkpoint-folder')
+classifier = tner.TransformersNER(checkpoint='path-to-checkpoint-folder')
 test_sentences = [
     'I live in United States, but Microsoft asks me to move to Japan.',
     'I have an Apple computer.',

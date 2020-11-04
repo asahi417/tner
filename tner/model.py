@@ -47,7 +47,7 @@ class Dataset(torch.utils.data.Dataset):
         return {k: self.to_tensor(k, v) for k, v in self.data[idx].items()}
 
 
-class TrainTransformerNER:
+class TrainTransformersNER:
     """ finetune transformers NER """
 
     def __init__(self,
@@ -374,7 +374,7 @@ class TrainTransformerNER:
             torch.cuda.empty_cache()
 
 
-class TransformerNER:
+class TransformersNER:
     """ transformers NER, interface to get prediction from pre-trained checkpoint """
 
     def __init__(self, checkpoint: str):
