@@ -1,8 +1,8 @@
-# Transformers NER  
+# `tner`: Transformers NER  
 
 ![](./asset/api.png)
 
-***Transformers NER***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
+***`tner`***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
 The following features are supported:
 - [Modules to finetune LMs](#train-model) (see in [google colab](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing))
     - various dataset option
@@ -16,10 +16,15 @@ The following features are supported:
 - [Command line tool to get model prediction.](#model-inference-interface)
  
 ## Get Started
-Clone and install libraries.
+Install via pip
 ```shell script
-git clone https://github.com/asahi417/transformers-ner
-cd transformers-ner
+pip install git+https://github.com/asahi417/tner
+```
+
+or clone and install libraries.
+```shell script
+git clone https://github.com/asahi417/tner
+cd tner
 pip install -r requirement.txt
 ```
 
@@ -34,8 +39,8 @@ pip install -r requirement.txt
 Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER! 
 
 ```python
-from src import TrainTransformerNER
-trainer = TrainTransformerNER(
+import tner
+trainer = tner.TrainTransformerNER(
         dataset="ontonote5",  # NER dataset name
         transformer="xlm-roberta-base",  # transformers model name
         checkpoint_dir="./ckpt",  
@@ -73,7 +78,7 @@ Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hy
 
 For more conclude examples, take a look below:  
 - [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-- [example_train_eval.py](example_train_eval.py)
+- [example_train_eval.py](helper/example_train_eval.py)
 
 ***WikiAnn dataset***  
 All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need 
@@ -90,9 +95,9 @@ In a same manner, **entity position accuracy** can be produced.
 Here, let's suppose that your model was trained on `ontonote5`, and checkpoint files are in `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`. 
 
 ```python
-from src import TrainTransformerNER
+import tner
 # model instance initialization with the checkpoint 
-trainer = TrainTransformerNER(checkpoint='./ckp/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
+trainer = tner.TrainTransformerNER(checkpoint='./ckp/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
 
 # test in domain accuracy (just on the valid/test set of the dataset where the model trained on) 
 trainer.test()
@@ -107,7 +112,7 @@ trainer.test(test_dataset='conll_2003', ignore_entity_type=True)
 Evaluation process create `logger_test.<dataname>.log` file where includes all the report under the checkpoint directory.
 For more conclude examples, take a look below:  
 - [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-- [example_train_eval.py](example_train_eval.py)
+- [example_train_eval.py](helper/example_train_eval.py)
 
 ### Result
 We finetune [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) on each dataset and
@@ -169,7 +174,7 @@ Finally, we show cross-lingual transfer result on `panx_dataset`.
 
 
 Notes:  
-- Configuration can be found in [training script](example_train_eval.py).
+- Configuration can be found in [training script](helper/example_train_eval.py).
 - SoTA reported at the time of Oct, 2020.
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
 - For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
@@ -178,8 +183,8 @@ Notes:
 To get an inference from finetuned model can be done as below.
 
 ```python
-from src import TransformerNER
-classifier = TransformerNER(checkpoint='path-to-checkpoint-folder')
+import tner
+classifier = tner.TransformerNER(checkpoint='path-to-checkpoint-folder')
 test_sentences = [
     'I live in United States, but Microsoft asks me to move to Japan.',
     'I have an Apple computer.',
@@ -190,7 +195,7 @@ classifier.predict(test_sentences)
 
 
 ## Web App
-To play around with NER model, we provide a quick [web App](./asset/api.gif). 
+To play around with NER model, we provide a quick [web App](./asset/api.gif). Please [clone and install the repo](#get-started) firstly.  
 1. [Train a model](#train-model) or download [default model checkpoint file](https://drive.google.com/file/d/1zhXuSeHVXL4_WqcblroaUrGkHFGSY0Is/view?usp=sharing),
 `xlm-roberta-base` finetuned on `ontonote5`,
 and unzip it (now you should have `./ckpt/default`).

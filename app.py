@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from matplotlib import cm, colors  # for colormap https://matplotlib.org/3.1.0/tutorials/colors/colormaps.html
-from src import TransformerNER
+from tner import TransformerNER
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
