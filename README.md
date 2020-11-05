@@ -158,7 +158,7 @@ Instead of NER metric comparison, we focus on entity detection ability in differ
 | **`ontonote5`**        |      _0.91_ |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
 | **`conll_2003`**       |        0.61 |       _0.96_ |       0.5 |              0.61 |                  0 |                0 |
 | **`wnut_17`**          |        0.52 |         0.69 |    _0.63_ |              0.53 |                  0 |             0.09 |
-| **`panx_dataset/en`**  |        0.41 |         0.73 |           |            _0.93_ |                  0 |             0.08 |
+| **`panx_dataset/en`**  |        0.41 |         0.73 |      0.34 |            _0.93_ |                  0 |             0.08 |
 | **`mit_movie_trivia`** |        0.02 |            0 |         0 |                 0 |             _0.73_ |                0 |
 | **`mit_restaurant`**   |        0.15 |          0.2 |      0.09 |              0.18 |                  0 |           _0.83_ |
 
