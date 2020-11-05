@@ -196,9 +196,9 @@ classifier.predict(test_sentences)
 
 ## Web App
 To play around with NER model, we provide a quick [web App](./asset/api.gif). Please [clone and install the repo](#get-started) firstly.  
-1. [Train a model](#train-model) or download [default model checkpoint file](https://drive.google.com/file/d/1zhXuSeHVXL4_WqcblroaUrGkHFGSY0Is/view?usp=sharing),
-`xlm-roberta-base` finetuned on `ontonote5`,
-and unzip it (now you should have `./ckpt/default`).
+1. [Train a model](#train-model) or download [unified model checkpoint file](https://drive.google.com/drive/folders/1UOy_OU4qHyQCYX0QQi02lnCZj7mNFBak?usp=sharing),
+`xlm-roberta-base` finetuned on all dataset except MIT corpora,
+and put it under `./ckpt` (now you should have `./ckpt/all_english_no_lower_case`).
 If you use your own checkpoint, set the path to the checkpoint folder by `export MODEL_CKPT=<path-to-your-checkpoint-folder>`.  
 
 2. Run the app, and open your browser http://0.0.0.0:8000    

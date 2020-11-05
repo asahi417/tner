@@ -11,7 +11,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-MODEL_CKPT = os.getenv('MODEL_CKPT', './ckpt/default')
+MODEL_CKPT = os.getenv('MODEL_CKPT', './ckpt/all_english_no_lower_case')
 if MODEL_CKPT == '':
     MODEL = None
 else:
