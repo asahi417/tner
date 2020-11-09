@@ -78,7 +78,7 @@ Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hy
 
 For more conclude examples, take a look below:  
 - [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-- [example_train_eval.py](helper/example_train_eval.py)
+- [example_train_eval.py](examples/example_train_eval.py)
 
 ***WikiAnn dataset***  
 All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need 
@@ -174,7 +174,7 @@ Finally, we show cross-lingual transfer result on `panx_dataset`.
 
 
 Notes:  
-- Configuration can be found in [training script](helper/example_train_eval.py).
+- Configuration can be found in [training script](examples/example_train_eval.py).
 - SoTA reported at the time of Oct, 2020.
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
 - For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
