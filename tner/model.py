@@ -1,11 +1,12 @@
-""" hugginface.transformers based NER model """
+""" Named-Entity-Recognition (NER) modeling """
 import os
 import random
 import json
 import logging
 from time import time
 from typing import Dict, List
-from itertools import groupby, chain
+from itertools import groupby
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 import transformers
 import torch
@@ -17,19 +18,18 @@ from torch.utils.tensorboard import SummaryWriter
 from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
 from .tokenizer import Transforms
-from .util import get_logger
 
-LOGGER = get_logger()
+
 NUM_WORKER = 4
 PROGRESS_INTERVAL = 100
-CACHE_DIR = './cache'
+CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 
 class Dataset(torch.utils.data.Dataset):
-    """ simple torch.utils.data.Dataset wrapper converting into tensor"""
+    """ torch.utils.data.Dataset wrapper converting into tensor """
     float_tensors = ['attention_mask']
 
     def __init__(self, data: List):
@@ -48,14 +48,14 @@ class Dataset(torch.utils.data.Dataset):
 
 
 class TrainTransformersNER:
-    """ finetune transformers NER """
+    """ Named-Entity-Recognition (NER) trainer """
 
     def __init__(self,
-                 dataset: str = None,
+                 dataset: (str, List) = None,
                  batch_size_validation: int = None,
                  checkpoint: str = None,
                  checkpoint_dir: str = None,
-                 transformer: str = 'xlm-roberta-base',
+                 transformers_model: str = 'roberta-base',
                  random_seed: int = 1234,
                  lr: float = 1e-5,
                  total_step: int = 13000,
@@ -63,18 +63,58 @@ class TrainTransformersNER:
                  weight_decay: float = 1e-7,
                  batch_size: int = 16,
                  max_seq_length: int = 128,
-                 early_stop: float = None,
                  fp16: bool = False,
                  max_grad_norm: float = 1.0,
-                 lower_case: bool = False):
-        LOGGER.info('*** initialize network ***')
+                 lower_case: bool = False,
+                 num_worker: int = 1):
+        """ Named-Entity-Recognition (NER) trainer
+
+         Parameter
+        -----------------
+        dataset: List
+            List of dataset name
+            eg) 'panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant'
+        batch_size_validation: int
+            Batch size for validation
+        checkpoint: str
+            Checkpoint folder to load weight
+        checkpoint_dir: str
+            Checkpoint directory ('checkpoint_dir/checkpoint' is regarded as a checkpoint path)
+        transformers_model: str
+            Model name on huggingface transformers (https://huggingface.co/transformers/v2.2.0/pretrained_models.html)
+        random_seed: int
+            Random seed through the experiment
+        lr: float
+            Learning rate
+        total_step: int
+            Total training step
+        warmup_step: int
+            Step for linear warmup
+        weight_decay: float
+            Parameter for weight decay
+        batch_size: int
+            Batch size for training
+        max_seq_length: int
+            Language model's maximum sequence length
+        fp16: bool
+            Training with mixture precision mode
+        max_grad_norm: float
+            Gradient clipping
+        lower_case: bool
+            Convert the dataset into lowercase
+        num_worker: int
+            Number of worker for torch.Dataloader class
+        """
+        logging.info('*** initialize network ***')
+        if num_worker == 1:
+            os.environ["OMP_NUM_THREADS"] = "1"  # to turn off warning message
 
         # checkpoint version
         self.args = Argument(
             dataset=dataset,
             checkpoint_dir=checkpoint_dir,
             checkpoint=checkpoint,
-            transformer=transformer,
+            transformers_model=transformers_model,
             random_seed=random_seed,
             lr=lr,
             total_step=total_step,
@@ -82,11 +122,9 @@ class TrainTransformersNER:
             weight_decay=weight_decay,
             batch_size=batch_size,
             max_seq_length=max_seq_length,
-            early_stop=early_stop,
             fp16=fp16,
             max_grad_norm=max_grad_norm,
             lower_case=lower_case)
-
         self.batch_size_validation = batch_size_validation if batch_size_validation else self.args.batch_size
 
         # fix random seed
@@ -108,15 +146,15 @@ class TrainTransformersNER:
 
         # model setup
         self.model = transformers.AutoModelForTokenClassification.from_pretrained(
-            self.args.transformer,
+            self.args.transformers_model,
             config=transformers.AutoConfig.from_pretrained(
-                self.args.transformer,
+                self.args.transformers_model,
                 num_labels=len(self.id_to_label),
                 id2label=self.id_to_label,
                 label2id=self.label_to_id,
                 cache_dir=CACHE_DIR)
         )
-        self.transforms = Transforms(self.args.transformer)
+        self.transforms = Transforms(self.args.transformers_model)
 
         # optimizer
         no_decay = ["bias", "LayerNorm.weight"]
@@ -128,21 +166,14 @@ class TrainTransformersNER:
         self.optimizer = transformers.AdamW(optimizer_grouped_parameters, lr=self.args.lr, eps=1e-8)
 
         # scheduler
+        self.__epoch = 0
+        self.__step = 0
         self.scheduler = transformers.get_linear_schedule_with_warmup(
             self.optimizer, num_warmup_steps=self.args.warmup_step, num_training_steps=self.args.total_step)
 
         # apply checkpoint statistics to optimizer/scheduler
-        self.__step = 0
-        self.__epoch = 0
-        self.__best_val_score = None
         if self.args.model_statistics is not None:
-            self.__step = self.args.model_statistics['step']
-            self.__epoch = self.args.model_statistics['epoch']
-            self.__best_val_score = self.args.model_statistics['best_val_score']
             self.model.load_state_dict(self.args.model_statistics['model_state_dict'])
-            if self.optimizer is not None and self.scheduler is not None:
-                self.optimizer.load_state_dict(self.args.model_statistics['optimizer_state_dict'])
-                self.scheduler.load_state_dict(self.args.model_statistics['scheduler_state_dict'])
 
         # GPU allocation
         self.n_gpu = torch.cuda.device_count()
@@ -158,7 +189,7 @@ class TrainTransformersNER:
                     self.model, self.optimizer, opt_level='O1', max_loss_scale=2 ** 13, min_loss_scale=1e-5)
                 self.master_params = amp.master_params
                 self.scale_loss = amp.scale_loss
-                LOGGER.info('using `apex.amp`')
+                logging.info('using `apex.amp`')
             except ImportError:
                 raise ImportError(
                     "Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
@@ -167,8 +198,8 @@ class TrainTransformersNER:
         if self.n_gpu > 1:
             # multi-gpu training (should be after apex fp16 initialization)
             self.model = torch.nn.DataParallel(self.model.cuda())
-            LOGGER.info('using `torch.nn.DataParallel`')
-        LOGGER.info('running on %i GPUs' % self.n_gpu)
+            logging.info('using `torch.nn.DataParallel`')
+        logging.info('running on %i GPUs' % self.n_gpu)
 
     def __setup_loader(self, data_type: str, dataset_split: Dict, language: str):
         if data_type not in dataset_split.keys():
@@ -184,96 +215,89 @@ class TrainTransformersNER:
         return torch.utils.data.DataLoader(
             data_obj, num_workers=NUM_WORKER, batch_size=_batch_size, shuffle=is_train, drop_last=is_train)
 
-    def test(self,
-             test_dataset: str = None,
-             ignore_entity_type: bool = False,
-             greedy_baseline: bool = False,
-             lower_case: bool = False):
-        """
-        ignore_entity_type: entity position detection
-        greedy_baseline: rely on model's prediction but use most frequent entity type in training set as the entity
-        """
-        if test_dataset is not None:
-            LOGGER.addHandler(logging.FileHandler(
-                os.path.join(self.args.checkpoint_dir, 'logger_test.{}.log'.format(test_dataset.replace('/', '_')))))
-            LOGGER.info('cross-transfer testing on {}...'.format(test_dataset))
-            dataset_split, self.label_to_id, language, unseen_entity_set = get_dataset_ner(
-                test_dataset, label_to_id=self.label_to_id, lower_case=lower_case)
-            self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
-        else:
-            LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_test.log')))
-            dataset_split = self.dataset_split
-            language = self.language
-            unseen_entity_set = None
-        if greedy_baseline:
-            b_labels = {k: v for k, v in self.label_to_id.items() if 'B' in k}
-            labels_flatten = list(chain(*dataset_split['train']['label']))
-            entity_n = sorted([
-                ('-'.join(self.id_to_label[v].split('-')[1:]), sum(i == v for i in labels_flatten))
-                for k, v in b_labels.items()],
-                              key=lambda x: x[1], reverse=True)
-            top_entity, top_n = entity_n[0]
-        else:
-            top_entity, top_n = None, None
+    @property
+    def checkpoint(self):
+        return self.args.checkpoint_dir
 
+    def test(self,
+             test_dataset: str,
+             ignore_entity_type: bool = False,
+             lower_case: bool = False):
+        """ Test NER model on specific dataset
+
+         Parameter
+        -------------
+        test_dataset: str
+            Target dataset to test
+            eg) 'panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant'
+        ignore_entity_type: bool
+            Test without entity type (entity span detection)
+        lower_case: bool
+            Converting test data into lowercased
+        """
+
+        # setup data
+        logging.info('testing model on {}'.format(test_dataset))
+        dataset_split, self.label_to_id, language, unseen_entity_set = get_dataset_ner(
+            test_dataset, label_to_id=self.label_to_id, lower_case=lower_case)
+        self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
         data_loader = {k: self.__setup_loader(k, dataset_split, language) for k in dataset_split.keys() if k != 'train'}
-        LOGGER.info('data_loader: {}'.format(str(list(data_loader.keys()))))
-        LOGGER.info('ignore_entity_type: {}'.format(ignore_entity_type))
-        LOGGER.info('greedy_baseline: {}'.format(greedy_baseline))
+        logging.info('data_loader: {}'.format(str(list(data_loader.keys()))))
+
+        # run inference
         start_time = time()
+        metrics = {}
+        params = dict(ignore_entity_type=ignore_entity_type, unseen_entity_set=unseen_entity_set)
         for k, v in data_loader.items():
             assert v is not None, '{} data split is not found'.format(k)
-            self.__epoch_valid(
-                v,
-                prefix=k,
-                ignore_entity_type=ignore_entity_type,
-                unseen_entity_set=unseen_entity_set,
-                greedy_entity_type=top_entity)
+            metrics[k] = self.__epoch_valid(v, prefix=k, **params)
             self.release_cache()
-        LOGGER.info('[test completed, %0.2f sec in total]' % (time() - start_time))
+
+        # export result
+        filename = 'test_{}{}{}.json'.format(
+            test_dataset.replace('/', '-'), '_ignore' if ignore_entity_type else '', '_lower' if lower_case else '')
+        with open(os.path.join(self.args.checkpoint_dir, filename), 'w') as f:
+            json.dump(metrics, f)
+        logging.info('[test completed, %0.2f sec in total]' % (time() - start_time))
+        logging.info('export metrics at: {}'.format(os.path.join(self.args.checkpoint_dir, filename)))
 
     def train(self, skip_validation: bool = False):
-        LOGGER.addHandler(logging.FileHandler(os.path.join(self.args.checkpoint_dir, 'logger_train.log')))
+        """ Train NER model
+
+         Parameter
+        -------------
+        skip_validation: bool
+            Training without testing at the end of each epoch for monitoring purpose
+        """
         writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
         start_time = time()
 
         # setup dataset/data loader
         data_loader = {k: self.__setup_loader(k, self.dataset_split, self.language) for k in ['train', 'valid']}
-        LOGGER.info('data_loader: %s' % str(list(data_loader.keys())))
-        LOGGER.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
-        if_early_stop = False
+        logging.info('data_loader: %s' % str(list(data_loader.keys())))
+        logging.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
         try:
             with detect_anomaly():
                 while True:
                     if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
                     self.release_cache()
                     if not skip_validation and data_loader['valid']:
-                        if_early_stop = self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
+                        self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
                         self.release_cache()
-                    if if_training_finish or if_early_stop:
+                    if if_training_finish:
                         break
                     self.__epoch += 1
         except RuntimeError:
-            LOGGER.exception('*** RuntimeError (NaN found, see above log in detail) ***')
+            logging.exception('*** RuntimeError (NaN found, see above log in detail) ***')
 
         except KeyboardInterrupt:
-            LOGGER.info('*** KeyboardInterrupt ***')
+            logging.info('*** KeyboardInterrupt ***')
 
-        LOGGER.info('[training completed, %0.2f sec in total]' % (time() - start_time))
-        if self.n_gpu > 1:
-            model_wts = self.model.module.state_dict()
-        else:
-            model_wts = self.model.state_dict()
-        torch.save({
-            'step': self.__step,
-            'epoch': self.__epoch,
-            'model_state_dict': model_wts,
-            'best_val_score': self.__best_val_score,
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'scheduler_state_dict': self.scheduler.state_dict()
-        }, os.path.join(self.args.checkpoint_dir, 'model.pt'))
+        logging.info('[training completed, %0.2f sec in total]' % (time() - start_time))
+        model_wts = self.model.module.state_dict() if self.n_gpu > 1 else self.model.state_dict()
+        torch.save({'model_state_dict': model_wts}, os.path.join(self.args.checkpoint_dir, 'model.pt'))
         writer.close()
-        LOGGER.info('ckpt saved at %s' % self.args.checkpoint_dir)
+        logging.info('ckpt saved at %s' % self.args.checkpoint_dir)
 
     def __epoch_train(self, data_loader, writer):
         """ train on single epoch, returning flag which is True if training has been completed """
@@ -302,12 +326,12 @@ class TrainTransformersNER:
                 writer.add_scalar('train/loss', inst_loss, self.__step)
                 writer.add_scalar('train/learning_rate', inst_lr, self.__step)
             if self.__step % PROGRESS_INTERVAL == 0:
-                LOGGER.info('[epoch %i] * (training step %i) loss: %.3f, lr: %0.8f'
-                            % (self.__epoch, self.__step, inst_loss, inst_lr))
+                logging.info('[epoch %i] * (training step %i) loss: %.3f, lr: %0.8f'
+                             % (self.__epoch, self.__step, inst_loss, inst_lr))
             self.__step += 1
             # break
             if self.__step >= self.args.total_step:
-                LOGGER.info('reached maximum step')
+                logging.info('reached maximum step')
                 return True
         return False
 
@@ -316,9 +340,10 @@ class TrainTransformersNER:
                       writer=None,
                       prefix: str = 'valid',
                       unseen_entity_set: set = None,
-                      ignore_entity_type: bool = False,
-                      greedy_entity_type: int = None):
+                      ignore_entity_type: bool = False):
         """ validation/test, returning flag which is True if early stop condition was applied """
+
+        # aggregate prediction and true label
         self.model.eval()
         seq_pred, seq_true = [], []
         for encode in data_loader:
@@ -347,27 +372,30 @@ class TrainTransformersNER:
                         # ignore entity type and focus on entity position
                         _true_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _true_list]
                         _pred_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _pred_list]
-                    elif greedy_entity_type is not None:
-                        _pred_list = [i if i == 'O' else '-'.join([i.split('-')[0], greedy_entity_type])
-                                      for i in _pred_list]
                     seq_true.append(_true_list)
                     seq_pred.append(_pred_list)
+
+        # compute metrics
+        metric = {
+            "f1": f1_score(seq_true, seq_pred) * 100,
+            "recall": recall_score(seq_true, seq_pred) * 100,
+            "precision": precision_score(seq_true, seq_pred) * 100,
+            "accuracy": accuracy_score(seq_true, seq_pred) * 100
+        }
+
         try:
-            LOGGER.info('[epoch %i] (%s) \n %s' % (self.__epoch, prefix, classification_report(seq_true, seq_pred)))
+            summary = classification_report(seq_true, seq_pred)
+            logging.info('[epoch {}] ({}) \n {}'.format(self.__epoch, prefix, summary))
         except ZeroDivisionError:
-            LOGGER.info('[epoch %i] (%s) * classification_report raises `ZeroDivisionError`' % (self.__epoch, prefix))
+            logging.info('[epoch {}] ({}) * `ZeroDivisionError` at classification_report'.format(self.__epoch, prefix))
+            summary = ''
+        metric['summary'] = summary
         if writer:
-            writer.add_scalar('%s/f1' % prefix, f1_score(seq_true, seq_pred), self.__epoch)
-            writer.add_scalar('%s/recall' % prefix, recall_score(seq_true, seq_pred), self.__epoch)
-            writer.add_scalar('%s/precision' % prefix, precision_score(seq_true, seq_pred), self.__epoch)
-            writer.add_scalar('%s/accuracy' % prefix, accuracy_score(seq_true, seq_pred), self.__epoch)
-        if prefix == 'valid':
-            score = f1_score(seq_true, seq_pred)
-            if self.__best_val_score is None or score > self.__best_val_score:
-                self.__best_val_score = score
-            if self.args.early_stop and self.__best_val_score - score > self.args.early_stop:
-                return True
-        return False
+            writer.add_scalar('{}/f1'.format(prefix), metric['f1'], self.__epoch)
+            writer.add_scalar('{}/recall'.format(prefix), metric['recall'], self.__epoch)
+            writer.add_scalar('{}/precision'.format(prefix), metric['precision'], self.__epoch)
+            writer.add_scalar('{}/accuracy'.format(prefix), metric['accuracy'], self.__epoch)
+        return metric
 
     def release_cache(self):
         if self.device == "cuda":
@@ -375,10 +403,18 @@ class TrainTransformersNER:
 
 
 class TransformersNER:
-    """ transformers NER, interface to get prediction from pre-trained checkpoint """
+    """ Named-Entity-Recognition (NER) API for an inference """
 
     def __init__(self, checkpoint: str):
-        LOGGER.info('*** initialize network ***')
+        """ Named-Entity-Recognition (NER) API for an inference
+
+         Parameter
+        ------------
+        checkpoint: str
+            Path to model weight file
+        """
+        logging.info('*** initialize network ***')
+        checkpoint = checkpoint.replace('model.pt', '')
 
         # checkpoint version
         self.args = Argument(checkpoint=checkpoint)
@@ -387,15 +423,15 @@ class TransformersNER:
         self.label_to_id = self.args.label_to_id
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
         self.model = transformers.AutoModelForTokenClassification.from_pretrained(
-            self.args.transformer,
+            self.args.transformers_model,
             config=transformers.AutoConfig.from_pretrained(
-                self.args.transformer,
+                self.args.transformers_model,
                 num_labels=len(self.id_to_label),
                 id2label=self.id_to_label,
                 label2id=self.label_to_id,
                 cache_dir=CACHE_DIR)
         )
-        self.transforms = Transforms(self.args.transformer)
+        self.transforms = Transforms(self.args.transformers_model)
         self.model.load_state_dict(self.args.model_statistics['model_state_dict'])
 
         # GPU allocation
@@ -426,8 +462,24 @@ class TransformersNER:
         result = sorted(result, key=lambda x: x[1][0])
         return result
 
-    def predict(self, x: List, max_seq_length=128):
-        """ return a list of dictionary consisting of 'type', 'position', 'mention' and """
+    def predict(self, x: List, max_seq_length: int = 128):
+        """ Get prediction
+
+         Parameter
+        ----------------
+        x: list
+            Batch of input texts
+        max_seq_length: int
+            Maximum sequence length for running an inference
+
+         Return
+        ----------------
+        entities: list
+            List of dictionary where each consists of
+                'type': (str) entity type
+                'position': (list) start position and end position
+                'mention': (str) mention
+        """
         self.model.eval()
         encode_list = self.transforms.encode_plus_all(x, max_length=max_seq_length)
         data_loader = torch.utils.data.DataLoader(Dataset(encode_list), batch_size=len(encode_list))
@@ -451,7 +503,7 @@ class TransformersNER:
                     start_char += 1
                 end_char = start_char + len(mention)
                 if mention != sentence[start_char:end_char]:
-                    LOGGER.warning('entity mismatch: {} vs {}'.format(mention, sentence[start_char:end_char]))
+                    logging.warning('entity mismatch: {} vs {}'.format(mention, sentence[start_char:end_char]))
                 result = {'type': tag, 'position': [start_char, end_char], 'mention': mention,
                           'probability': sum(prob[start: end])/(end - start)}
                 _entities.append(result)

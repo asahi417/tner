@@ -3,13 +3,11 @@ import os
 import hashlib
 import json
 import shutil
+import logging
 from glob import glob
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 import torch
-
-from .util import get_logger
-
-LOGGER = get_logger()
 
 __all__ = 'Argument'
 
@@ -17,16 +15,15 @@ __all__ = 'Argument'
 class Argument:
     """ Model training arguments manager """
 
-    def __init__(self,
-                 checkpoint: str = None,
-                 checkpoint_dir: str = None,
-                 **kwargs):
-        """  Model training arguments manager
+    def __init__(self, checkpoint: str = None, checkpoint_dir: str = None, **kwargs):
+        """ Model training arguments manager
 
          Parameter
         -------------------
-        prefix: prefix to filename
-        checkpoint: existing checkpoint name if you want to load
+        checkpoint: str
+            Existing checkpoint name to load model weights
+        checkpoint_dir: str
+            Directory to organize the checkpoint files
         kwargs: model arguments
         """
         if checkpoint_dir is None:
@@ -39,9 +36,9 @@ class Argument:
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.checkpoint_dir, self.parameter, self.model_statistics, self.label_to_id = self.version(
             kwargs, checkpoint=checkpoint, checkpoint_dir=checkpoint_dir)
-        LOGGER.info('checkpoint: %s' % self.checkpoint_dir)
+        logging.info('checkpoint: %s' % self.checkpoint_dir)
         for k, v in self.parameter.items():
-            LOGGER.info(' - [arg] %s: %s' % (k, str(v)))
+            logging.info(' - [arg] %s: %s' % (k, str(v)))
         self.__dict__.update(self.parameter)
 
     def remove_ckpt(self):
@@ -54,7 +51,7 @@ class Argument:
         label_id_file = os.path.join(checkpoint_dir, 'label_to_id.json')
         if not os.path.exists(checkpoint_file):
             return None
-        LOGGER.info('load ckpt from %s' % checkpoint_file)
+        logging.info('load ckpt from %s' % checkpoint_file)
         stats = torch.load(checkpoint_file, map_location='cpu')  # allocate stats on cpu
         if os.path.exists(label_id_file):
             label_to_id = json.load(open(label_id_file, 'r'))
@@ -89,7 +86,7 @@ class Argument:
             raise ValueError('either of `checkpoint` or `parameter` is needed.')
 
         if checkpoint is None:
-            LOGGER.info('issue new checkpoint id')
+            logging.info('issue new checkpoint id')
             # check if there are any checkpoints with same hyperparameters
             version_name = []
             for parameter_path in glob(os.path.join(checkpoint_dir, '*/parameter.json')):
@@ -108,15 +105,13 @@ class Argument:
             with open(os.path.join(checkpoint_dir, 'tmp.json'), 'w') as _f:
                 json.dump(parameter, _f)
             new_checkpoint = self.md5(os.path.join(checkpoint_dir, 'tmp.json'))
-            if 'dataset' in parameter.keys():
-                new_checkpoint = '_'.join([parameter['dataset'].replace('/', '_'), new_checkpoint])
             new_checkpoint_dir = os.path.join(checkpoint_dir, new_checkpoint)
             os.makedirs(new_checkpoint_dir, exist_ok=True)
             shutil.move(os.path.join(checkpoint_dir, 'tmp.json'), os.path.join(new_checkpoint_dir, 'parameter.json'))
             return new_checkpoint_dir, parameter, None, None
 
         else:
-            LOGGER.info('load existing checkpoint')
+            logging.info('load existing checkpoint')
             checkpoints = glob(os.path.join(checkpoint_dir, checkpoint, 'parameter.json'))
             if len(checkpoints) >= 2:
                 raise ValueError('Checkpoints are duplicated: %s' % str(checkpoints))

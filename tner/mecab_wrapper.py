@@ -18,15 +18,16 @@ __all__ = "MeCabWrapper"
 
 class MeCabWrapper:
     """ MeCab tokenizer with Neologd
+
      Usage
     --------------
-    >>> tokenizer = JaTokenizer()
+    >>> tokenizer = MeCabWrapper()
     >>> tokenizer.tokenize("日本ではサラリーマンが金曜日を華金と呼ぶ")
     ['日本', 'で', 'は', 'サラリーマン', 'が', '金曜日', 'を', '華金', 'と', '呼ぶ']
     >>> tokenizer.tokenize("日本ではサラリーマンが金曜日を華金と呼ぶ", return_pos=True)
     [['日本', 'NOUN'], ['で', 'RANDOM'], ['は', 'RANDOM'], ['サラリーマン', 'NOUN'], ['が', 'RANDOM'], ['金曜日', 'NOUN'],
     ['を', 'RANDOM'], ['華金', 'NOUN'], ['と', 'RANDOM'], ['呼ぶ', 'VERB']]
-    >>> tokenizer = JaTokenizer(False)
+    >>> tokenizer = MeCabWrapper(False)
     >>> tokenizer.tokenize("日本ではサラリーマンが金曜日を華金と呼ぶ")
     ['日本', 'で', 'は', 'サラリーマン', 'が', '金曜日', 'を', '華', '金', 'と', '呼ぶ']
     """
@@ -87,9 +88,3 @@ class MeCabWrapper:
                             new_labels_fixed.append('B-{}'.format(mention))
         assert len(tokens) == len(new_labels_fixed)
         return tokens, new_labels_fixed
-
-
-if __name__ == '__main__':
-    _tokenizer = MeCabWrapper()
-    print(_tokenizer.tokenize("日本ではサラリーマンが金曜日を華金と呼ぶ"))
-    print(_tokenizer.tokenize("日本ではサラリーマンが金曜日を華金と呼ぶ", return_pos=True))

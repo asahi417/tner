@@ -35,7 +35,7 @@ class Transforms:
     """ NER specific transform pipeline"""
 
     def __init__(self, transformer_tokenizer: str):
-        """ NER specific transform pipeline"""
+        """ NER specific transform pipeline """
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=CACHE_DIR)
         self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
         # find tokenizer-depend prefix

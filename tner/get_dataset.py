@@ -1,16 +1,17 @@
 """ Fetch/format NER dataset """
 import os
 import zipfile
+import logging
 from typing import Dict, List
 from itertools import chain
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 from .mecab_wrapper import MeCabWrapper
-from .util import get_logger
 
-LOGGER = get_logger()
 STOPWORDS = ['None', '#']
+VALID_DATASET = ['panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant']
 CACHE_DIR = './cache'
-os.makedirs(CACHE_DIR, exist_ok=True)
+
 # Shared label set across different dataset
 SHARED_NER_LABEL = {
     "location": ["LOCATION", "LOC", "location", "Location"],
@@ -58,12 +59,221 @@ SHARED_NER_LABEL = {
     "event": ["EVENT"]
 }
 
-__all__ = "get_dataset_ner"
+__all__ = ("get_dataset_ner", "VALID_DATASET", "SHARED_NER_LABEL")
+
+
+def get_dataset_ner(data_names: (List, str) = None,
+                    custom_data_path: str = None,
+                    custom_data_language: str = 'en',
+                    label_to_id: dict = None,
+                    fix_label_dict: bool = False,
+                    lower_case: bool = False):
+    """ Fetch NER dataset
+
+     Parameter
+    -----------------
+    data_names: list
+        A list of dataset name
+        eg) 'panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant'
+    custom_data_path: str
+        Filepath to custom dataset
+    custom_data_language: str
+        Language for custom_data_path dataset
+    label_to_id: dict
+        A dictionary of label to id
+    fix_label_dict: bool
+        Fixing given label_to_id dictionary (ignore label not in the dictionary in dataset)
+    lower_case: bool
+        Converting data into lowercased
+
+     Return
+    ----------------
+    unified_data: dict
+        A dataset consisting of 'train'/'valid' (only 'train' if more than one data set is used)
+    label_to_id: dict
+        A dictionary of label to id
+    language: str
+        Most frequent language in the dataset
+    """
+    assert data_names or custom_data_path, 'either `data_names` or `custom_data_path` should be not None'
+    data_names = data_names if data_names else []
+    data_names = [data_names] if type(data_names) is str else data_names
+    custom_data_path = [custom_data_path] if custom_data_path else []
+    data_list = data_names + custom_data_path
+    logging.info('target dataset: {}'.format(data_list))
+    data = []
+    languages = []
+    unseen_entity_set = {}
+    param = dict(fix_label_dict=fix_label_dict, lower_case=lower_case, custom_language=custom_data_language)
+    for d in data_list:
+        param['label_to_id'] = label_to_id
+        data_split_all, label_to_id, language, ues = get_dataset_ner_single(d, **param)
+        data.append(data_split_all)
+        languages.append(language)
+        unseen_entity_set = ues if len(unseen_entity_set) == 0 else unseen_entity_set.intersection(ues)
+    if len(data) > 1:
+        unified_data = {
+            'train': {
+                'data': list(chain(*[d['train']['data'] for d in data])),
+                'label': list(chain(*[d['train']['label'] for d in data]))
+            }
+        }
+    else:
+        unified_data = data[0]
+    # use the most frequent language in the data
+    freq = list(map(lambda x: (x, len(list(filter(lambda y: y == x, languages)))), set(languages)))
+    language = sorted(freq, key=lambda x: x[1], reverse=True)[0][0]
+    return unified_data, label_to_id, language, unseen_entity_set
+
+
+def get_dataset_ner_single(data_name: str = 'wnut2017',
+                           label_to_id: dict = None,
+                           fix_label_dict: bool = False,
+                           lower_case: bool = False,
+                           custom_language: str = 'en'):
+    """ download dataset file and return dictionary including training/validation split
+
+    :param data_name: data set name or path to the data
+    :param label_to_id: fixed dictionary of (label: id). If given, ignore other labels
+    :param fix_label_dict: not augment label_to_id based on dataset if True
+    :param lower_case: convert to lower case
+    :param custom_language
+    :return: formatted data, label_to_id
+    """
+    post_process_mecab = False
+    entity_first = False
+    language = 'en'
+    data_path = os.path.join(CACHE_DIR, data_name)
+    logging.info('data_name: {}'.format(data_name))
+    if data_name == 'conll2003':
+        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
+                      format(CACHE_DIR))
+            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
+            for i in ['train', 'dev', 'test']:
+                conll_formatting(
+                    file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
+                    file_tag=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.nertags'.format(i)),
+                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
+    elif data_name == 'mit_restaurant':
+        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttrain.bio'.format(
+                os.path.join(data_path, 'train.txt')))
+            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'.format(
+                os.path.join(data_path, 'valid.txt')))
+        entity_first = True
+    elif data_name == 'ontonote5':
+        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
+                format(CACHE_DIR))
+            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
+            for i in ['train', 'dev', 'test']:
+                conll_formatting(
+                    file_token=os.path.join(CACHE_DIR, 'data/onto/{}.words'.format(i)),
+                    file_tag=os.path.join(CACHE_DIR, 'data/onto/{}.ner'.format(i)),
+                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
+    elif data_name == 'mit_movie_trivia':
+        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13train.bio'.format(
+                os.path.join(data_path, 'train.txt')))
+            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13test.bio'.format(
+                os.path.join(data_path, 'valid.txt')))
+        entity_first = True
+    elif data_name == 'mit_movie':
+        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/engtrain.bio'.format(
+                os.path.join(data_path, 'train.txt')))
+            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/engtest.bio'.format(
+                os.path.join(data_path, 'valid.txt')))
+        entity_first = True
+    elif data_name == 'wnut2017':
+        files_info = {'train': 'train.txt.tmp', 'valid': 'dev.txt.tmp', 'test': 'test.txt.tmp'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/wnut17train.conll'  | tr '\t' ' ' > {}/train.txt.tmp".format(data_path))
+            os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/emerging.dev.conll' | tr '\t' ' ' > {}/dev.txt.tmp".format(data_path))
+            os.system("curl -L 'https://raw.githubusercontent.com/leondz/emerging_entities_17/master/emerging.test.annotated' | tr '\t' ' ' > {}/test.txt.tmp".format(data_path))
+    elif data_name == 'wiki_ja':
+        files_info = {'test': 'test.txt'}
+        language = 'ja'
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system(
+                'wget -O {0}/test.txt https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt'.
+                format(data_path))
+    elif data_name == 'wiki_news_ja':
+        files_info = {'test': 'test.txt'}
+        language = 'ja'
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system(
+                'wget -O {0}/test.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
+                format(data_path))
+    elif 'panx_dataset' in data_name:
+        files_info = {'valid': 'dev.txt', 'train': 'train.txt', 'test': 'test.txt'}
+        panx_la = data_name.split('/')[1]
+        if not os.path.exists(data_path):
+            if not os.path.exists(os.path.join(CACHE_DIR, 'panx_dataset')):
+                assert os.path.exists(os.path.join(CACHE_DIR, 'AmazonPhotos.zip')), 'download from {0} to {1}'.format(
+                    'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN', CACHE_DIR)
+                with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(CACHE_DIR), 'r') as zip_ref:
+                    zip_ref.extractall('{}/'.format(CACHE_DIR))
+            os.makedirs(data_path, exist_ok=True)
+            os.system('tar xzf {0}/panx_dataset/{1}.tar.gz -C {2}'.format(CACHE_DIR, panx_la, data_path))
+            for v in files_info.values():
+                os.system("sed -e 's/{0}://g' {1}/{2} > {1}/{2}.txt".format(panx_la, data_path, v.replace('.txt', '')))
+                os.system("rm -rf {0}/{1}".format(data_path, v.replace('.txt', '')))
+        if panx_la == 'ja':
+            language = 'ja'
+            post_process_mecab = True
+    else:
+        # for custom data
+        data_path = data_name
+        language = custom_language
+        if not os.path.exists(data_path):
+            raise ValueError('unknown dataset: %s' % data_path)
+        else:
+            files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
+
+    label_to_id = dict() if label_to_id is None else label_to_id
+    data_split_all, unseen_entity_set, label_to_id = decode_all_files(
+        files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first)
+
+    if post_process_mecab:
+        logging.info('mecab post processing')
+        id_to_label = {v: k for k, v in label_to_id.items()}
+        label_fixer = MeCabWrapper()
+        data, label = [], []
+        for k, v in data_split_all.items():
+            for x, y in zip(v['data'], v['label']):
+                y = [id_to_label[_y] for _y in y]
+                _data, _label = label_fixer.fix_ja_labels(inputs=x, labels=y)
+                _label = [label_to_id[_y] for _y in _label]
+                data.append(_data)
+                label.append(_label)
+            v['data'] = data
+            v['label'] = label
+
+    if lower_case:
+        logging.info('convert into lower cased')
+        data_split_all = {
+            k: {'data': [[ii.lower() for ii in i] for i in v['data']], 'label': v['label']}
+            for k, v in data_split_all.items()}
+    return data_split_all, label_to_id, language, unseen_entity_set
 
 
 def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False):
     inputs, labels, seen_entity = [], [], []
-    # seen_entity = list(label_to_id.keys())
     with open(os.path.join(data_path, file_name), 'r') as f:
         sentence, entity = [], []
         for n, line in enumerate(f):
@@ -125,14 +335,16 @@ def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_d
         else:
             unseen_entity = unseen_entity.intersection(unseen_entity_set)
         data_split[name] = data_dict
-        LOGGER.info('dataset {0}/{1}: {2} entries'.format(data_path, filepath, len(data_dict['data'])))
+        logging.info('dataset {0}/{1}: {2} entries'.format(data_path, filepath, len(data_dict['data'])))
     return data_split, unseen_entity, label_to_id
 
 
 def conll_formatting(file_token: str, file_tag: str, output_file: str):
     """ convert a separate ner/token file into single ner Conll 2003 format """
-    tokens = [i.split(' ') for i in open(file_token, 'r').read().split('\n')]
-    tags = [i.split(' ') for i in open(file_tag, 'r').read().split('\n')]
+    with open(file_token, 'r') as f:
+        tokens = [i.split(' ') for i in f.read().split('\n')]
+    with open(file_tag, 'r') as f:
+        tags = [i.split(' ') for i in f.read().split('\n')]
     with open(output_file, 'w') as f:
         assert len(tokens) == len(tags)
         for _token, _tag in zip(tokens, tags):
@@ -140,193 +352,3 @@ def conll_formatting(file_token: str, file_tag: str, output_file: str):
             for __token, __tag in zip(_token, _tag):
                 f.write('{0} {1}\n'.format(__token, __tag))
             f.write('\n')
-
-
-def get_dataset_ner(
-        data_name: str = 'wnut_17',
-        label_to_id: dict = None,
-        fix_label_dict: bool = False,
-        lower_case: bool = False):
-    if 'all' in data_name:
-        return get_dataset_ner_merged(data_name, label_to_id, fix_label_dict, lower_case)
-    else:
-        return get_dataset_ner_single(data_name, label_to_id, fix_label_dict, lower_case)
-
-
-def get_dataset_ner_single(
-        data_name: str = 'wnut_17',
-        label_to_id: dict = None,
-        fix_label_dict: bool = False,
-        lower_case: bool = False):
-    """ download dataset file and return dictionary including training/validation split
-
-    :param data_name: data set name or path to the data
-    :param label_to_id: fixed dictionary of (label: id). If given, ignore other labels
-    :param fix_label_dict: not augment label_to_id based on dataset if True
-    :param lower_case: convert to lower case
-    :return: formatted data, label_to_id
-    """
-    data_path = os.path.join(CACHE_DIR, data_name)
-    post_process_mecab = False
-    entity_first = False
-    language = 'en'
-    LOGGER.info('data_name: {}'.format(data_name))
-    if data_name == 'conll_2003':
-        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
-                      format(CACHE_DIR))
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
-            for i in ['train', 'dev', 'test']:
-                conll_formatting(
-                    file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
-                    file_tag=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.nertags'.format(i)),
-                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
-    elif data_name == 'mit_restaurant':
-        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttrain.bio'.format(
-                os.path.join(data_path, 'train.txt')))
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'.format(
-                os.path.join(data_path, 'valid.txt')))
-        entity_first = True
-    elif data_name == 'ontonote5':
-        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
-                format(CACHE_DIR))
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
-            for i in ['train', 'dev', 'test']:
-                conll_formatting(
-                    file_token=os.path.join(CACHE_DIR, 'data/onto/{}.words'.format(i)),
-                    file_tag=os.path.join(CACHE_DIR, 'data/onto/{}.ner'.format(i)),
-                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
-    elif data_name == 'mit_movie_trivia':
-        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13train.bio'.format(
-                os.path.join(data_path, 'train.txt')))
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13test.bio'.format(
-                os.path.join(data_path, 'valid.txt')))
-        entity_first = True
-    elif data_name == 'mit_movie':
-        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/engtrain.bio'.format(
-                os.path.join(data_path, 'train.txt')))
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/engtest.bio'.format(
-                os.path.join(data_path, 'valid.txt')))
-        entity_first = True
-    elif data_name == 'wnut_17':
-        files_info = {'train': 'train.txt.tmp', 'valid': 'dev.txt.tmp', 'test': 'test.txt.tmp'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/wnut17train.conll'  | tr '\t' ' ' > {}/train.txt.tmp".format(data_path))
-            os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/emerging.dev.conll' | tr '\t' ' ' > {}/dev.txt.tmp".format(data_path))
-            os.system("curl -L 'https://raw.githubusercontent.com/leondz/emerging_entities_17/master/emerging.test.annotated' | tr '\t' ' ' > {}/test.txt.tmp".format(data_path))
-    elif data_name == 'wiki_ja':
-        files_info = {'test': 'test.txt'}
-        language = 'ja'
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system(
-                'wget -O {0}/test.txt https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt'.
-                format(data_path))
-    elif data_name == 'wiki_news_ja':
-        files_info = {'test': 'test.txt'}
-        language = 'ja'
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system(
-                'wget -O {0}/test.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
-                format(data_path))
-    elif 'panx_dataset' in data_name:
-        files_info = {'valid': 'dev.txt', 'train': 'train.txt', 'test': 'test.txt'}
-        panx_la = data_name.split('/')[1]
-        if not os.path.exists(data_path):
-            if not os.path.exists(os.path.join(CACHE_DIR, 'panx_dataset')):
-                assert os.path.exists(os.path.join(CACHE_DIR, 'AmazonPhotos.zip')), 'download from {0} to {1}'.format(
-                    'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN', CACHE_DIR)
-                with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(CACHE_DIR), 'r') as zip_ref:
-                    zip_ref.extractall('{}/'.format(CACHE_DIR))
-            os.makedirs(data_path, exist_ok=True)
-            os.system('tar xzf {0}/panx_dataset/{1}.tar.gz -C {2}'.format(CACHE_DIR, panx_la, data_path))
-            for v in files_info.values():
-                os.system("sed -e 's/{0}://g' {1}/{2} > {1}/{2}.txt".format(panx_la, data_path, v.replace('.txt', '')))
-                os.system("rm -rf {0}/{1}".format(data_path, v.replace('.txt', '')))
-        if panx_la == 'ja':
-            language = 'ja'
-            post_process_mecab = True
-    else:
-        # for custom data
-        if not os.path.exists(data_path):
-            raise ValueError('unknown dataset: %s' % data_name)
-        else:
-            files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
-        if 'ja' in data_name:
-            language = 'ja'
-
-    label_to_id = dict() if label_to_id is None else label_to_id
-    data_split_all, unseen_entity_set, label_to_id = decode_all_files(
-        files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first)
-
-    if post_process_mecab:
-        id_to_label = {v: k for k, v in label_to_id.items()}
-        label_fixer = MeCabWrapper()
-        data, label = [], []
-        for k, v in data_split_all.items():
-            for x, y in zip(v['data'], v['label']):
-                y = [id_to_label[_y] for _y in y]
-                _data, _label = label_fixer.fix_ja_labels(inputs=x, labels=y)
-                _label = [label_to_id[_y] for _y in _label]
-                data.append(_data)
-                label.append(_label)
-            v['data'] = data
-            v['label'] = label
-
-    if lower_case:
-        LOGGER.info('convert into lower cased...')
-        data_split_all = {
-            k: {
-                'data': [[ii.lower() for ii in i] for i in v['data']],
-                'label': v['label']
-             } for k, v in data_split_all.items()}
-
-    return data_split_all, label_to_id, language, unseen_entity_set
-
-
-def get_dataset_ner_merged(
-        merge_type: str = 'all_english',
-        label_to_id: dict = None,
-        fix_label_dict: bool = False,
-        lower_case: bool = False):
-    if merge_type == 'all_english':
-        data_list = ['conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant', 'panx_dataset/en']
-        language = 'en'
-    elif merge_type == 'all_english_no_lower_case':
-        data_list = ['conll_2003', 'wnut_17', 'ontonote5', 'panx_dataset/en']
-        language = 'en'
-    else:
-        raise ValueError('no data found: {}'.format(merge_type))
-    data = []
-    unseen_entity_set = None
-    for d in data_list:
-        data_split_all, label_to_id, _, _unseen_entity_set = \
-            get_dataset_ner(d, label_to_id=label_to_id, fix_label_dict=fix_label_dict, lower_case=lower_case)
-        data.append(data_split_all['train'])
-        if unseen_entity_set:
-            unseen_entity_set = unseen_entity_set.intersection(_unseen_entity_set)
-        else:
-            unseen_entity_set = _unseen_entity_set
-    unified_data = {
-        'train': {
-            'data': list(chain(*[d['data'] for d in data])),
-            'label': list(chain(*[d['label'] for d in data]))
-        }
-    }
-    return unified_data, label_to_id, language, {}

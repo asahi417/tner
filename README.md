@@ -65,12 +65,12 @@ As a choice of NER dataset, following data sources are supported.
 
 |                                   Name                                           |         Genre        |    Language   | Entity types |       Data size      | Lower-cased |
 |:--------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
-| OntoNote 5 ([`ontonote5`](https://www.aclweb.org/anthology/N06-2015.pdf))          | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 | No | 
-| CoNLL 2003 ([`conll_2003`](https://www.aclweb.org/anthology/W03-0419.pdf))         |         News         |    English    |            4 |   14,041/3,250/3,453 | No |
-| WNUT 2017 ([`wnut_17`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))          |         Tweet        |    English    |            6 |       1,000/1,008/1,287 | No |
-| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf)) |       Wikipedia      | 282 languages |            3 | 20,000/10,000/10,000 | No |
-| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))   |   Restaurant review  |    English    |            8 |          7,660/1,521 | Yes |
-| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))      |     Movie review     |    English    |           12 |          7,816/1,953 | Yes |
+| OntoNote 5 ([`ontonote5`](https://www.aclweb.org/anthology/N06-2015.pdf))        | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 | No | 
+| CoNLL 2003 ([`conll2003`](https://www.aclweb.org/anthology/W03-0419.pdf))        |         News         |    English    |            4 |   14,041/3,250/3,453 | No |
+| WNUT 2017 ([`wnut2017`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))       |         Tweet        |    English    |            6 |    1,000/1,008/1,287 | No |
+| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf)) | Wikipedia | 282 languages |   3 | 20,000/10,000/10,000 | No |
+| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/)) |   Restaurant review  |    English    |            8 |          7,660/1,521 | Yes |
+| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))    |     Movie review     |    English    |           12 |          7,816/1,953 | Yes |
 
 Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hyperparameter combination>`
 (eg, `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`). Each checkpoint consists of following files:
@@ -101,16 +101,16 @@ Here, let's suppose that your model was trained on `ontonote5`, and checkpoint f
 ```python
 import tner
 # model instance initialization with the checkpoint 
-trainer = tner.TrainTransformersNER(checkpoint='./ckp/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
+trainer = tner.TrainTransformersNER(checkpoint='./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
 
 # test in domain accuracy (just on the valid/test set of the dataset where the model trained on) 
 trainer.test()
 
 # test out of domain accuracy
-trainer.test(test_dataset='conll_2003')
+trainer.test(test_dataset='conll2003')
 
 # test entity span accuracy
-trainer.test(test_dataset='conll_2003', ignore_entity_type=True)
+trainer.test(test_dataset='conll2003', ignore_entity_type=True)
 ```
 
 Evaluation process create `logger_test.<dataname>.log` file where includes all the report under the checkpoint directory.
