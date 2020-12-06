@@ -15,6 +15,10 @@ The following features are supported:
 - [Web app](#web-app) to visualize model prediction.
 - [Command line tool to get model prediction.](#model-inference-interface)
  
+***Table of Contents***  
+1. [Setup](#get-started)
+2. [Model training](#model-trainingevaluation)
+
 ## Get Started
 Install via pip
 ```shell script

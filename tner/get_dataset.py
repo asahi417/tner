@@ -267,7 +267,7 @@ def get_dataset_ner_single(
         if not os.path.exists(data_path):
             raise ValueError('unknown dataset: %s' % data_name)
         else:
-            files_info = {'train': 'train.txt', 'valid': 'valid.txt', 'test': 'test.txt'}
+            files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
         if 'ja' in data_name:
             language = 'ja'
 
