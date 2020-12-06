@@ -14,20 +14,20 @@ setup(
     long_description=readme,
     author='Asahi Ushio',
     author_email='asahi1992ushio@gmail.com',
-    packages=find_packages(exclude=('')),
+    packages=find_packages(),
     include_package_data=True,
     install_requires=[
-	'pillow==6.2.1',
-	'mecab-python3==0.996.2',
-	'uvicorn==0.11.8',
-	'jinja2==2.11.2',
-	'aiofiles==0.5.0',
-	'fastapi==0.61.0',
-	'matplotlib==3.3.1',
-	'toml',
-	'tensorboard',
-	'torch',
-	'transformers',
-	'seqeval'
-    ]
+		'Pillow>=7.1.0',
+		'mecab-python3==0.996.2',
+		'uvicorn==0.11.8',
+		'jinja2==2.11.2',
+		'aiofiles==0.5.0',
+		'fastapi==0.61.0',
+		'matplotlib==3.3.1',
+		'toml',
+		'tensorboard',
+		'torch',
+		'transformers',
+		'seqeval'
+	]
 )
