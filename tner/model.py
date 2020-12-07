@@ -306,7 +306,7 @@ class TrainTransformersNER:
             # update model
             encode = {k: v.to(self.device) for k, v in encode.items()}
             self.optimizer.zero_grad()
-            loss = self.model(**encode)[0]
+            loss = self.model(**encode, return_dict=True)['loss']
             if self.n_gpu > 1:
                 loss = loss.mean()
             if self.args.fp16:
@@ -349,8 +349,7 @@ class TrainTransformersNER:
         for encode in data_loader:
             encode = {k: v.to(self.device) for k, v in encode.items()}
             labels_tensor = encode.pop('labels')
-            model_outputs = self.model(**encode)
-            logit = model_outputs[0]
+            logit = self.model(**encode, return_dict=True)['logit']
             _true = labels_tensor.cpu().detach().int().tolist()
             _pred = torch.max(logit, 2)[1].cpu().detach().int().tolist()
             for b in range(len(_true)):
@@ -484,7 +483,7 @@ class TransformersNER:
         encode_list = self.transforms.encode_plus_all(x, max_length=max_seq_length)
         data_loader = torch.utils.data.DataLoader(Dataset(encode_list), batch_size=len(encode_list))
         encode = list(data_loader)[0]
-        logit = self.model(**{k: v.to(self.device) for k, v in encode.items()})[0]
+        logit = self.model(**{k: v.to(self.device) for k, v in encode.items()}, return_dict=True)['logit']
         entities = []
         for n, e in enumerate(encode['input_ids'].cpu().tolist()):
             sentence = self.transforms.tokenizer.decode(e, skip_special_tokens=True)
