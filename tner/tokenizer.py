@@ -108,7 +108,7 @@ class Transforms:
                         labels: List = None,
                         language: str = 'en',
                         max_length: int = None):
-        max_length = self.tokenizer.max_len if max_length is None else max_length
+        max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
         # TODO: no padding for prediction
         shared_param = {'language': language, 'pad_to_max_length': True, 'max_length': max_length}
         if labels:
