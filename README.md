@@ -3,17 +3,6 @@
 ![](./asset/api.png)
 
 ***`tner`***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
-The following features are supported:
-- [Modules to finetune LMs](#train-model) (see in [google colab](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing))
-    - various dataset option
-    - organizing checkpoints by hyperparameter configuration
-    - tensorboard visualization
-- [Script to evaluate model which enables](#evaluate-on-inout-of-domain-f1-score-withwithout-entity-type)  (see in [google colab](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)) 
-    - **in-domain/cross-domain/cross-lingual** span-F1 score across datasets
-    - **entity position F1 score** (reduce the prediction and true label to be entity-agnostic, to see entity position detection performance, 
-    see the [baseline result](#result)) 
-- [Web app](#web-app) to visualize model prediction.
-- [Command line tool to get model prediction.](#model-inference-interface)
  
 ### Table of Contents  
 **1. [Setup](#get-started)**
