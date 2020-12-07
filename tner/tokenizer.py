@@ -52,7 +52,7 @@ class Transforms:
     def fixed_encode_en(self, tokens, labels: List = None, max_seq_length: int = 128):
         """ fixed encoding for language with halfspace in between words """
         encode = self.tokenizer.encode_plus(
-            ' '.join(tokens), max_length=max_seq_length, pad_to_max_length=True, truncation=True)
+            ' '.join(tokens), max_length=max_seq_length, padding='max_length', truncation=True)
         if labels:
             assert len(tokens) == len(labels)
             fixed_labels = list(chain(*[

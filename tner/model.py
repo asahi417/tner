@@ -282,18 +282,21 @@ class TrainTransformersNER:
         logging.info('data_loader: %s' % str(list(data_loader.keys())))
         logging.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
         try:
-            with detect_anomaly():
-                while True:
-                    if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
-                    self.release_cache()
-                    if not skip_validation and data_loader['valid']:
+            while True:
+                if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
+                self.release_cache()
+                if not skip_validation and data_loader['valid']:
+                    try:
                         self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
-                        self.release_cache()
-                    if if_training_finish:
-                        break
-                    self.__epoch += 1
+                    except RuntimeError:
+                        logging.exception('*** RuntimeError: skip validation ***')
+
+                    self.release_cache()
+                if if_training_finish:
+                    break
+                self.__epoch += 1
         except RuntimeError:
-            logging.exception('*** RuntimeError (NaN found, see above log in detail) ***')
+            logging.exception('*** RuntimeError ***')
 
         except KeyboardInterrupt:
             logging.info('*** KeyboardInterrupt ***')
