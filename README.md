@@ -15,14 +15,14 @@ The following features are supported:
 - [Web app](#web-app) to visualize model prediction.
 - [Command line tool to get model prediction.](#model-inference-interface)
  
-***Table of Contents***  
-1. [Setup](#get-started)
-2. [Language Model Finetuning on NER](#language-model-finetuning-on-ner)
-    - [Datasets](#datasets)
-    - [Model Finetuning](#model-finetuning), [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-    - [Model Evaluation](#model-evaluation), [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-3. [Experiment with XLM-R](#experiment-with-xlm-r)
-4. [Web API](#web-app)   
+### Table of Contents  
+**1. [Setup](#get-started)**
+**2. [Language Model Finetuning on NER](#language-model-finetuning-on-ner)**
+    - *[Datasets](#datasets):* Built-in datasets and custom dataset
+    - *[Model Finetuning](#model-finetuning):* Model training [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+    - *[Model Evaluation](#model-evaluation):* In/out of domain evaluation [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+**3. [Experiment with XLM-R](#experiment-with-xlm-r):** Cross-domain analysis on XLM-R
+**4. [Web API](#web-app):** Model deployment on a web-app   
 
 ## Get Started
 Install via pip
