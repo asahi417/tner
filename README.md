@@ -2,7 +2,7 @@
 
 ![](./asset/api.png)
 
-***`tner`***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
+***`T-NER`*** is a python tool to analyse language model finetuning for named-entity-recognition.  
  
 ### Table of Contents  
 1. **[Setup](#get-started)**
