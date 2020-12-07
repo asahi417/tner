@@ -201,7 +201,7 @@ class TrainTransformersNER:
             logging.info('using `torch.nn.DataParallel`')
         logging.info('running on %i GPUs' % self.n_gpu)
 
-    def __setup_loader(self, data_type: str, dataset_split: Dict, language: str):
+    def __setup_loader(self, data_type: str, dataset_split: Dict, language: str, batch_size: int):
         if data_type not in dataset_split.keys():
             return None
         is_train = data_type == 'train'
@@ -211,9 +211,8 @@ class TrainTransformersNER:
             language=language,
             max_length=self.args.max_seq_length if is_train else None)
         data_obj = Dataset(features)
-        _batch_size = self.args.batch_size if is_train else self.batch_size_validation
         return torch.utils.data.DataLoader(
-            data_obj, num_workers=NUM_WORKER, batch_size=_batch_size, shuffle=is_train, drop_last=is_train)
+            data_obj, num_workers=NUM_WORKER, batch_size=batch_size, shuffle=is_train, drop_last=is_train)
 
     @property
     def checkpoint(self):
@@ -222,7 +221,8 @@ class TrainTransformersNER:
     def test(self,
              test_dataset: str,
              ignore_entity_type: bool = False,
-             lower_case: bool = False):
+             lower_case: bool = False,
+             batch_size: int = None):
         """ Test NER model on specific dataset
 
          Parameter
@@ -237,11 +237,13 @@ class TrainTransformersNER:
         """
 
         # setup data
+        batch_size = batch_size if batch_size else self.args.batch_size
         logging.info('testing model on {}'.format(test_dataset))
         dataset_split, self.label_to_id, language, unseen_entity_set = get_dataset_ner(
             test_dataset, label_to_id=self.label_to_id, lower_case=lower_case)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
-        data_loader = {k: self.__setup_loader(k, dataset_split, language) for k in dataset_split.keys() if k != 'train'}
+        data_loader = {k: self.__setup_loader(k, dataset_split, language, batch_size)
+                       for k in dataset_split.keys() if k != 'train'}
         logging.info('data_loader: {}'.format(str(list(data_loader.keys()))))
 
         # run inference
@@ -273,7 +275,10 @@ class TrainTransformersNER:
         start_time = time()
 
         # setup dataset/data loader
-        data_loader = {k: self.__setup_loader(k, self.dataset_split, self.language) for k in ['train', 'valid']}
+        data_loader = {
+            'train': self.__setup_loader('train', self.dataset_split, self.language, self.args.batch_size),
+            'valid': self.__setup_loader('valid', self.dataset_split, self.language, self.batch_size_validation)
+        }
         logging.info('data_loader: %s' % str(list(data_loader.keys())))
         logging.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
         try:
@@ -349,7 +354,7 @@ class TrainTransformersNER:
         for encode in data_loader:
             encode = {k: v.to(self.device) for k, v in encode.items()}
             labels_tensor = encode.pop('labels')
-            logit = self.model(**encode, return_dict=True)['logit']
+            logit = self.model(**encode, return_dict=True)['logits']
             _true = labels_tensor.cpu().detach().int().tolist()
             _pred = torch.max(logit, 2)[1].cpu().detach().int().tolist()
             for b in range(len(_true)):
@@ -483,7 +488,7 @@ class TransformersNER:
         encode_list = self.transforms.encode_plus_all(x, max_length=max_seq_length)
         data_loader = torch.utils.data.DataLoader(Dataset(encode_list), batch_size=len(encode_list))
         encode = list(data_loader)[0]
-        logit = self.model(**{k: v.to(self.device) for k, v in encode.items()}, return_dict=True)['logit']
+        logit = self.model(**{k: v.to(self.device) for k, v in encode.items()}, return_dict=True)['logits']
         entities = []
         for n, e in enumerate(encode['input_ids'].cpu().tolist()):
             sentence = self.transforms.tokenizer.decode(e, skip_special_tokens=True)
