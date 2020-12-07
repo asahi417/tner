@@ -5,13 +5,13 @@
 ***`tner`***, a python tool to inspect finetuning of pre-trained language model (LM) for Named-Entity-Recognition (NER). 
  
 ### Table of Contents  
-**1. [Setup](#get-started)**
-**2. [Language Model Finetuning on NER](#language-model-finetuning-on-ner)**
+1. **[Setup](#get-started)**
+2. **[Language Model Finetuning on NER](#language-model-finetuning-on-ner)**
     - *[Datasets](#datasets):* Built-in datasets and custom dataset
     - *[Model Finetuning](#model-finetuning):* Model training [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
     - *[Model Evaluation](#model-evaluation):* In/out of domain evaluation [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-**3. [Experiment with XLM-R](#experiment-with-xlm-r):** Cross-domain analysis on XLM-R
-**4. [Web API](#web-app):** Model deployment on a web-app   
+3. **[Experiment with XLM-R](#experiment-with-xlm-r):** Cross-domain analysis on XLM-R
+4. **[Web API](#web-app):** Model deployment on a web-app   
 
 ## Get Started
 Install via pip
