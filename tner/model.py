@@ -11,7 +11,6 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 import transformers
 import torch
 from torch import nn
-from torch.autograd import detect_anomaly
 from seqeval.metrics import f1_score, precision_score, recall_score, classification_report, accuracy_score
 from torch.utils.tensorboard import SummaryWriter
 

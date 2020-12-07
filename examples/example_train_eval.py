@@ -70,7 +70,7 @@ if __name__ == '__main__':
         batch_size_validation=opt.batch_size_validation,
         checkpoint_dir=opt.checkpoint_dir,
         dataset=opt.data,
-        transformer=opt.transformer,
+        transformers_model=opt.transformer,
         random_seed=opt.random_seed,
         lr=opt.lr,
         total_step=opt.total_step,
@@ -78,7 +78,6 @@ if __name__ == '__main__':
         weight_decay=opt.weight_decay,
         batch_size=opt.batch_size,
         max_seq_length=opt.max_seq_length,
-        early_stop=opt.early_stop,
         fp16=opt.fp16,
         max_grad_norm=opt.max_grad_norm,
         lower_case=opt.lower_case
@@ -87,7 +86,6 @@ if __name__ == '__main__':
         trainer.test(
             test_dataset=opt.test_data,
             ignore_entity_type=opt.test_ignore_entity,
-            greedy_baseline=opt.test_greedy_baseline,
             lower_case=opt.test_lower_case
         )
     else:

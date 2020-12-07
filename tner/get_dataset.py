@@ -10,7 +10,7 @@ from .mecab_wrapper import MeCabWrapper
 
 STOPWORDS = ['None', '#']
 VALID_DATASET = ['panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant']
-CACHE_DIR = './cache'
+CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 
 # Shared label set across different dataset
 SHARED_NER_LABEL = {

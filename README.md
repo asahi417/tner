@@ -17,7 +17,12 @@ The following features are supported:
  
 ***Table of Contents***  
 1. [Setup](#get-started)
-2. [Model training](#model-trainingevaluation)
+2. [Language Model Finetuning on NER](#language-model-finetuning-on-ner)
+    - [Datasets](#datasets)
+    - [Model Finetuning](#model-finetuning), [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+    - [Model Evaluation](#model-evaluation), [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+3. [Experiment with XLM-R](#experiment-with-xlm-r)
+4. [Web API](#web-app)   
 
 ## Get Started
 Install via pip
@@ -32,38 +37,17 @@ cd tner
 pip install -r requirement.txt
 ```
 
-## Model Training/Evaluation
+## Language Model Finetuning on NER
 
 <p align="center">
   <img src="./asset/tb_valid.png" width="600">
   <br><i>Fig 1: Tensorboard visualization</i>
 </p>
 
-### Train model
-Pick up a model from [pretrained LM list](https://huggingface.co/models), and run the following lines to finetune on NER! 
+### Datasets
+Following built-in NER datasets are available via `tner`.   
 
-```python
-import tner
-trainer = tner.TrainTransformersNER(
-        dataset="ontonote5",  # NER dataset name
-        transformer="xlm-roberta-base",  # transformers model name
-        checkpoint_dir="./ckpt",  
-        random_seed=1234,
-        lr=1e-5,
-        total_step=13000,
-        warmup_step=700,
-        weight_decay=1e-7,
-        batch_size=16,
-        batch_size_validation=2,
-        max_seq_length=128,
-        fp16=False,
-        max_grad_norm=1.0
-    )
-trainer.train()
-```
-As a choice of NER dataset, following data sources are supported.   
-
-|                                   Name                                           |         Genre        |    Language   | Entity types |       Data size      | Lower-cased |
+|                                   Name (`alias`)                                 |         Genre        |    Language   | Entity types |       Data size      | Lower-cased |
 |:--------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
 | OntoNote 5 ([`ontonote5`](https://www.aclweb.org/anthology/N06-2015.pdf))        | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 | No | 
 | CoNLL 2003 ([`conll2003`](https://www.aclweb.org/anthology/W03-0419.pdf))        |         News         |    English    |            4 |   14,041/3,250/3,453 | No |
@@ -72,53 +56,94 @@ As a choice of NER dataset, following data sources are supported.
 | MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/)) |   Restaurant review  |    English    |            8 |          7,660/1,521 | Yes |
 | MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))    |     Movie review     |    English    |           12 |          7,816/1,953 | Yes |
 
-Checkpoints are stored under `checkpoint_dir`, called `<dataset>_<MD5 hash of hyperparameter combination>`
-(eg, `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`). Each checkpoint consists of following files:
+One can specify cache directory by an environment variable `CACHE_DIR`, which set as `./cache` as default.
+
+***WikiAnn dataset***  
+All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need 
+first create the cache directory (`./cache` as the default but can be change through an environment variable `CACHE_DIR`)
+and you then need to manually download data from
+[here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
+(note that it will download as `AmazonPhotos.zip`) to the cache folder.
+
+***Custom Dataset***  
+To go beyond the public datasets, user can use their own dataset by formatting them into
+the IOB format described in [CoNLL 2003 NER shared task paper](https://www.aclweb.org/anthology/W03-0419.pdf),
+where all data files contain one word per line with empty lines representing sentence boundaries.
+At the end of each line there is a tag which states whether the current word is inside a named entity or not.
+The tag also encodes the type of named entity. Here is an example sentence:
+```
+EU B-ORG
+rejects O
+German B-MISC
+call O
+to O
+boycott O
+British B-MISC
+lamb O
+. O
+```
+Words tagged with O are outside of named entities and the I-XXX tag is used for words inside a
+named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
+first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
+The custom dataset should has `train.txt` and `valid.txt` file in a same folder.
+
+Please take a look [sample custom data](./tests/sample_data). 
+
+### Model Finetuning
+Language model finetuning can be done with a few lines:
+```python
+import tner
+trainer = tner.TrainTransformersNER(dataset="ontonote5", transformers_model="xlm-roberta-base")
+trainer.train(skip_validation=True)  # monitoring accuracy on validation after each epoch if False
+```
+where `transformers_model` is a pre-trained model name from [pretrained LM list](https://huggingface.co/models) and
+`dataset` is a dataset alias or path to custom dataset explained [dataset section](#datasets). 
+
+***Train on multiple datasets:*** Model can be trained on a concatenation of multiple datasets by 
+
+```python
+trainer = tner.TrainTransformersNER(dataset=["ontonote5", "conll2003"], transformers_model="xlm-roberta-base")
+```
+Custom dataset can be also added to built-in dataset eg) `dataset=["ontonote5", "./test/sample_data"]`.
+For more information about the options, you may want to see [here](./tner/model.py#L3).
+
+***Organize model weights (checkpoint files):*** Checkpoint files (model weight, training config, benchmark results, etc)
+are stored under `checkpoint_dir`, which is `./ckpt` as default.
+The folder names after `<MD5 hash of hyperparameter combination>` (eg, `./ckpt/6bb4fdb286b5e32c068262c2a413639e/`).
+Each checkpoint consists of following files:
 - `events.out.tfevents.*`: tensorboard file for monitoring the learning proecss
 - `label_to_id.json`: dictionary to map prediction id to label
 - `model.pt`: pytorch model weight file
 - `parameter.json`: model hyperparameters
-- `logger_train.log`: training log
 
-For more conclude examples, take a look below:  
+***Reference:***    
 - [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
 - [example_train_eval.py](examples/example_train_eval.py)
 
-***WikiAnn dataset***  
-All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need 
-first create a cache folder with `mkdir -p ./cache` in the root of this project if it's not created yet.
-You then need to manually download data from
-[here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
-(note that it will download as `AmazonPhotos.zip`) to the cache folder.
-
-
-### Evaluate on in/out of domain F1 score with/without entity type
-Once a model was trained on any dataset, you can start test it on other dataset to see 
-**cross-domain/cross-lingual** transferring ability as well as in domain accuracy.
-In a same manner, **entity position accuracy** can be produced.
-Here, let's suppose that your model was trained on `ontonote5`, and checkpoint files are in `./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e/`. 
+### Model Evaluation
+To evaluate NER models, here we explain how to proceed in/out of domain evaluation by micro F1 score.
+Supposing that your model's checkpoint is `./ckpt/xxx/`. 
 
 ```python
 import tner
-# model instance initialization with the checkpoint 
-trainer = tner.TrainTransformersNER(checkpoint='./ckpt/ontonote5_6bb4fdb286b5e32c068262c2a413639e')
-
-# test in domain accuracy (just on the valid/test set of the dataset where the model trained on) 
-trainer.test()
-
-# test out of domain accuracy
+trainer = tner.TrainTransformersNER(checkpoint='./ckpt/xxx')
 trainer.test(test_dataset='conll2003')
+```
+This gives you a accuracy summary.
+Again, the `test_dataset` can be a path to custom dataset explained at [dataset section](#datasets).
 
-# test entity span accuracy
+***Entity position detection:***  For better understanding of out-of-domain accuracy, we provide entity position detection
+accuracy, which ignores the entity type and compute metrics only on the IOB entity position.
+
+```python
 trainer.test(test_dataset='conll2003', ignore_entity_type=True)
 ```
 
-Evaluation process create `logger_test.<dataname>.log` file where includes all the report under the checkpoint directory.
-For more conclude examples, take a look below:  
+***Reference:***    
 - [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
 - [example_train_eval.py](helper/example_train_eval.py)
 
-### Result
+## Experiment with XLM-R
 We finetune [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) on each dataset and
 evaluate it on in-domain/cross-domain/cross-lingual setting.
 
@@ -197,7 +222,6 @@ test_sentences = [
 classifier.predict(test_sentences)
 ```
 
-
 ## Web App
 To play around with NER model, we provide a quick [web App](./asset/api.gif). Please [clone and install the repo](#get-started) firstly.  
 1. [Train a model](#train-model) or download [unified model checkpoint file](https://drive.google.com/drive/folders/1UOy_OU4qHyQCYX0QQi02lnCZj7mNFBak?usp=sharing),
@@ -211,7 +235,7 @@ If you use your own checkpoint, set the path to the checkpoint folder by `export
 uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
 
-## Acknowledgement
+### Acknowledgement
 The App interface is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
 
 
