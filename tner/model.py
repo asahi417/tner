@@ -54,7 +54,7 @@ class TrainTransformersNER:
                  batch_size_validation: int = None,
                  checkpoint: str = None,
                  checkpoint_dir: str = None,
-                 transformers_model: str = 'roberta-base',
+                 transformers_model: str = 'xlm-roberta-base',
                  random_seed: int = 1234,
                  lr: float = 1e-5,
                  total_step: int = 13000,

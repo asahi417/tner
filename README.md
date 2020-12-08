@@ -10,6 +10,7 @@
     - *[Datasets](#datasets):* Built-in datasets and custom dataset
     - *[Model Finetuning](#model-finetuning):* Model training [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
     - *[Model Evaluation](#model-evaluation):* In/out of domain evaluation [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+    - *[Model Inference API](#model-inference):* An API to get prediction from models
 3. **[Experiment with XLM-R](#experiment-with-xlm-r):** Cross-domain analysis on XLM-R
 4. **[Web API](#web-app):** Model deployment on a web-app   
 
@@ -83,10 +84,16 @@ Language model finetuning can be done with a few lines:
 ```python
 import tner
 trainer = tner.TrainTransformersNER(dataset="ontonote5", transformers_model="xlm-roberta-base")
-trainer.train(skip_validation=True)  # monitoring accuracy on validation after each epoch if False
+trainer.train()
 ```
 where `transformers_model` is a pre-trained model name from [pretrained LM list](https://huggingface.co/models) and
 `dataset` is a dataset alias or path to custom dataset explained [dataset section](#datasets). 
+
+In the end of each epoch, metrics on validation set are computed for monitoring purpose, but it can be turned off to reduce 
+training time by
+```python
+trainer.train(skip_validation=True)
+```
 
 ***Train on multiple datasets:*** Model can be trained on a concatenation of multiple datasets by 
 
@@ -131,6 +138,21 @@ trainer.test(test_dataset='conll2003', ignore_entity_type=True)
 ***Reference:***    
 - [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
 - [example_train_eval.py](helper/example_train_eval.py)
+
+### Model Inference API
+To work on model as a part of pipeline, we provide an API to get prediction from trained model.
+
+```python
+import tner
+classifier = tner.TransformersNER(checkpoint='path-to-checkpoint-dir')
+test_sentences = [
+    'I live in United States, but Microsoft asks me to move to Japan.',
+    'I have an Apple computer.',
+    'I like to eat an apple.'
+]
+classifier.predict(test_sentences)
+```
+For more information about the module, you may want to see [here](./tner/model.py#L411).
 
 ## Experiment with XLM-R
 We finetune [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-base`) on each dataset and
@@ -196,20 +218,6 @@ Notes:
 - SoTA reported at the time of Oct, 2020.
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
 - For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
-
-### Model inference interface
-To get an inference from finetuned model can be done as below.
-
-```python
-import tner
-classifier = tner.TransformersNER(checkpoint='path-to-checkpoint-folder')
-test_sentences = [
-    'I live in United States, but Microsoft asks me to move to Japan.',
-    'I have an Apple computer.',
-    'I like to eat an apple.'
-]
-classifier.predict(test_sentences)
-```
 
 ## Web App
 To play around with NER model, we provide a quick [web App](./asset/api.gif). Please [clone and install the repo](#get-started) firstly.  
