@@ -18,7 +18,7 @@ setup(
     include_package_data=True,
     install_requires=[
 		'Pillow>=7.1.0',
-		'mecab-python3==0.996.2',
+		'mecab-python3',
 		'uvicorn==0.11.8',
 		'jinja2==2.11.2',
 		'aiofiles==0.5.0',
