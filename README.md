@@ -42,9 +42,14 @@ Following built-in NER datasets are available via `tner`.
 | OntoNote 5 ([`ontonote5`](https://www.aclweb.org/anthology/N06-2015.pdf))        | News, Blog, Dialogue |    English    |           18 |   59,924/8,582/8,262 | No | 
 | CoNLL 2003 ([`conll2003`](https://www.aclweb.org/anthology/W03-0419.pdf))        |         News         |    English    |            4 |   14,041/3,250/3,453 | No |
 | WNUT 2017 ([`wnut2017`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))       |         Tweet        |    English    |            6 |    1,000/1,008/1,287 | No |
-| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf)) | Wikipedia | 282 languages |   3 | 20,000/10,000/10,000 | No |
+| FIN ([`fin`](https://www.aclweb.org/anthology/U15-1010.pdf))                     |         Finance      |    English    |            7 |            1,164/303 | No |
+| BioNLP 2004 ([`bionlp2004`](https://www.aclweb.org/anthology/W04-1213.pdf))      |      BioMedical      |    English    |           10 |         18,546/3,856 | No |
+| Japanese Wikipedia ([`wiki_ja`](https://github.com/Hironsan/IOB2Corpus))         |     Wikipedia        |    Japanese   |           16 |                  500 | No |
+| Japanese WikiNews ([`wiki_news_ja`](https://github.com/Hironsan/IOB2Corpus))     |     Wikipedia        |    Japanese   |           20 |                1,000 | No |
+| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf))    | Wikipedia | 282 languages |   3 | 20,000/10,000/10,000 | No |
 | MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/)) |   Restaurant review  |    English    |            8 |          7,660/1,521 | Yes |
 | MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))    |     Movie review     |    English    |           12 |          7,816/1,953 | Yes |
+
 
 One can specify cache directory by an environment variable `CACHE_DIR`, which set as `./cache` as default.
 
@@ -76,6 +81,7 @@ Words tagged with O are outside of named entities and the I-XXX tag is used for 
 named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
 first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
 The custom dataset should has `train.txt` and `valid.txt` file in a same folder.
+As mention type, you need to use [the shared dictionary definition](./tner/get_dataset.py#L16) 
 
 Please take a look [sample custom data](./tests/sample_data). 
 

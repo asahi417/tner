@@ -9,7 +9,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 from .mecab_wrapper import MeCabWrapper
 
 STOPWORDS = ['None', '#']
-VALID_DATASET = ['panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant']
+VALID_DATASET = ['panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant',
+                 'fin', 'bionlp2004', 'wiki_ja', 'wiki_news_ja']
 CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 
 # Shared label set across different dataset
@@ -56,7 +57,12 @@ SHARED_NER_LABEL = {
     "work of art": ["WORK_OF_ART", "creative-work"],
     "facility": ["FAC"],
     "language": ["LANGUAGE"],
-    "event": ["EVENT"]
+    "event": ["EVENT"],
+    "dna": ["DNA"],  # bionlp2004
+    "protein": ["protein"],
+    "cell type": ["cell_type"],
+    "cell line": ["cell_line"],
+    "rna": ["RNA"]
 }
 
 __all__ = ("get_dataset_ner", "VALID_DATASET", "SHARED_NER_LABEL")
@@ -142,6 +148,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     """
     post_process_mecab = False
     entity_first = False
+    to_bio = False
     language = 'en'
     data_path = os.path.join(CACHE_DIR, data_name)
     logging.info('data_name: {}'.format(data_name))
@@ -157,6 +164,28 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                     file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
                     file_tag=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.nertags'.format(i)),
                     output_file=os.path.join(data_path, '{}.txt'.format(i)))
+    elif data_name == 'bionlp2004':  # https://www.aclweb.org/anthology/W04-1213.pdf
+        files_info = {'train': 'Genia4ERtask1.iob2', 'valid': 'Genia4EReval1.iob2'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0}/Genia4ERtraining.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining.tar.gz'.
+                      format(data_path))
+            os.system('tar -xzf {0}/Genia4ERtraining.tar.gz -C {0}'.format(data_path))
+            os.system('mv {0}/Genia4ERtraining/* {0}/'.format(data_path))
+
+            os.system('wget -O {0}/Genia4ERtest.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest.tar.gz'.
+                      format(data_path))
+            os.system('tar -xzf {0}/Genia4ERtest.tar.gz -C {0}'.format(data_path))
+            os.system('mv {0}/Genia4ERtest/* {0}/'.format(data_path))
+    elif data_name == 'fin':  # https://www.aclweb.org/anthology/U15-1010.pdf
+        files_info = {'train': 'FIN5.txt', 'valid': 'FIN3.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0}/financial_risk_assessment.tgz https://people.eng.unimelb.edu.au/tbaldwin/resources/finance-sec/financial_risk_assessment.tgz'.
+                      format(data_path))
+            os.system('tar -xzf {0}/financial_risk_assessment.tgz -C {0}'.format(data_path))
+            os.system('mv {0}/dataset/* {0}/'.format(data_path))
+        to_bio = True
     elif data_name == 'mit_restaurant':
         files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
         if not os.path.exists(data_path):
@@ -247,7 +276,8 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
 
     label_to_id = dict() if label_to_id is None else label_to_id
     data_split_all, unseen_entity_set, label_to_id = decode_all_files(
-        files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first)
+        files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first,
+        to_bio=to_bio)
 
     if post_process_mecab:
         logging.info('mecab post processing')
@@ -272,8 +302,14 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     return data_split_all, label_to_id, language, unseen_entity_set
 
 
-def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False):
+def decode_file(file_name: str,
+                data_path: str,
+                label_to_id: Dict,
+                fix_label_dict: bool,
+                entity_first: bool = False,
+                to_bio: bool = False):
     inputs, labels, seen_entity = [], [], []
+    past_mention = 'O'
     with open(os.path.join(data_path, file_name), 'r') as f:
         sentence, entity = [], []
         for n, line in enumerate(f):
@@ -303,11 +339,23 @@ def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dic
                 if tag != 'O':  # map tag by custom dictionary
                     location = tag.split('-')[0]
                     mention = '-'.join(tag.split('-')[1:])
+                    if to_bio and mention == past_mention:
+                        location = 'I'
+                    elif to_bio:
+                        location = 'B'
+
+                    # if len([k for k, v in SHARED_NER_LABEL.items() if mention in v]) == 0:
+                    #     print(tag)
+                    #     input()
+
                     fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
                     if len(fixed_mention) == 0:
                         tag = 'O'
                     else:
                         tag = '-'.join([location, fixed_mention[0]])
+                    past_mention = mention
+                else:
+                    past_mention = 'O'
 
                 # if label dict is fixed, unknown tag type will be ignored
                 if tag not in label_to_id.keys() and fix_label_dict:
@@ -323,13 +371,14 @@ def decode_file(file_name: str, data_path: str, label_to_id: Dict, fix_label_dic
     return label_to_id, unseen_entity_label, {"data": inputs, "label": labels}
 
 
-def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False):
+def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False,
+                     to_bio: bool = False):
     data_split = dict()
     unseen_entity = None
     for name, filepath in files.items():
         label_to_id, unseen_entity_set, data_dict = decode_file(
             filepath, data_path=data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict,
-            entity_first=entity_first)
+            entity_first=entity_first, to_bio=to_bio)
         if unseen_entity is None:
             unseen_entity = unseen_entity_set
         else:
