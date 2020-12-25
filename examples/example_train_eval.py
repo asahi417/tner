@@ -18,13 +18,8 @@ python ./example_train_eval.py -c <path-to-checkpoint> --test \
 
 """
 import argparse
-
+from tner import VALID_DATASET
 from tner import TrainTransformersNER
-
-VALID_DATASET = [
-    'panx_dataset/*', 'conll_2003', 'wnut_17', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant',
-    'all_english', 'all_english_no_lower_case'
-]
 
 
 def get_options():
@@ -44,7 +39,7 @@ def get_options():
     parser.add_argument('--total-step', help='total training step', default=13000, type=int)
     parser.add_argument('--batch-size-validation',
                         help='batch size for validation (smaller size to save memory)',
-                        default=2,
+                        default=1,
                         type=int)
     parser.add_argument('--warmup-step', help='warmup step (6 percent of total is recommended)', default=700, type=int)
     parser.add_argument('--weight-decay', help='weight decay', default=1e-7, type=float)
