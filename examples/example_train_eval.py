@@ -1,22 +1,4 @@
-""" Model training/evaluation script
-
-eg) To train a model
-```
-python ./example_train_eval.py \
-    -t xlm-roberta-base \
-    -d ontonote5 \
-    --max-seq-length 128
-```
-
-eg) To evaluate a model
-```
-python ./example_train_eval.py -c <path-to-checkpoint> --test \
-    --test-data conll_2003 \
-    --test-ignore-entity \
-    --test-greedy-baseline
-```
-
-"""
+""" Model training/evaluation script """
 import argparse
 from tner import VALID_DATASET
 from tner import TrainTransformersNER

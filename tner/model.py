@@ -266,7 +266,7 @@ class TrainTransformersNER:
 
         data_loader = {k: self.__setup_loader(k, batch_size, max_seq_length) for k in self.dataset_split.keys()}
 
-        logging.info('testing model on {}'.format(test_dataset))
+        logging.info('testing model on {}'.format(dataset))
         logging.info('data_loader: {}'.format(str(list(data_loader.keys()))))
 
         # run inference
@@ -280,7 +280,7 @@ class TrainTransformersNER:
 
         # export result
         filename = 'test_{}{}{}.json'.format(
-            test_dataset.replace('/', '-'), '_ignore' if ignore_entity_type else '', '_lower' if lower_case else '')
+            dataset.replace('/', '-'), '_ignore' if ignore_entity_type else '', '_lower' if lower_case else '')
         with open(os.path.join(self.args.checkpoint_dir, filename), 'w') as f:
             json.dump(metrics, f)
         logging.info('[test completed, %0.2f sec in total]' % (time() - start_time))
