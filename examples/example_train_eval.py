@@ -49,10 +49,10 @@ if __name__ == '__main__':
     )
     if not trainer.is_trained:
         trainer.train(monitor_validation=opt.monitor_validation)
-
-    trainer.test(
-        test_dataset=opt.test_data,
-        ignore_entity_type=opt.test_ignore_entity,
-        lower_case=opt.test_lower_case
-    )
+    else:
+        trainer.test(
+            test_dataset=opt.test_data,
+            ignore_entity_type=opt.test_ignore_entity,
+            lower_case=opt.test_lower_case
+        )
 

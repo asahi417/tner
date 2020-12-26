@@ -340,6 +340,7 @@ class TrainTransformersNER:
             json.dump(self.label_to_id, f)
         writer.close()
         logging.info('ckpt saved at %s' % self.args.checkpoint_dir)
+        self.is_trained = True
 
     def __epoch_train(self, data_loader, writer):
         """ train on single epoch, returning flag which is True if training has been completed """
