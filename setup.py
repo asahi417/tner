@@ -28,6 +28,7 @@ setup(
 		'tensorboard',
 		'torch',
 		'transformers',
-		'seqeval'
+		'seqeval',
+		'segtok'
 	]
 )

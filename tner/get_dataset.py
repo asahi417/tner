@@ -2,6 +2,7 @@
 import os
 import zipfile
 import logging
+import re
 from typing import Dict, List
 from itertools import chain
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -10,7 +11,7 @@ from .mecab_wrapper import MeCabWrapper
 
 STOPWORDS = ['None', '#']
 VALID_DATASET = ['panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant',
-                 'fin', 'bionlp2004', 'wiki_ja', 'wiki_news_ja']
+                 'fin', 'bionlp2004', 'wiki_ja', 'wiki_news_ja', 'bc5cdr']
 CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 
 # Shared label set across different dataset
@@ -62,7 +63,9 @@ SHARED_NER_LABEL = {
     "protein": ["protein"],
     "cell type": ["cell_type"],
     "cell line": ["cell_line"],
-    "rna": ["RNA"]
+    "rna": ["RNA"],
+    "chemical": ["Chemical"],  # bc5cdr
+    "disease": ["Disease"]
 }
 
 __all__ = ("get_dataset_ner", "VALID_DATASET", "SHARED_NER_LABEL")
@@ -164,6 +167,56 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                     file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
                     file_tag=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.nertags'.format(i)),
                     output_file=os.path.join(data_path, '{}.txt'.format(i)))
+    elif data_name == 'bc5cdr':
+        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            os.system('wget -O {0}/CDR_Data.zip https://github.com/JHnlp/BioCreative-V-CDR-Corpus/raw/master/CDR_Data.zip'.format(data_path))
+            os.system('unzip {0}/CDR_Data.zip -d {0}'.format(data_path))
+            os.system('mv {0}/CDR_Data/CDR.Corpus.v010516/*.txt {0}/'.format(data_path))
+
+        def __process_single(_r):
+            title, body = _r.split('\n')[:2]
+            entities = _r.split('\n')[2:]
+            text = title.split('|t|')[-1] + ' ' + body.split('|a|')[-1]
+            _tokens = []
+            _tags = []
+            last_end = 0
+            for e in entities:
+                start, end = e.split('\t')[1:3]
+                try:
+                    start, end = int(start), int(end)
+                except ValueError:
+                    continue
+                mention = e.split('\t')[3]
+                entity_type = e.split('\t')[4]
+                assert text[start:end] == mention
+                _tokens_tmp = list(filter(
+                    lambda _x: len(_x) > 0, map(lambda m: m.replace(' ', ''), re.split(r'\b', text[last_end:start]))
+                ))
+                last_end = end
+
+                _tokens += _tokens_tmp
+                _tags += ['O'] * len(_tokens_tmp)
+
+                _mention_token = mention.split(' ')
+                _tokens += _mention_token
+                _tags += ['B-{}'.format(entity_type)] + ['I-{}'.format(entity_type)] * (len(_mention_token) - 1)
+                assert len(_tokens) == len(_tags)
+            return _tokens, _tags
+
+        def convert_to_iob(path, export):
+            path = '{0}/{1}'.format(data_path, path)
+            with open(path, 'r') as f:
+                raw = list(filter(lambda _x: len(_x) > 0, f.read().split('\n\n')))
+                token_tag = list(map(lambda _x: __process_single(_x), raw))
+                tokens, tags = list(zip(*token_tag))
+                conll_formatting(tokens=tokens, tags=tags, output_file=os.path.join(data_path, export), sentence_division='.')
+
+        convert_to_iob('CDR_DevelopmentSet.PubTator.txt', 'dev.txt')
+        convert_to_iob('CDR_TestSet.PubTator.txt', 'test.txt')
+        convert_to_iob('CDR_TrainingSet.PubTator.txt', 'train.txt')
+
     elif data_name == 'bionlp2004':  # https://www.aclweb.org/anthology/W04-1213.pdf
         files_info = {'train': 'Genia4ERtask1.iob2', 'valid': 'Genia4EReval1.iob2'}
         if not os.path.exists(data_path):
@@ -388,16 +441,34 @@ def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_d
     return data_split, unseen_entity, label_to_id
 
 
-def conll_formatting(file_token: str, file_tag: str, output_file: str):
+def conll_formatting(output_file: str,
+                     file_token: str=None,
+                     file_tag: str=None,
+                     tokens=None,
+                     tags=None,
+                     sentence_division=None):
     """ convert a separate ner/token file into single ner Conll 2003 format """
-    with open(file_token, 'r') as f:
-        tokens = [i.split(' ') for i in f.read().split('\n')]
-    with open(file_tag, 'r') as f:
-        tags = [i.split(' ') for i in f.read().split('\n')]
+    if file_token:
+        with open(file_token, 'r') as f:
+            tokens = [i.split(' ') for i in f.read().split('\n')]
+    if file_tag:
+        with open(file_tag, 'r') as f:
+            tags = [i.split(' ') for i in f.read().split('\n')]
+    assert tokens and tags
+    _end = False
     with open(output_file, 'w') as f:
         assert len(tokens) == len(tags)
         for _token, _tag in zip(tokens, tags):
             assert len(_token) == len(_tag)
             for __token, __tag in zip(_token, _tag):
+                _end = False
                 f.write('{0} {1}\n'.format(__token, __tag))
-            f.write('\n')
+                if sentence_division and __token == sentence_division:
+                    f.write('\n')
+                    _end = True
+            if _end:
+                _end = False
+            else:
+                f.write('\n')
+                _end = True
+
