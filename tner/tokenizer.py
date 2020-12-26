@@ -39,6 +39,10 @@ class Transforms:
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=CACHE_DIR)
         self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
         # find tokenizer-depend prefix
+        # tokens = self.tokenizer.tokenize('get tokenizer specific prefix')
+        # tokens_encode = self.tokenizer.convert_ids_to_tokens(self.tokenizer.encode('get tokenizer specific prefix'))
+        # sp_token_prefix = tokens_encode[:tokens_encode.index(tokens[0])]
+        # print(sp_token_prefix, self.tokenizer.convert_tokens_to_ids(sp_token_prefix))
         self.prefix = self.__sp_token_prefix()
         # find special tokens to be added
         self.sp_token_start, _, self.sp_token_end = additional_special_tokens(self.tokenizer)
