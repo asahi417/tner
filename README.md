@@ -95,10 +95,9 @@ trainer.train()
 where `transformers_model` is a pre-trained model name from [pretrained LM list](https://huggingface.co/models) and
 `dataset` is a dataset alias or path to custom dataset explained [dataset section](#datasets). 
 
-In the end of each epoch, metrics on validation set are computed for monitoring purpose, but it can be turned off to reduce 
-training time by
+In the end of each epoch, metrics on validation set are computed for monitoring purpose by activate monitoring.
 ```python
-trainer.train(skip_validation=True)
+trainer.train(monitor_validation=True)
 ```
 
 ***Train on multiple datasets:*** Model can be trained on a concatenation of multiple datasets by 

@@ -16,20 +16,10 @@ class Test(unittest.TestCase):
 
         # test training
         model = tner.TrainTransformersNER(dataset=[data],
+                                          total_step=100,
+                                          warmup_step=10,
                                           transformers_model=transformers_model,
                                           checkpoint_dir='./tests/ckpt_1')
-        model.train(skip_validation=True)
-        model.test(test_dataset=data)
-        model.test(test_dataset=data, ignore_entity_type=True)
-        model.test(test_dataset='wnut2017')
-        model.test(test_dataset='wnut2017', ignore_entity_type=True)
-        load_model(model.checkpoint)
-
-    def test_2(self):
-        # test training
-        model = tner.TrainTransformersNER(dataset=[data],
-                                          transformers_model=transformers_model,
-                                          checkpoint_dir='./tests/ckpt_2')
         model.train()
         model.test(test_dataset=data)
         model.test(test_dataset=data, ignore_entity_type=True)

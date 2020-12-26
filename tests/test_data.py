@@ -14,13 +14,10 @@ class Test(unittest.TestCase):
         unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['fin'])
         unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['bionlp2004'])
         unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['wiki_ja'])
-        print(label_to_id)
         unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['wiki_news_ja'])
-        print(label_to_id)
 
-    # def test_custom_data(self):
-    #     unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['./examples/sample_data'])
-    #     assert language == 'en'
+    def test_custom_data(self):
+        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['./tests/sample_data'])
 
 
 if __name__ == "__main__":
