@@ -53,6 +53,28 @@ Following built-in NER datasets are available via `tner`.
 
 
 One can specify cache directory by an environment variable `CACHE_DIR`, which set as `./cache` as default.
+The data API provide all the above dataset by one line, although data doesn't need to be loaded manually for training (see [model training section](#model-finetuning).   
+ 
+```python
+import tner
+data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['wnut2017'])
+```
+where `data` consists of following structured data.
+```
+{
+    'train': {
+        'data': [
+            ['@paulwalk', 'It', "'s", 'the', 'view', 'from', 'where', 'I', "'m", 'living', 'for', 'two', 'weeks', '.', 'Empire', 'State', 'Building', '=', 'ESB', '.', 'Pretty', 'bad', 'storm', 'here', 'last', 'evening', '.'],
+            ['From', 'Green', 'Newsfeed', ':', 'AHFA', 'extends', 'deadline', 'for', 'Sage', 'Award', 'to', 'Nov', '.', '5', 'http://tinyurl.com/24agj38'], ...
+        ],
+        'label': [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ...
+        ]
+    },
+    'valid': ...
+}
+```
 
 ***WikiAnn dataset***  
 All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need 
