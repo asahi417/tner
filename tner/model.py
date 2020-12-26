@@ -135,6 +135,7 @@ class TrainTransformersNER:
         self.dataset_split = None
         self.label_to_id = None
         self.language = None
+        self.unseen_entity_set = None
         self.label_to_id = None
         self.id_to_label = None
         self.optimizer = None
@@ -150,13 +151,13 @@ class TrainTransformersNER:
     def __setup_data(self, dataset_name, lower_case):
         assert self.dataset_split is None, "dataset has already been loaded"
         if self.is_trained:
-            self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
+            self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
                 dataset_name,
                 label_to_id=self.args.label_to_id,
                 fix_label_dict=True,
                 lower_case=lower_case)
         else:
-            self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
+            self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
                 dataset_name,
                 lower_case=lower_case)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
