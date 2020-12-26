@@ -272,7 +272,7 @@ class TrainTransformersNER:
         # run inference
         start_time = time()
         metrics = {}
-        params = dict(ignore_entity_type=ignore_entity_type, unseen_entity_set=unseen_entity_set)
+        params = dict(ignore_entity_type=ignore_entity_type, unseen_entity_set=self.unseen_entity_set)
         for k, v in data_loader.items():
             assert v is not None, '{} data split is not found'.format(k)
             metrics[k] = self.__epoch_valid(v, prefix=k, **params)
