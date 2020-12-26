@@ -51,7 +51,7 @@ class TrainTransformersNER:
 
     def __init__(self,
                  dataset: (str, List) = None,
-                 batch_size_validation: int = None,
+                 # batch_size_validation: int = None,
                  checkpoint: str = None,
                  checkpoint_dir: str = None,
                  transformers_model: str = 'xlm-roberta-base',
@@ -124,26 +124,44 @@ class TrainTransformersNER:
             fp16=fp16,
             max_grad_norm=max_grad_norm,
             lower_case=lower_case)
-        self.batch_size_validation = batch_size_validation if batch_size_validation else self.args.batch_size
 
+        self.is_trained = self.args.model_statistics is not None
         # fix random seed
         random.seed(self.args.random_seed)
         transformers.set_seed(self.args.random_seed)
         torch.manual_seed(self.args.random_seed)
         torch.cuda.manual_seed_all(self.args.random_seed)
 
-        # dataset
-        if self.args.model_statistics is None:
+        self.dataset_split = None
+        self.label_to_id = None
+        self.language = None
+        self.label_to_id = None
+        self.id_to_label = None
+        self.optimizer = None
+        self.scheduler = None
+        self.scale_loss = None
+        self.n_gpu = torch.cuda.device_count()
+        self.device = 'cuda' if self.n_gpu > 0 else 'cpu'
+        self.model = None
+        self.transforms = None
+        self.__epoch = 0
+        self.__step = 0
+
+    def __setup_data(self, dataset_name, lower_case):
+        assert self.dataset_split is None, "dataset has already been loaded"
+        if self.is_trained:
             self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
-                self.args.dataset, lower_case=self.args.lower_case)
-            with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
-                json.dump(self.label_to_id, f)
+                dataset_name,
+                label_to_id=self.args.label_to_id,
+                fix_label_dict=True,
+                lower_case=lower_case)
         else:
             self.dataset_split, self.label_to_id, self.language, _ = get_dataset_ner(
-                self.args.dataset, label_to_id=self.args.label_to_id, fix_label_dict=True, lower_case=self.args.lower_case)
+                dataset_name,
+                lower_case=lower_case)
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
-        # model setup
+    def __setup_model(self):
         self.model = transformers.AutoModelForTokenClassification.from_pretrained(
             self.args.transformers_model,
             config=transformers.AutoConfig.from_pretrained(
@@ -154,33 +172,27 @@ class TrainTransformersNER:
                 cache_dir=CACHE_DIR)
         )
         self.transforms = Transforms(self.args.transformers_model)
+        if not self.is_trained:
+            # optimizer
+            no_decay = ["bias", "LayerNorm.weight"]
+            optimizer_grouped_parameters = [
+                {"params": [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
+                 "weight_decay": self.args.weight_decay},
+                {"params": [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)],
+                 "weight_decay": 0.0}]
+            self.optimizer = transformers.AdamW(optimizer_grouped_parameters, lr=self.args.lr, eps=1e-8)
 
-        # optimizer
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {"params": [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
-             "weight_decay": self.args.weight_decay},
-            {"params": [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)],
-             "weight_decay": 0.0}]
-        self.optimizer = transformers.AdamW(optimizer_grouped_parameters, lr=self.args.lr, eps=1e-8)
-
-        # scheduler
-        self.__epoch = 0
-        self.__step = 0
-        self.scheduler = transformers.get_linear_schedule_with_warmup(
-            self.optimizer, num_warmup_steps=self.args.warmup_step, num_training_steps=self.args.total_step)
-
-        # apply checkpoint statistics to optimizer/scheduler
-        if self.args.model_statistics is not None:
+            # scheduler
+            self.scheduler = transformers.get_linear_schedule_with_warmup(
+                self.optimizer, num_warmup_steps=self.args.warmup_step, num_training_steps=self.args.total_step)
+        else:
+            # load check point
             self.model.load_state_dict(self.args.model_statistics['model_state_dict'])
 
         # GPU allocation
-        self.n_gpu = torch.cuda.device_count()
-        self.device = 'cuda' if self.n_gpu > 0 else 'cpu'
         self.model.to(self.device)
 
         # GPU mixture precision
-        self.scale_loss = None
         if self.args.fp16:
             try:
                 from apex import amp  # noqa: F401
@@ -200,15 +212,19 @@ class TrainTransformersNER:
             logging.info('using `torch.nn.DataParallel`')
         logging.info('running on %i GPUs' % self.n_gpu)
 
-    def __setup_loader(self, data_type: str, dataset_split: Dict, language: str, batch_size: int):
-        if data_type not in dataset_split.keys():
+    def __setup_loader(self,
+                       data_type: str,
+                       batch_size: int,
+                       max_seq_length: int):
+        assert self.dataset_split, 'run __setup_data firstly'
+        if data_type not in self.dataset_split.keys():
             return None
         is_train = data_type == 'train'
         features = self.transforms.encode_plus_all(
-            tokens=dataset_split[data_type]['data'],
-            labels=dataset_split[data_type]['label'],
-            language=language,
-            max_length=self.args.max_seq_length if is_train else None)
+            tokens=self.dataset_split[data_type]['data'],
+            labels=self.dataset_split[data_type]['label'],
+            language=self.language,
+            max_length=max_seq_length)
         data_obj = Dataset(features)
         return torch.utils.data.DataLoader(
             data_obj, num_workers=NUM_WORKER, batch_size=batch_size, shuffle=is_train, drop_last=is_train)
@@ -218,10 +234,11 @@ class TrainTransformersNER:
         return self.args.checkpoint_dir
 
     def test(self,
-             test_dataset: str,
+             test_dataset: str = None,
              ignore_entity_type: bool = False,
              lower_case: bool = False,
-             batch_size: int = None):
+             batch_size_validation: int = None,
+             max_seq_length_validation: int = None):
         """ Test NER model on specific dataset
 
          Parameter
@@ -235,14 +252,20 @@ class TrainTransformersNER:
             Converting test data into lowercased
         """
 
-        # setup data
-        batch_size = batch_size if batch_size else self.args.batch_size
+        # setup model/dataset/data loader
+        assert self.is_trained, 'finetune model before'
+        dataset = test_dataset if test_dataset else self.args.dataset
+        batch_size = batch_size_validation if batch_size_validation else self.args.batch_size
+        max_seq_length = max_seq_length_validation if max_seq_length_validation else self.args.max_seq_length
+        self.__setup_data(dataset, lower_case)
+        self.__setup_model()
+
+        if 'train' in self.dataset_split.keys():
+            self.dataset_split.pop('train')
+
+        data_loader = {k: self.__setup_loader(k, batch_size, max_seq_length) for k in self.dataset_split.keys()}
+
         logging.info('testing model on {}'.format(test_dataset))
-        dataset_split, self.label_to_id, language, unseen_entity_set = get_dataset_ner(
-            test_dataset, label_to_id=self.label_to_id, lower_case=lower_case)
-        self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
-        data_loader = {k: self.__setup_loader(k, dataset_split, language, batch_size)
-                       for k in dataset_split.keys() if k != 'train'}
         logging.info('data_loader: {}'.format(str(list(data_loader.keys()))))
 
         # run inference
@@ -262,7 +285,10 @@ class TrainTransformersNER:
         logging.info('[test completed, %0.2f sec in total]' % (time() - start_time))
         logging.info('export metrics at: {}'.format(os.path.join(self.args.checkpoint_dir, filename)))
 
-    def train(self, skip_validation: bool = False):
+    def train(self,
+              monitor_validation: bool = False,
+              batch_size_validation: int = 1,
+              max_seq_length_validation: int = 128):
         """ Train NER model
 
          Parameter
@@ -270,21 +296,27 @@ class TrainTransformersNER:
         skip_validation: bool
             Training without testing at the end of each epoch for monitoring purpose
         """
+        # setup model/dataset/data loader
+        assert not self.is_trained, 'model has been already finetuned'
+        self.__setup_data(self.args.dataset, self.args.lower_case)
+        self.__setup_model()
         writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
-        start_time = time()
 
-        # setup dataset/data loader
-        data_loader = {
-            'train': self.__setup_loader('train', self.dataset_split, self.language, self.args.batch_size),
-            'valid': self.__setup_loader('valid', self.dataset_split, self.language, self.batch_size_validation)
-        }
+        data_loader = {'train': self.__setup_loader('train', self.args.batch_size, self.args.max_seq_length)}
+        if monitor_validation and 'valid' in self.dataset_split.keys():
+            data_loader['valid'] = self.__setup_loader('valid', batch_size_validation, max_seq_length_validation)
+        else:
+            data_loader['valid'] = None
+
+        # start experiment
+        start_time = time()
         logging.info('data_loader: %s' % str(list(data_loader.keys())))
         logging.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
         try:
             while True:
                 if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
                 self.release_cache()
-                if not skip_validation and data_loader['valid']:
+                if data_loader['valid']:
                     try:
                         self.__epoch_valid(data_loader['valid'], writer=writer, prefix='valid')
                     except RuntimeError:
@@ -303,6 +335,8 @@ class TrainTransformersNER:
         logging.info('[training completed, %0.2f sec in total]' % (time() - start_time))
         model_wts = self.model.module.state_dict() if self.n_gpu > 1 else self.model.state_dict()
         torch.save({'model_state_dict': model_wts}, os.path.join(self.args.checkpoint_dir, 'model.pt'))
+        with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
+            json.dump(self.label_to_id, f)
         writer.close()
         logging.info('ckpt saved at %s' % self.args.checkpoint_dir)
 
@@ -310,6 +344,7 @@ class TrainTransformersNER:
         """ train on single epoch, returning flag which is True if training has been completed """
         self.model.train()
         for i, encode in enumerate(data_loader, 1):
+
             # update model
             encode = {k: v.to(self.device) for k, v in encode.items()}
             self.optimizer.zero_grad()
@@ -323,9 +358,11 @@ class TrainTransformersNER:
             else:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
+
             # optimizer and scheduler step
             self.optimizer.step()
             self.scheduler.step()
+
             # log instantaneous accuracy, loss, and learning rate
             inst_loss = loss.cpu().detach().item()
             inst_lr = self.optimizer.param_groups[0]['lr']
@@ -336,10 +373,12 @@ class TrainTransformersNER:
                 logging.info('[epoch %i] * (training step %i) loss: %.3f, lr: %0.8f'
                              % (self.__epoch, self.__step, inst_loss, inst_lr))
             self.__step += 1
+
             # break
             if self.__step >= self.args.total_step:
                 logging.info('reached maximum step')
                 return True
+
         return False
 
     def __epoch_valid(self,
