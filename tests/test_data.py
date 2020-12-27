@@ -17,8 +17,11 @@ class Test(unittest.TestCase):
             tags = list(filter(lambda x: len(x) > 0, list(set([k[2:] for k in label_to_id.keys()]))))
             logging.info('\n- data: {}, tag: {} ({})\n'.format(i, tags, len(tags)))
 
-    # def test_custom_data(self):
-    #     unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['./tests/sample_data'])
+    def test_custom_data(self):
+        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['./tests/sample_data'])
+
+    def test_multiple_data(self):
+        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['conll2003', 'fin', 'ontonote5'])
 
 
 if __name__ == "__main__":

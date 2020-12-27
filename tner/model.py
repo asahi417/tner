@@ -194,17 +194,18 @@ class TrainTransformersNER:
         self.model.to(self.device)
 
         # GPU mixture precision
+        try:
+            from apex import amp  # noqa: F401
+            self.model, self.optimizer = amp.initialize(
+                self.model, self.optimizer, opt_level='O1', max_loss_scale=2 ** 13, min_loss_scale=1e-5)
+            self.master_params = amp.master_params
+            self.scale_loss = amp.scale_loss
+            logging.info('using `apex.amp`')
+        except ImportError:
+            raise ImportError(
+                "Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
         if self.args.fp16:
-            try:
-                from apex import amp  # noqa: F401
-                self.model, self.optimizer = amp.initialize(
-                    self.model, self.optimizer, opt_level='O1', max_loss_scale=2 ** 13, min_loss_scale=1e-5)
-                self.master_params = amp.master_params
-                self.scale_loss = amp.scale_loss
-                logging.info('using `apex.amp`')
-            except ImportError:
-                raise ImportError(
-                    "Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
+            pass
 
         # multi-gpus
         if self.n_gpu > 1:
