@@ -255,7 +255,12 @@ class TrainTransformersNER:
 
         # setup model/dataset/data loader
         assert self.is_trained, 'finetune model before'
-        dataset = test_dataset if test_dataset else self.args.dataset
+        if test_dataset is None:
+            assert len(self.args.dataset) == 1, "test dataset can not be determined"
+            dataset = self.args.dataset[0]
+        else:
+            dataset = test_dataset
+        assert type(dataset) is str
         batch_size = batch_size_validation if batch_size_validation else self.args.batch_size
         max_seq_length = max_seq_length_validation if max_seq_length_validation else self.args.max_seq_length
         self.__setup_data(dataset, lower_case)
