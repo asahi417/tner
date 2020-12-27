@@ -30,11 +30,12 @@ def get_options():
 
 if __name__ == '__main__':
     opt = get_options()
+    data = opt.data.split(',')
     # train model
     trainer = TrainTransformersNER(
         checkpoint=opt.checkpoint,
         checkpoint_dir=opt.checkpoint_dir,
-        dataset=opt.data,
+        dataset=data,
         transformers_model=opt.transformer,
         random_seed=opt.random_seed,
         lr=opt.lr,
