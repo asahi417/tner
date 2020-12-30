@@ -21,7 +21,7 @@ PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "
         "ku", "mr", "pl", "sk", "uk", "zh", "bar", "cs", "fiu-vro", "hy", "ky", "ms", "pms", "sl", "ur", "bat-smg",
         "csb", "fo", "ia", "la", "mt", "pnb", "so", "uz", "be-x-old", "cv", "fr", "id", "lb", "mwl", "ps", "sq", "vec",
         "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"]
-VALID_DATASET = ['conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
+VALID_DATASET = ['conll2003', 'wnut2017', 'ontonotes5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
                  'wiki_ja', 'wiki_news_ja', 'bc5cdr'] + ['panx_dataset/{}'.format(i) for i in [PANX]]
 CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 
@@ -259,7 +259,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'.format(
                 os.path.join(data_path, 'valid.txt')))
         entity_first = True
-    elif data_name == 'ontonote5':
+    elif data_name == 'ontonotes5':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)

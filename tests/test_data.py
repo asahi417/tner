@@ -24,7 +24,7 @@ class Test(unittest.TestCase):
 
     def test_multiple_data(self):
         unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner([
-            'conll2003', 'fin', 'ontonote5', path_to_custom_data])
+            'conll2003', 'fin', 'ontonotes5', path_to_custom_data])
 
 
 if __name__ == "__main__":

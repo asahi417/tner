@@ -112,7 +112,7 @@ Please take a look [sample custom data](examples/custom_dataset_sample).
 Language model finetuning can be done with a few lines:
 ```python
 import tner
-trainer = tner.TrainTransformersNER(dataset="ontonote5", transformers_model="xlm-roberta-base")
+trainer = tner.TrainTransformersNER(dataset="ontonotes5", transformers_model="xlm-roberta-base")
 trainer.train()
 ```
 where `transformers_model` is a pre-trained model name from [pretrained LM list](https://huggingface.co/models) and
@@ -126,9 +126,9 @@ trainer.train(monitor_validation=True)
 ***Train on multiple datasets:*** Model can be trained on a concatenation of multiple datasets by 
 
 ```python
-trainer = tner.TrainTransformersNER(dataset=["ontonote5", "conll2003"], transformers_model="xlm-roberta-base")
+trainer = tner.TrainTransformersNER(dataset=["ontonotes5", "conll2003"], transformers_model="xlm-roberta-base")
 ```
-Custom dataset can be also added to built-in dataset eg) `dataset=["ontonote5", "./test/sample_data"]`.
+Custom dataset can be also added to built-in dataset eg) `dataset=["ontonotes5", "./test/sample_data"]`.
 For more information about the options, you may want to see [here](./tner/model.py#L3).
 
 ***Organize model weights (checkpoint files):*** Checkpoint files (model weight, training config, benchmark results, etc)
@@ -190,7 +190,7 @@ Firstly, we report our baseline on each dataset, where the metrics are quite clo
 
 |   Dataset              | F1 (val) | F1 (test) | SoTA F1 (test) |                    SoTA reference                    |
 |:----------------------:|:--------:|:---------:|:--------------:|:----------------------------------------------------:|
-| **`ontonote5`**        |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
+| **`ontonotes5`**        |     0.87 |      0.89 |           0.92 | [BERT-MRC-DSC](https://arxiv.org/pdf/1911.02855.pdf) |
 | **`conll_2003`**       |     0.95 |      0.91 |           0.94 | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       |
 | **`wnut_17`**          |     0.63 |      0.53 |           0.50 | [CrossWeigh](https://www.aclweb.org/anthology/D19-1519.pdf)  |
 | **`panx_dataset/en`**  |     0.84 |      0.83 |           0.84 | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
@@ -207,7 +207,7 @@ which implies model's high capacity of entity type classification.
 
 |   Dataset              | F1 (val, ignore type) | F1 (test, ignore type) |
 |:----------------------:|:---------------------:|:----------------------:|
-| **`ontonote5`**        |                  0.91 |                   0.91 |
+| **`ontonotes5`**        |                  0.91 |                   0.91 |
 | **`conll_2003`**       |                  0.98 |                   0.98 |
 | **`wnut_17`**          |                  0.73 |                   0.63 | 
 | **`panx_dataset/en`**  |                  0.93 |                   0.93 |
@@ -221,9 +221,9 @@ Cross-domain comparison in NER is not so straightforward as in either number of 
 be different depending on each dataset.
 Instead of NER metric comparison, we focus on entity detection ability in different models.
 
-|       Train\Test       | `ontonote5` | `conll_2003` | `wnut_17` | `panx_dataset/en` | `mit_movie_trivia` | `mit_restaurant` |
+|       Train\Test       | `ontonotes5` | `conll_2003` | `wnut_17` | `panx_dataset/en` | `mit_movie_trivia` | `mit_restaurant` |
 |:----------------------:|:-----------:|:------------:|:---------:|:-----------------:|:------------------:|:----------------:|
-| **`ontonote5`**        |      _0.91_ |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
+| **`ontonotes5`**        |      _0.91_ |         0.58 |       0.5 |              0.46 |                0.2 |             0.01 |
 | **`conll_2003`**       |        0.61 |       _0.96_ |       0.5 |              0.61 |                  0 |                0 |
 | **`wnut_17`**          |        0.52 |         0.69 |    _0.63_ |              0.53 |                  0 |             0.09 |
 | **`panx_dataset/en`**  |        0.41 |         0.73 |      0.34 |            _0.93_ |                  0 |             0.08 |
