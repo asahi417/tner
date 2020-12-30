@@ -106,7 +106,7 @@ first word of the second entity will be tagged B-XXX in order to show that it st
 The custom dataset should has `train.txt` and `valid.txt` file in a same folder.
 As mention type, you need to use [the shared dictionary definition](./tner/get_dataset.py#L16) 
 
-Please take a look [sample custom data](./tests/sample_data). 
+Please take a look [sample custom data](examples/custom_dataset_sample). 
 
 ### Model Finetuning
 Language model finetuning can be done with a few lines:

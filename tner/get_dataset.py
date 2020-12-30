@@ -10,8 +10,19 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 from .mecab_wrapper import MeCabWrapper
 
 STOPWORDS = ['None', '#']
-VALID_DATASET = ['panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant',
-                 'fin', 'bionlp2004', 'wiki_ja', 'wiki_news_ja', 'bc5cdr']
+PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "bh", "de", "fy", "io", "lmo", "nap",
+        "rm", "sv", "vls", "als", "bn", "diq", "ga", "is", "ln", "nds", "ro", "sw", "vo", "am", "bo", "dv", "gan", "it",
+        "lt", "ne", "ru", "szl", "wa", "an", "br", "el", "gd", "ja", "lv", "nl", "rw", "ta", "war", "ang", "bs", "eml",
+        "gl", "jbo", "map-bms", "nn", "sa", "te", "wuu", "ar", "ca", "en", "gn", "jv", "mg", "no", "sah", "tg", "xmf",
+        "arc", "cbk-zam", "eo", "gu", "ka", "mhr", "nov", "scn", "th", "yi", "arz", "cdo", "es", "hak", "kk", "mi",
+        "oc", "sco", "tk", "yo", "as", "ce", "et", "he", "km", "min", "or", "sd", "tl", "zea", "ast", "ceb", "eu", "hi",
+        "kn", "mk", "os", "sh", "tr", "zh-classical", "ay", "ckb", "ext", "hr", "ko", "ml", "pa", "si", "tt",
+        "zh-min-nan", "az", "co", "fa", "hsb", "ksh", "mn", "pdc", "simple", "ug", "zh-yue", "ba", "crh", "fi", "hu",
+        "ku", "mr", "pl", "sk", "uk", "zh", "bar", "cs", "fiu-vro", "hy", "ky", "ms", "pms", "sl", "ur", "bat-smg",
+        "csb", "fo", "ia", "la", "mt", "pnb", "so", "uz", "be-x-old", "cv", "fr", "id", "lb", "mwl", "ps", "sq", "vec",
+        "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"]
+VALID_DATASET = ['conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
+                 'wiki_ja', 'wiki_news_ja', 'bc5cdr'] + ['panx_dataset/{}'.format(i) for i in [PANX]]
 CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 
 # Shared label set across different dataset
@@ -159,9 +170,9 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
+            os.system('wget -O {0}/data", " https://github.com/swiseman/neighbor-tagging/raw/master/data", "'.
                       format(CACHE_DIR))
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
+            os.system('tar -xzf {0}/data", " -C {0}'.format(CACHE_DIR))
             for i in ['train', 'dev', 'test']:
                 conll_formatting(
                     file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
@@ -221,14 +232,14 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info = {'train': 'Genia4ERtask1.iob2', 'valid': 'Genia4EReval1.iob2'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/Genia4ERtraining.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining.tar.gz'.
+            os.system('wget -O {0}/Genia4ERtraining", " http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining", "'.
                       format(data_path))
-            os.system('tar -xzf {0}/Genia4ERtraining.tar.gz -C {0}'.format(data_path))
+            os.system('tar -xzf {0}/Genia4ERtraining", " -C {0}'.format(data_path))
             os.system('mv {0}/Genia4ERtraining/* {0}/'.format(data_path))
 
-            os.system('wget -O {0}/Genia4ERtest.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest.tar.gz'.
+            os.system('wget -O {0}/Genia4ERtest", " http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest", "'.
                       format(data_path))
-            os.system('tar -xzf {0}/Genia4ERtest.tar.gz -C {0}'.format(data_path))
+            os.system('tar -xzf {0}/Genia4ERtest", " -C {0}'.format(data_path))
             os.system('mv {0}/Genia4ERtest/* {0}/'.format(data_path))
     elif data_name == 'fin':  # https://www.aclweb.org/anthology/U15-1010.pdf
         files_info = {'train': 'FIN5.txt', 'valid': 'FIN3.txt'}
@@ -252,9 +263,9 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
+            os.system('wget -O {0}/data", " https://github.com/swiseman/neighbor-tagging/raw/master/data", "'.
                 format(CACHE_DIR))
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
+            os.system('tar -xzf {0}/data", " -C {0}'.format(CACHE_DIR))
             for i in ['train', 'dev', 'test']:
                 conll_formatting(
                     file_token=os.path.join(CACHE_DIR, 'data/onto/{}.words'.format(i)),
@@ -311,7 +322,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                 with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(CACHE_DIR), 'r') as zip_ref:
                     zip_ref.extractall('{}/'.format(CACHE_DIR))
             os.makedirs(data_path, exist_ok=True)
-            os.system('tar xzf {0}/panx_dataset/{1}.tar.gz -C {2}'.format(CACHE_DIR, panx_la, data_path))
+            os.system('tar xzf {0}/panx_dataset/{1}", " -C {2}'.format(CACHE_DIR, panx_la, data_path))
             for v in files_info.values():
                 os.system("sed -e 's/{0}://g' {1}/{2} > {1}/{2}.txt".format(panx_la, data_path, v.replace('.txt', '')))
                 os.system("rm -rf {0}/{1}".format(data_path, v.replace('.txt', '')))

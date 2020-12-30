@@ -1,3 +1,4 @@
+""" command line tool to test finetuned NER model """
 import argparse
 from pprint import pprint
 
@@ -5,14 +6,13 @@ from tner import TransformersNER
 
 
 def get_options():
-    parser = argparse.ArgumentParser(description='command line test',)
+    parser = argparse.ArgumentParser(description='command line tool to test finetuned NER model',)
     parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     opt = get_options()
-    # play around with trained model
     classifier = TransformersNER(checkpoint=opt.checkpoint)
     test_sentences = [
         'I live in United States, but Microsoft asks me to move to Japan.',

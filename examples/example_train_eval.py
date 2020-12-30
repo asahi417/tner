@@ -1,4 +1,4 @@
-""" Model training/evaluation script """
+""" Fine-tune transformers on NER dataset """
 import argparse
 from tner import VALID_DATASET
 from tner import TrainTransformersNER

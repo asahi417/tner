@@ -4,7 +4,7 @@ import random
 import json
 import logging
 from time import time
-from typing import Dict, List
+from typing import List
 from itertools import groupby
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -19,12 +19,13 @@ from .checkpoint_versioning import Argument
 from .tokenizer import Transforms
 
 
-NUM_WORKER = 4
 PROGRESS_INTERVAL = 100
 CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
 os.makedirs(CACHE_DIR, exist_ok=True)
+
+__all__ = ('TrainTransformersNER', 'TransformersNER')
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -51,16 +52,15 @@ class TrainTransformersNER:
 
     def __init__(self,
                  dataset: (str, List) = None,
-                 # batch_size_validation: int = None,
                  checkpoint: str = None,
                  checkpoint_dir: str = None,
-                 transformers_model: str = 'xlm-roberta-base',
+                 transformers_model: str = 'xlm-roberta-large',
                  random_seed: int = 1234,
                  lr: float = 1e-5,
-                 total_step: int = 13000,
+                 total_step: int = 5000,
                  warmup_step: int = 700,
                  weight_decay: float = 1e-7,
-                 batch_size: int = 16,
+                 batch_size: int = 32,
                  max_seq_length: int = 128,
                  fp16: bool = False,
                  max_grad_norm: float = 1.0,
@@ -70,43 +70,43 @@ class TrainTransformersNER:
 
          Parameter
         -----------------
-        dataset: List
-            List of dataset name
-            eg) 'panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant'
-        batch_size_validation: int
-            Batch size for validation
+        dataset: list
+            list of dataset for training, alias of preset dataset (see tner.VALID_DATASET) or path to custom dataset
+            folder such as https://github.com/asahi417/tner/tree/master/tests/sample_data
+            eg) ['panx_dataset/en', 'conll2003', 'tests/custom_dataset_sample']
         checkpoint: str
-            Checkpoint folder to load weight
+            checkpoint folder to load weight
         checkpoint_dir: str
-            Checkpoint directory ('checkpoint_dir/checkpoint' is regarded as a checkpoint path)
+            checkpoint directory ('checkpoint_dir/checkpoint' is regarded as a checkpoint path)
         transformers_model: str
-            Model name on huggingface transformers (https://huggingface.co/transformers/v2.2.0/pretrained_models.html)
+            language model alias from huggingface (https://huggingface.co/transformers/v2.2.0/pretrained_models.html)
         random_seed: int
-            Random seed through the experiment
+            random seed through the experiment
         lr: float
-            Learning rate
+            learning rate
         total_step: int
-            Total training step
+            total training step
         warmup_step: int
-            Step for linear warmup
+            step for linear warmup
         weight_decay: float
-            Parameter for weight decay
+            parameter for weight decay
         batch_size: int
-            Batch size for training
+            batch size for training
         max_seq_length: int
-            Language model's maximum sequence length
+            language model's maximum sequence length
         fp16: bool
-            Training with mixture precision mode
+            training with mixture precision mode
         max_grad_norm: float
-            Gradient clipping
+            gradient clipping
         lower_case: bool
-            Convert the dataset into lowercase
+            convert the dataset into lowercase
         num_worker: int
-            Number of worker for torch.Dataloader class
+            number of worker for torch.Dataloader class
         """
         logging.info('*** initialize network ***')
         if num_worker == 1:
             os.environ["OMP_NUM_THREADS"] = "1"  # to turn off warning message
+        self.num_worker = num_worker
 
         # checkpoint version
         self.args = Argument(
@@ -132,12 +132,11 @@ class TrainTransformersNER:
         torch.manual_seed(self.args.random_seed)
         torch.cuda.manual_seed_all(self.args.random_seed)
 
+        self.label_to_id = self.args.label_to_id
+        self.id_to_label = None if self.label_to_id is None else {v: str(k) for k, v in self.label_to_id.items()}
         self.dataset_split = None
-        self.label_to_id = None
         self.language = None
         self.unseen_entity_set = None
-        self.label_to_id = None
-        self.id_to_label = None
         self.optimizer = None
         self.scheduler = None
         self.scale_loss = None
@@ -149,11 +148,12 @@ class TrainTransformersNER:
         self.__step = 0
 
     def __setup_data(self, dataset_name, lower_case):
-        assert self.dataset_split is None, "dataset has already been loaded"
+        """ set up dataset """
+        # assert self.dataset_split is None, "dataset has already been loaded"
         if self.is_trained:
             self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
                 dataset_name,
-                label_to_id=self.args.label_to_id,
+                label_to_id=self.label_to_id,
                 fix_label_dict=True,
                 lower_case=lower_case)
         else:
@@ -163,6 +163,9 @@ class TrainTransformersNER:
         self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
 
     def __setup_model(self):
+        """ set up language model """
+        if self.model is not None:
+            return
         self.model = transformers.AutoModelForTokenClassification.from_pretrained(
             self.args.transformers_model,
             config=transformers.AutoConfig.from_pretrained(
@@ -213,10 +216,8 @@ class TrainTransformersNER:
             logging.info('using `torch.nn.DataParallel`')
         logging.info('running on %i GPUs' % self.n_gpu)
 
-    def __setup_loader(self,
-                       data_type: str,
-                       batch_size: int,
-                       max_seq_length: int):
+    def __setup_loader(self, data_type: str, batch_size: int, max_seq_length: int):
+        """ setup data loader """
         assert self.dataset_split, 'run __setup_data firstly'
         if data_type not in self.dataset_split.keys():
             return None
@@ -228,7 +229,7 @@ class TrainTransformersNER:
             max_length=max_seq_length)
         data_obj = Dataset(features)
         return torch.utils.data.DataLoader(
-            data_obj, num_workers=NUM_WORKER, batch_size=batch_size, shuffle=is_train, drop_last=is_train)
+            data_obj, num_workers=self.num_worker, batch_size=batch_size, shuffle=is_train, drop_last=is_train)
 
     @property
     def checkpoint(self):
@@ -245,12 +246,12 @@ class TrainTransformersNER:
          Parameter
         -------------
         test_dataset: str
-            Target dataset to test
-            eg) 'panx_dataset/*', 'conll2003', 'wnut2017', 'ontonote5', 'mit_movie_trivia', 'mit_restaurant'
+            target dataset to test, alias of preset dataset (see tner.VALID_DATASET) or path to custom dataset folder
+            eg) https://github.com/asahi417/tner/tree/master/tests/sample_data
         ignore_entity_type: bool
-            Test without entity type (entity span detection)
+            test without entity type (entity span detection)
         lower_case: bool
-            Converting test data into lowercased
+            converting test data into lower-cased
         """
 
         # setup model/dataset/data loader
@@ -299,8 +300,12 @@ class TrainTransformersNER:
 
          Parameter
         -------------
-        skip_validation: bool
-            Training without testing at the end of each epoch for monitoring purpose
+        monitor_validation: bool
+            display validation result at the end of each epoch
+        batch_size_validation: int
+            batch size for validation monitoring
+        max_seq_length_validation: int
+            max seq length for validation monitoring
         """
         # setup model/dataset/data loader
         assert not self.is_trained, 'model has been already finetuned'
@@ -348,7 +353,7 @@ class TrainTransformersNER:
         self.is_trained = True
 
     def __epoch_train(self, data_loader, writer):
-        """ train on single epoch, returning flag which is True if training has been completed """
+        """ single epoch training: returning flag which is True if training has been completed """
         self.model.train()
         for i, encode in enumerate(data_loader, 1):
 
@@ -388,14 +393,9 @@ class TrainTransformersNER:
 
         return False
 
-    def __epoch_valid(self,
-                      data_loader,
-                      writer=None,
-                      prefix: str = 'valid',
-                      unseen_entity_set: set = None,
-                      ignore_entity_type: bool = False):
-        """ validation/test, returning flag which is True if early stop condition was applied """
-
+    def __epoch_valid(self, data_loader, prefix, writer=None,
+                      unseen_entity_set: set = None, ignore_entity_type: bool = False):
+        """ single epoch validation/test """
         # aggregate prediction and true label
         self.model.eval()
         seq_pred, seq_true = [], []
@@ -438,8 +438,8 @@ class TrainTransformersNER:
         try:
             summary = classification_report(seq_true, seq_pred)
             logging.info('[epoch {}] ({}) \n {}'.format(self.__epoch, prefix, summary))
-        except ZeroDivisionError:
-            logging.info('[epoch {}] ({}) * `ZeroDivisionError` at classification_report'.format(self.__epoch, prefix))
+        except ZeroDivisionError or ValueError:
+            logging.exception('classification_report raises error')
             summary = ''
         metric['summary'] = summary
         if writer:
@@ -463,7 +463,7 @@ class TransformersNER:
          Parameter
         ------------
         checkpoint: str
-            Path to model weight file
+            path to model weight file
         """
         logging.info('*** initialize network ***')
         checkpoint = checkpoint.replace('model.pt', '')
@@ -504,8 +504,8 @@ class TransformersNER:
             mask = [t.split('-')[-1] == i for t, p in zip(tag_sequence, tag_probability)]
 
             # find blocks of True in a boolean list
-            group = [list(g) for _, g in groupby(mask)]
-            length = [len(g) for g in group]
+            group = list(map(lambda x: list(x[1]), groupby(mask)))
+            length = list(map(lambda x: len(x), group))
             group_length = [[sum(length[:n]), sum(length[:n]) + len(g)] for n, g in enumerate(group) if all(g)]
 
             # get entity
@@ -520,14 +520,14 @@ class TransformersNER:
          Parameter
         ----------------
         x: list
-            Batch of input texts
+            batch of input texts
         max_seq_length: int
-            Maximum sequence length for running an inference
+            maximum sequence length for running an inference
 
          Return
         ----------------
         entities: list
-            List of dictionary where each consists of
+            list of dictionary where each consists of
                 'type': (str) entity type
                 'position': (list) start position and end position
                 'mention': (str) mention

@@ -5,6 +5,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 
 import tner
 
+path_to_custom_data = './examples/custom_dataset_sample'
+
 
 class Test(unittest.TestCase):
     """ Test get_benchmark_dataset """
@@ -18,10 +20,11 @@ class Test(unittest.TestCase):
             logging.info('\n- data: {}, tag: {} ({})\n'.format(i, tags, len(tags)))
 
     def test_custom_data(self):
-        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['./tests/sample_data'])
+        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner([path_to_custom_data])
 
     def test_multiple_data(self):
-        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['conll2003', 'fin', 'ontonote5'])
+        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner([
+            'conll2003', 'fin', 'ontonote5', path_to_custom_data])
 
 
 if __name__ == "__main__":

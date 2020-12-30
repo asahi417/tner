@@ -11,13 +11,6 @@ class Test(unittest.TestCase):
 
     def test(self):
         transforms = tner.Transforms('roberta-base')
-        # transforms = tner.Transforms('xlm-roberta-base')
-        # print(transforms.sp_token_start)
-        # print(transforms.prefix)
-        # transforms = tner.Transforms('roberta-base')
-        # print(transforms.sp_token_start)
-        # print(transforms.prefix)
-        # input()
         unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['ontonote5'])
         tokens = unified_data['valid']['data'][:10]
         labels = unified_data['valid']['label'][:10]
@@ -34,10 +27,6 @@ class Test(unittest.TestCase):
             print(list(zip(tokens_restore, labels_restore)))
             print(list(zip(tokens[n], [label_to_id[_l] for _l in labels[n] if _l != -100])))
             print()
-
-    # def test_custom_data(self):
-    #     unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['./examples/sample_data'])
-    #     assert language == 'en'
 
 
 if __name__ == "__main__":
