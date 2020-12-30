@@ -25,7 +25,6 @@ def get_options():
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
     parser.add_argument('--test-data', help='test dataset (if not specified, use trained set)', default=None, type=str)
     parser.add_argument('--test-lower-case', help='lower case all the test data', action='store_true')
-    parser.add_argument('--test-ignore-entity', help='test with ignoring entity type', action='store_true')
     return parser.parse_args()
 
 
@@ -54,7 +53,13 @@ if __name__ == '__main__':
         for i in opt.test_data.split(','):
             trainer.test(
                 test_dataset=opt.test_data,
-                ignore_entity_type=opt.test_ignore_entity,
+                ignore_entity_type=True,
                 lower_case=opt.test_lower_case
             )
+            trainer.test(
+                test_dataset=opt.test_data,
+                ignore_entity_type=False,
+                lower_case=opt.test_lower_case
+            )
+
 
