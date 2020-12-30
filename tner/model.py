@@ -438,7 +438,7 @@ class TrainTransformersNER:
         try:
             summary = classification_report(seq_true, seq_pred)
             logging.info('[epoch {}] ({}) \n {}'.format(self.__epoch, prefix, summary))
-        except ZeroDivisionError or ValueError:
+        except Exception:
             logging.exception('classification_report raises error')
             summary = ''
         metric['summary'] = summary
