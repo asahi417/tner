@@ -1,5 +1,6 @@
 """ Fine-tune transformers on NER dataset """
 import argparse
+from glob import glob
 from tner import VALID_DATASET
 from tner import TrainTransformersNER
 
@@ -10,7 +11,7 @@ def get_options():
     parser.add_argument('-d', '--data', help='dataset: {}'.format(VALID_DATASET), default='wnut_17', type=str)
     parser.add_argument('-t', '--transformer', help='pretrained language model', default='xlm-roberta-large', type=str)
     parser.add_argument('-b', '--batch-size', help='batch size', default=32, type=int)
-    parser.add_argument('--checkpoint-dir', help='checkpoint directory', default=None, type=str)
+    parser.add_argument('--checkpoint-dir', help='checkpoint directory', default='./ckpt', type=str)
     parser.add_argument("--max-grad-norm", default=1.0, type=float, help="Max gradient norm.")
     parser.add_argument('--max-seq-length', default=128, type=int,
                         help='max sequence length (use same length as used in pre-training if not provided)')
