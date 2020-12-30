@@ -262,8 +262,9 @@ class TrainTransformersNER:
             dataset = test_dataset
         filename = 'test_{}{}{}.json'.format(
             dataset.replace('/', '-'), '_ignore' if ignore_entity_type else '', '_lower' if lower_case else '')
+        filename = os.path.join(self.args.checkpoint_dir, filename)
         if os.path.exists(filename):
-            return 
+            return
         assert type(dataset) is str
         batch_size = batch_size_validation if batch_size_validation else self.args.batch_size
         max_seq_length = max_seq_length_validation if max_seq_length_validation else self.args.max_seq_length
@@ -288,10 +289,10 @@ class TrainTransformersNER:
             self.release_cache()
 
         # export result
-        with open(os.path.join(self.args.checkpoint_dir, filename), 'w') as f:
+        with open(filename, 'w') as f:
             json.dump(metrics, f)
         logging.info('[test completed, %0.2f sec in total]' % (time() - start_time))
-        logging.info('export metrics at: {}'.format(os.path.join(self.args.checkpoint_dir, filename)))
+        logging.info('export metrics at: {}'.format(filename))
 
     def train(self,
               monitor_validation: bool = False,
