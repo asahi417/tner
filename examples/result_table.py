@@ -43,15 +43,14 @@ def summary():
                 else:
                     task = 'ner'
 
-                if test_data != train_data:
-                    if train_data not in dict_out_domain['f1'][task].keys():
-                        dict_out_domain['f1'][task][train_data] = {}
-                        dict_out_domain['recall'][task][train_data] = {}
-                        dict_out_domain['precision'][task][train_data] = {}
-                    dict_out_domain['f1'][task][train_data][test_data] = f1
-                    dict_out_domain['recall'][task][train_data][test_data] = f1
-                    dict_out_domain['precision'][task][train_data][test_data] = f1
-                else:
+                if train_data not in dict_out_domain['f1'][task].keys():
+                    dict_out_domain['f1'][task][train_data] = {}
+                    dict_out_domain['recall'][task][train_data] = {}
+                    dict_out_domain['precision'][task][train_data] = {}
+                dict_out_domain['f1'][task][train_data][test_data] = f1
+                dict_out_domain['recall'][task][train_data][test_data] = f1
+                dict_out_domain['precision'][task][train_data][test_data] = f1
+                if test_data == train_data:
                     dict_in_domain['f1'][task][test_data] = f1
                     dict_in_domain['recall'][task][test_data] = recall
                     dict_in_domain['precision'][task][test_data] = precision
