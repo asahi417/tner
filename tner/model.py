@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 import transformers
 import torch
 from torch import nn
-from seqeval.metrics import f1_score, precision_score, recall_score, classification_report, accuracy_score
+from seqeval.metrics import f1_score, precision_score, recall_score, classification_report
 from torch.utils.tensorboard import SummaryWriter
 
 from .get_dataset import get_dataset_ner
@@ -253,7 +253,6 @@ class TrainTransformersNER:
         lower_case: bool
             converting test data into lower-cased
         """
-
         # setup model/dataset/data loader
         assert self.is_trained, 'finetune model before'
         if test_dataset is None:
@@ -261,6 +260,10 @@ class TrainTransformersNER:
             dataset = self.args.dataset[0]
         else:
             dataset = test_dataset
+        filename = 'test_{}{}{}.json'.format(
+            dataset.replace('/', '-'), '_ignore' if ignore_entity_type else '', '_lower' if lower_case else '')
+        if os.path.exists(filename):
+            return 
         assert type(dataset) is str
         batch_size = batch_size_validation if batch_size_validation else self.args.batch_size
         max_seq_length = max_seq_length_validation if max_seq_length_validation else self.args.max_seq_length
@@ -285,8 +288,6 @@ class TrainTransformersNER:
             self.release_cache()
 
         # export result
-        filename = 'test_{}{}{}.json'.format(
-            dataset.replace('/', '-'), '_ignore' if ignore_entity_type else '', '_lower' if lower_case else '')
         with open(os.path.join(self.args.checkpoint_dir, filename), 'w') as f:
             json.dump(metrics, f)
         logging.info('[test completed, %0.2f sec in total]' % (time() - start_time))
@@ -432,7 +433,6 @@ class TrainTransformersNER:
             "f1": f1_score(seq_true, seq_pred) * 100,
             "recall": recall_score(seq_true, seq_pred) * 100,
             "precision": precision_score(seq_true, seq_pred) * 100,
-            "accuracy": accuracy_score(seq_true, seq_pred) * 100
         }
 
         try:
@@ -446,7 +446,6 @@ class TrainTransformersNER:
             writer.add_scalar('{}/f1'.format(prefix), metric['f1'], self.__epoch)
             writer.add_scalar('{}/recall'.format(prefix), metric['recall'], self.__epoch)
             writer.add_scalar('{}/precision'.format(prefix), metric['precision'], self.__epoch)
-            writer.add_scalar('{}/accuracy'.format(prefix), metric['accuracy'], self.__epoch)
         return metric
 
     def release_cache(self):
