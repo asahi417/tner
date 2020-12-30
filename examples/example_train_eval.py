@@ -51,15 +51,7 @@ if __name__ == '__main__':
         trainer.train(monitor_validation=opt.monitor_validation)
     else:
         for i in opt.test_data.split(','):
-            trainer.test(
-                test_dataset=opt.test_data,
-                ignore_entity_type=True,
-                lower_case=opt.test_lower_case
-            )
-            trainer.test(
-                test_dataset=opt.test_data,
-                ignore_entity_type=False,
-                lower_case=opt.test_lower_case
-            )
+            trainer.test(test_dataset=i, lower_case=opt.test_lower_case)
+            trainer.test(test_dataset=i, ignore_entity_type=True, lower_case=opt.test_lower_case)
 
 
