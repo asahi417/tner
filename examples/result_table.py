@@ -20,9 +20,15 @@ def summary():
         for i in glob('{}/*'.format(checkpoint_dir)):
             with open('{}/parameter.json'.format(i)) as f:
                 param = json.load(f)
-            train_data = '+'.join(param['dataset'])
-            total_step = param['total_step']
-            # print(dataset, total_step)
+            if len(param['dataset']) > 1:
+                total_step = param['total_step']
+                if 'mit_restaurant' in param['dataset']:
+                    train_data = 'all_mit_{}'.format(total_step)
+                else:
+                    train_data = 'all_{}'.format(total_step)
+            else:
+                train_data = param['dataset'][0]
+
             for a in glob('{}/test*.json'.format(i)):
                 # if 'ignore' in a:
                 # test_data = a.split('test_')[-1].split('_ignore.json')[0]
@@ -73,9 +79,9 @@ def summary():
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
             tmp_out = dict_out_domain[metric][task]
-            pprint(tmp_out)
-            tmp = pd.DataFrame(tmp_out).T
-            pprint(tmp)
+            tmp_df = pd.DataFrame(tmp_out).T
+            tmp_df = tmp_df.sort_index()
+            pprint(tmp_df)
             input()
     df_in_domain = {k: {_k: pd.DataFrame(_v) for _k, _v in v.items()} for k, v in dict_in_domain.items()}
     pprint(df_in_domain)
