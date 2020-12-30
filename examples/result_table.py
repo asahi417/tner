@@ -50,8 +50,10 @@ def summary(prefix: str = 'valid'):
                 dict_in_domain['f1'][task][test_data] = f1
                 dict_in_domain['recall'][task][test_data] = recall
                 dict_in_domain['precision'][task][test_data] = precision
-    pprint(dict_in_domain)
-    pprint(dict_out_domain)
+    with open('./ckpt/summary_in_domain.json', 'w') as f:
+        json.dump(dict_in_domain, f)
+    with open('./ckpt/summary_out_domain.json', 'w') as f:
+        json.dump(dict_out_domain, f)
 
 
 if __name__ == '__main__':
