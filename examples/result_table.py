@@ -40,10 +40,11 @@ def summary(panx_multi_lingual: bool = False):
         for a in glob('{}/test*.json'.format(i)):
             test_data = a.split('test_')[-1].split('.json')[0]
             test_data = test_data.replace('-', '/')
-            print(test_data)
-            if panx_multi_lingual and test_data not in panx_data:
+            test_data_raw = test_data.replace('_ignore', '')
+            print(test_data_raw)
+            if panx_multi_lingual and test_data_raw not in panx_data:
                 continue
-            if not panx_multi_lingual and test_data not in all_data:
+            if not panx_multi_lingual and test_data_raw not in all_data:
                 continue
 
             with open(a) as f:
