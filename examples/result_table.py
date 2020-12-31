@@ -94,10 +94,10 @@ def summary(panx_multi_lingual: bool = False):
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
             if panx_multi_lingual:
-                tmp_df = tmp_df[data]
+                tmp_df = tmp_df[panx_data]
                 tmp_df = tmp_df.T[panx_data].T
             else:
-                tmp_df = tmp_df[all_data]
+                tmp_df = tmp_df[data]
                 tmp_df = tmp_df.T[all_data].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(
                 task, metric, '_panx' if panx_multi_lingual else ''))
