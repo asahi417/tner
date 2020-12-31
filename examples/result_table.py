@@ -5,6 +5,7 @@ from glob import glob
 
 data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
         "mit_restaurant", "mit_movie_trivia"]
+all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
 panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru"]
 
 
@@ -28,10 +29,9 @@ def summary(panx_multi_lingual: bool = False):
                 train_data = 'all_{}'.format(total_step)
         else:
             train_data = param['dataset'][0]
-        print(panx_multi_lingual, train_data, train_data not in panx_data, train_data not in data)
         if panx_multi_lingual and train_data not in panx_data:
             continue
-        if not panx_multi_lingual and train_data not in data:
+        if not panx_multi_lingual and train_data not in all_data:
             continue
 
         for a in glob('{}/test*.json'.format(i)):
@@ -88,9 +88,7 @@ def summary(panx_multi_lingual: bool = False):
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
             tmp_df = tmp_df[data]
-            print(tmp_df)
-            ind = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
-            tmp_df = tmp_df.T[ind].T
+            tmp_df = tmp_df.T[all_data].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(
                 task, metric, '_panx' if panx_multi_lingual else ''))
             pprint(tmp_df)
