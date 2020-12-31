@@ -88,6 +88,7 @@ def summary(panx_multi_lingual: bool = False):
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
             tmp_df = tmp_df[data]
+            print(tmp_df)
             ind = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
             tmp_df = tmp_df.T[ind].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(
