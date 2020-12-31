@@ -1,14 +1,17 @@
-import re
 import json
 import os
 import pandas as pd
 from pprint import pprint
 from glob import glob
 
+data = [
+    "ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
+    "mit_restaurant", "mit_movie_trivia"]
+
 
 def summary():
-    in_domain_file = './ckpt/summary_in_domain.json'
-    out_domain_file = './ckpt/summary_out_domain.json'
+    in_domain_file = './asset/summary_in_domain.json'
+    out_domain_file = './asset/summary_out_domain.json'
     if not os.path.exists(in_domain_file) or not os.path.exists(out_domain_file):
         dict_in_domain = {'f1': {'es': {}, 'ner': {}}, 'recall': {'es': {}, 'ner': {}}, 'precision': {'es': {}, 'ner': {}}}
         dict_out_domain = {
@@ -75,16 +78,18 @@ def summary():
     in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
     in_result_key = list(dict_in_domain['f1']['ner'].keys())
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
-    df.to_csv('./ckpt/summary_in_domain.csv')
+    df.to_csv('./asset/summary_in_domain.csv')
+    pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
-            tmp_df = tmp_df.sort_index()
+            tmp_df = tmp_df[data]
+            ind = data + ["all_5000", "all_10000", "all_mit_5000", "all_mit_10000"]
+            tmp_df = tmp_df.T[ind].T
+            tmp_df.to_csv('./asset/summary_out_domain_{}_{}.csv'.format(task, metric))
             pprint(tmp_df)
-            input()
-    df_in_domain = {k: {_k: pd.DataFrame(_v) for _k, _v in v.items()} for k, v in dict_in_domain.items()}
-    pprint(df_in_domain)
+
     # df_in_domain = {k: v for k, v in dict_in_domain.items()}
     # df_out_domain = pd.DataFrame
 
