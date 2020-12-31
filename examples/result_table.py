@@ -24,9 +24,9 @@ def summary(panx_multi_lingual: bool = False):
         if len(param['dataset']) > 1:
             total_step = param['total_step']
             if 'mit_restaurant' in param['dataset']:
-                train_data = 'all_mit_{}'.format(total_step)
-            else:
                 train_data = 'all_{}'.format(total_step)
+            else:
+                train_data = 'all_no_mit_{}'.format(total_step)
         else:
             train_data = param['dataset'][0]
         if panx_multi_lingual and train_data not in panx_data:
