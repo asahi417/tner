@@ -198,15 +198,15 @@ Through the section, we use test F1 score.
 | `wnut2017`         | 51.53  | 67.85     | 58.58 | 50.03     | [CrossWeigh](https://www.aclweb.org/anthology/D19-1519.pdf)  |
 | `conll2003`        | 93.86  | 92.09     | 92.97 | 94.30     | [LUKE](https://arxiv.org/pdf/2010.01057v1.pdf)       | 
 | `panx_dataset/en`  | 84.78  | 83.27     | 84.02 | 84.8      | [mBERT](https://arxiv.org/pdf/2005.00052.pdf)        |
-| `panx_dataset/ja`  |   |      |  | - | - |
-| `panx_dataset/ru`  |   |      |  | - | - |
+| `panx_dataset/ja`  | 87.96  | 85.17     | 86.54 | - | - |
+| `panx_dataset/ru`  | 90.7   | 89.45     | 90.07 | - | - |
 | `fin`              | 82.56  | 71.24     | 76.48 | - | - |  
 | `bionlp2004`       | 79.63  | 69.78     | 74.38 | - | - |
 | `bc5cdr`           | 90.36  | 87.02     | 88.66 | - | - |
 | `mit_restaurant`   | 80.64  | 78.64     | 79.63 | - | - |
 | `mit_movie_trivia` | 73.14  | 69.42     | 71.23 | - | - |
 
-Then, we run evaluation of each model on different dataset to see its domain adaptation capacity.
+Then, we run evaluation of each model on different dataset to see its domain adaptation capacity in English.
 As the entities are different among those dataset, we can't compare them by ordinary entity-type F1 score like above.
 Due to that, we employ entity-span f1 score for our metric of domain adaptation. 
 
@@ -224,30 +224,29 @@ Due to that, we employ entity-span f1 score for our metric of domain adaptation.
 
 
 Here, one can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task.
-
-Finally, we train NER model on all the dataset and report the result.
+Now, we train NER model on all the dataset and report the result.
+Each models were trained on all datasets for `5000`, `10000`, and `15000` steps.
+As you can see, the accuracy is altogether close to what attained from from single dataset model, indicating `xlm-roberta-large` at least can learn all the features in each domain.  
 
 |                 | `ontonotes5` | `conll2003` | `wnut2017` | `panx_dataset/en` | `bionlp2004` | `bc5cdr` | `fin`   | `mit_restaurant` | `mit_movie_trivia` | 
-|:---------------:|:----------:|:---------:|:--------:|:---------------:|:----------:|:------:|:-----:|:--------------:|:----------------:| 
-| `all_5000`      | 85.97      | 88.08     | 51.5     | 79.15           | 71.01      | 79.16  | 71.8  | 11.56          | 36.49            | 
-| `all_10000`     | 87.74      | 89.46     | 54.3     | 82.03           | 73.07      | 83.21  | 72.66 | 10.92          | 44.54            | 
-| `all_mit_5000`  | 85.67      | 88.28     | 51.11    | 79.22           | 70.8       | 79.56  | 74.72 | 78.57          | 66.64            | 
-| `all_mit_10000` | 87.18      | 89.76     | 53.12    | 82.03           | 73.03      | 82.8   | 75.93 | 81.27          | 71.04            | 
+|:---------------:|:------------:|:-----------:|:----------:|:-----------------:|:------------:|:--------:|:-------:|:----------------:|:------------------:| 
+| `all_5000`      | 85.67        | 88.28       | 51.11      | 79.22             | 70.8         | 79.56    | 74.72   | 78.57            | 66.64              | 
+| `all_10000`     | 87.18        | 89.76       | 53.12      | 82.03             | 73.03        | 82.8     | 75.93   | 81.27            | 71.04              | 
+| `all_15000`     | 87.91        | 89.8        | 55.48      | 82.29             | 73.76        | 84.25    | 74.77   | 81.44            | 72.33              | 
 
+Finally, we show cross-lingual transfer metrics over a few `WikiAnn` datasets.
+
+|  Train\Test       | `panx_dataset/en` | `panx_dataset/ja` | `panx_dataset/ru` | 
+|:-----------------:|:-----------------:|:-----------------:|:-----------------:| 
+| `panx_dataset/en` | 84.02             | 46.37             | 73.18             | 
+| `panx_dataset/ja` | 53.6              | 86.54             | 45.75             | 
+| `panx_dataset/ru` | 60.49             | 53.38             | 90.07             | 
 
 
 Notes:  
 - Configuration can be found in [training script](examples/example_train_eval.py).
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
 - For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
-
-Detailed result:
-- NER:
-    - [in-domain](./asset/summary_in_domain.csv)
-    - out-domain ([f1](./asset/summary_out_domain_ner_f1.csv), [recall](./asset/summary_out_domain_ner_recall.csv), [precision](./asset/summary_out_domain_ner_precision.csv))
-- Entity-span:
-    - out-domain ([f1](./asset/summary_out_domain_es_f1.csv), [recall](./asset/summary_out_domain_es_recall.csv), [precision](./asset/summary_out_domain_es_precision.csv))
-
 
 ## Web App
 We provide a quick [web App](./asset/api.gif). Please [clone and install the repo](#get-started) firstly.  
