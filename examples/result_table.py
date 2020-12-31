@@ -3,9 +3,9 @@ import pandas as pd
 from pprint import pprint
 from glob import glob
 
-data = [
-    "ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
-    "mit_restaurant", "mit_movie_trivia"]
+data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
+        "mit_restaurant", "mit_movie_trivia"]
+panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru"]
 
 
 def summary(panx_multi_lingual: bool = False):
@@ -27,16 +27,18 @@ def summary(panx_multi_lingual: bool = False):
                 train_data = 'all_{}'.format(total_step)
         else:
             train_data = param['dataset'][0]
-        if not panx_multi_lingual and param['language'] != 'en':
+        if panx_multi_lingual and train_data not in panx_data:
             continue
-        elif panx_multi_lingual and 'panx' not in train_data:
+        if not panx_multi_lingual and train_data not in data:
             continue
 
         for a in glob('{}/test*.json'.format(i)):
-            if panx_multi_lingual and 'panx' not in a:
+            test_data = a.split('test_')[-1].split('.json')[0]
+            if panx_multi_lingual and test_data not in panx_data:
+                continue
+            if not panx_multi_lingual and test_data not in data:
                 continue
 
-            test_data = a.split('test_')[-1].split('.json')[0]
             test_data = test_data.replace('-', '/')
             with open(a) as f:
                 test = json.load(f)
