@@ -27,6 +27,7 @@ def summary(panx_multi_lingual: bool = False):
                 train_data = 'all_{}'.format(total_step)
         else:
             train_data = param['dataset'][0]
+        print(panx_multi_lingual, train_data, train_data not in panx_data, train_data not in data)
         if panx_multi_lingual and train_data not in panx_data:
             continue
         if not panx_multi_lingual and train_data not in data:
@@ -34,10 +35,10 @@ def summary(panx_multi_lingual: bool = False):
 
         for a in glob('{}/test*.json'.format(i)):
             test_data = a.split('test_')[-1].split('.json')[0]
-            if panx_multi_lingual and test_data not in panx_data:
-                continue
-            if not panx_multi_lingual and test_data not in data:
-                continue
+            # if panx_multi_lingual and test_data not in panx_data:
+            #     continue
+            # if not panx_multi_lingual and test_data not in data:
+            #     continue
 
             test_data = test_data.replace('-', '/')
             with open(a) as f:
