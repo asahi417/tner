@@ -8,9 +8,7 @@ data = [
     "mit_restaurant", "mit_movie_trivia"]
 
 
-def summary():
-    in_domain_file = './ckpt/summary_in_domain.json'
-    out_domain_file = './ckpt/summary_out_domain.json'
+def summary(panx_multi_lingual: bool = False):
     dict_in_domain = {'f1': {'es': {}, 'ner': {}}, 'recall': {'es': {}, 'ner': {}}, 'precision': {'es': {}, 'ner': {}}}
     dict_out_domain = {
         'f1': {'es': {}, 'ner': {}},
@@ -29,10 +27,15 @@ def summary():
                 train_data = 'all_{}'.format(total_step)
         else:
             train_data = param['dataset'][0]
+        if not panx_multi_lingual and param['language'] != 'en':
+            continue
+        elif panx_multi_lingual and 'panx' not in train_data:
+            continue
 
         for a in glob('{}/test*.json'.format(i)):
-            # if 'ignore' in a:
-            # test_data = a.split('test_')[-1].split('_ignore.json')[0]
+            if panx_multi_lingual and 'panx' not in a:
+                continue
+
             test_data = a.split('test_')[-1].split('.json')[0]
             test_data = test_data.replace('-', '/')
             with open(a) as f:
@@ -61,6 +64,10 @@ def summary():
                 dict_in_domain['f1'][task][test_data] = f1
                 dict_in_domain['recall'][task][test_data] = recall
                 dict_in_domain['precision'][task][test_data] = precision
+
+    in_domain_file = './ckpt/summary_in_domain{}.json'.format('_panx' if panx_multi_lingual else '')
+    out_domain_file = './ckpt/summary_out_domain{}.json'.format('_panx' if panx_multi_lingual else '')
+
     with open(in_domain_file, 'w') as f:
         json.dump(dict_in_domain, f)
     with open(out_domain_file, 'w') as f:
@@ -70,7 +77,7 @@ def summary():
     in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
     in_result_key = list(dict_in_domain['f1']['ner'].keys())
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
-    df.to_csv('./ckpt/summary_in_domain.csv')
+    df.to_csv('./ckpt/summary_in_domain{}.csv'.format('_panx' if panx_multi_lingual else ''))
     pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
@@ -79,9 +86,11 @@ def summary():
             tmp_df = tmp_df[data]
             ind = data + ["all_5000", "all_10000", "all_mit_5000", "all_mit_10000"]
             tmp_df = tmp_df.T[ind].T
-            tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.csv'.format(task, metric))
+            tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(
+                task, metric, '_panx' if panx_multi_lingual else ''))
             pprint(tmp_df)
 
 
 if __name__ == '__main__':
-    summary()
+    summary(False)
+    summary(True)
