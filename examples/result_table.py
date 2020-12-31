@@ -1,3 +1,4 @@
+import os
 import json
 import pandas as pd
 from pprint import pprint
@@ -18,6 +19,8 @@ def summary(panx_multi_lingual: bool = False):
     }
     checkpoint_dir = './ckpt'
     for i in glob('{}/*'.format(checkpoint_dir)):
+        if not os.path.isdir(i):
+            continue
 
         with open('{}/parameter.json'.format(i)) as f:
             param = json.load(f)
