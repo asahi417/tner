@@ -90,6 +90,8 @@ def summary(panx_multi_lingual: bool = False):
     pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
+            if task not in dict_out_domain[metric].keys():
+                continue
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
             pprint(tmp_df)
