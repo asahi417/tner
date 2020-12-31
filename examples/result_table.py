@@ -41,7 +41,7 @@ def summary(panx_multi_lingual: bool = False):
             test_data = a.split('test_')[-1].split('.json')[0]
             if panx_multi_lingual and test_data not in panx_data:
                 continue
-            
+
             test_data = test_data.replace('-', '/')
             with open(a) as f:
                 test = json.load(f)
@@ -88,11 +88,12 @@ def summary(panx_multi_lingual: bool = False):
         for task in ['es', 'ner']:
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
+            pprint(tmp_df)
             tmp_df = tmp_df[data]
             tmp_df = tmp_df.T[all_data].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(
                 task, metric, '_panx' if panx_multi_lingual else ''))
-            pprint(tmp_df)
+            # pprint(tmp_df)
 
 
 if __name__ == '__main__':
