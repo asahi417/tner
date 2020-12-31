@@ -17,6 +17,7 @@ def summary(panx_multi_lingual: bool = False):
     }
     checkpoint_dir = './ckpt'
     for i in glob('{}/*'.format(checkpoint_dir)):
+
         with open('{}/parameter.json'.format(i)) as f:
             param = json.load(f)
         if len(param['dataset']) > 1:
@@ -87,7 +88,7 @@ def summary(panx_multi_lingual: bool = False):
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
             tmp_df = tmp_df[data]
-            ind = data + ["all_5000", "all_10000", "all_mit_5000", "all_mit_10000"]
+            ind = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
             tmp_df = tmp_df.T[ind].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(
                 task, metric, '_panx' if panx_multi_lingual else ''))
