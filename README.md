@@ -252,6 +252,7 @@ Notes:
 - For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
 
 ## Web App
+![](./asset/api.png)
 We provide a quick [web App](./asset/api.gif). Please [clone and install the repo](#get-started) firstly.  
 1. [Train a model](#model-finetuning) or download [`all` model checkpoint file](https://drive.google.com/drive/folders/1UOy_OU4qHyQCYX0QQi02lnCZj7mNFBak?usp=sharing),
 `xlm-roberta-large` finetuned on all built in English dataset,
