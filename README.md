@@ -1,5 +1,10 @@
 # T-NER: Transformers NER  
 
+<p align="center">
+  <img src="./asset/diagram.png" width="600">
+</p>
+
+
 ![](./asset/api.png)
 
 ***`T-NER`*** is a python tool to analyse language model finetuning for named-entity-recognition.  
