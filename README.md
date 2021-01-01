@@ -1,7 +1,7 @@
 # T-NER: Transformers NER  
 
 <p align="center">
-  <img src="./asset/diagram.png" width="500">
+  <img src="./asset/diagram.png" width="700">
 </p>
 
 
