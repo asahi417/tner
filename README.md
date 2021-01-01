@@ -5,7 +5,10 @@
 </p>
 
 
-***`T-NER`*** is a python tool to analyse language model finetuning for named-entity-recognition.  
+***`T-NER`*** is a python tool to analyse language model finetuning on named-entity-recognition (NER). 
+It has an easy interface to finetune models, test on cross-domain datasets, where we compile 9 publicly available NER datasets.
+Models can be deployed immediately on our web app for qualitative analysis, and the API for a micro service.
+Also we release all the NER model checkpoints, where the most generalized model trained on all the dataset, has 43 entity types.    
  
 ### Table of Contents  
 1. **[Setup](#get-started)**
@@ -14,6 +17,7 @@
     - *[Model Finetuning](#model-finetuning):* Model training [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
     - *[Model Evaluation](#model-evaluation):* In/out of domain evaluation [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
     - *[Model Inference API](#model-inference-api):* An API to get prediction from models
+    - *[Model Checkpoints](#model-checkpoints)* : Released model checkpoints
 3. **[Experiment with XLM-R](#experiment-with-xlm-r):** Cross-domain analysis of XLM-R
 4. **[Web API](#web-app):** Model deployment on a web-app   
 
@@ -186,6 +190,13 @@ test_sentences = [
 classifier.predict(test_sentences)
 ```
 For more information about the module, you may want to see [here](./tner/model.py#L411).
+As an example, we have [a commandline interface](./examples/example_inference.py) on top of the inference api. 
+
+### Model Checkpoints
+We release NER model checkpoints trained with `tner` [here](https://cf-my.sharepoint.com/:f:/r/personal/ushioa_cardiff_ac_uk/Documents/tner?csf=1&web=1&e=95Ty6n).
+It includes models finetuned on each [dataset](#datasets), as well as one on all the data `all_15000`.
+As a language model, we use `xlm-roberta-large`, as those models are used in [later experiments](#experiment-with-xlm-r).
+To use it, one may need to create checkpoint directory `./ckpt` and put any checkpoint folders under the directory.
 
 ## Experiment with XLM-R
 We finetune [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-large`) on each dataset and
@@ -249,14 +260,13 @@ Finally, we show cross-lingual transfer metrics over a few `WikiAnn` datasets.
 Notes:  
 - Configuration can be found in [training script](examples/example_train_eval.py).
 - F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
-- For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work. 
+- For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work.
+- We release all the checkpoints used in the experiments. Take a look [here](#model-checkpoints). 
 
 ## Web App
 ![](./asset/api.png)
-We provide a quick [web App](./asset/api.gif). Please [clone and install the repo](#get-started) firstly.  
-1. [Train a model](#model-finetuning) or download [`all` model checkpoint file](https://drive.google.com/drive/folders/1UOy_OU4qHyQCYX0QQi02lnCZj7mNFBak?usp=sharing),
-`xlm-roberta-large` finetuned on all built in English dataset,
-and put it under `./ckpt` (now you should have `./ckpt/all`).
+We provide a quick web App. Please [clone and install the repo](#get-started) firstly.  
+1. [Train a model](#model-finetuning) or [download our checkpoint](#model-checkpoints).
 If you use your own checkpoint, set the path to the checkpoint folder by `export MODEL_CKPT=<path-to-your-checkpoint-folder>`.  
 
 2. Run the app, and open your browser http://0.0.0.0:8000    
