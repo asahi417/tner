@@ -19,12 +19,12 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
     }
     checkpoint_dir = './ckpt'
     for i in glob('{}/*'.format(checkpoint_dir)):
-        print(i)
         if not os.path.isdir(i):
             continue
+        print(i)
         if not lowercased and 'lower' in i:
             continue
-        elif lowercased and ('lower' not in i or 'mit' not in i):
+        elif lowercased and not ('lower' in i or 'mit' in i):
             continue
         print('pass')
 
@@ -95,7 +95,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
     if not lowercased:
         df.to_csv('./ckpt/summary_in_domain{}.csv'.format(prefix))
-    pprint(df)
+    # pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
             if task not in dict_out_domain[metric].keys():
@@ -109,7 +109,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
                 tmp_df = tmp_df[data]
                 tmp_df = tmp_df.T[all_data].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(task, metric, prefix))
-            pprint(tmp_df)
+            # pprint(tmp_df)
 
 
 if __name__ == '__main__':
