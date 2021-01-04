@@ -33,7 +33,9 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
             param = json.load(f)
         if len(param['dataset']) > 1:
             total_step = param['total_step']
-            if 'mit_restaurant' in param['dataset']:
+            if lowercased:
+                train_data = 'all_lower'
+            elif 'mit_restaurant' in param['dataset']:
                 assert 'mit_movie_trivia' in param['dataset']
                 train_data = 'all_{}'.format(total_step)
             else:
