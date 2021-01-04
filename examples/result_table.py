@@ -6,7 +6,8 @@ from glob import glob
 
 data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
         "mit_restaurant", "mit_movie_trivia"]
-all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
+all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000",
+                   'all_lower']
 panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru"]
 data_lower = [
     "ontonotes5_lower", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
@@ -50,7 +51,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
         for a in glob('{}/test*.json'.format(i)):
             test_data = a.split('test_')[-1].split('.json')[0]
             test_data = test_data.replace('-', '/')
-            test_data_raw = test_data.replace('_ignore', '')
+            test_data_raw = test_data.replace('_ignore', '').replace('_lower')
             if panx_multi_lingual and test_data_raw not in panx_data:
                 continue
             if not panx_multi_lingual and test_data_raw not in all_data:
