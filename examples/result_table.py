@@ -51,7 +51,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
         for a in glob('{}/test*.json'.format(i)):
             test_data = a.split('test_')[-1].split('.json')[0]
             test_data = test_data.replace('-', '/')
-            test_data_raw = test_data.replace('_ignore', '').replace('_lower')
+            test_data_raw = test_data.replace('_ignore', '').replace('_lower', '')
             if panx_multi_lingual and test_data_raw not in panx_data:
                 continue
             if not panx_multi_lingual and test_data_raw not in all_data:
@@ -67,7 +67,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
             recall = round(metric['recall'], 2)
             precision = round(metric['precision'], 2)
             if 'ignore' in test_data:
-                test_data = test_data.replace('_ignore', '')
+                # test_data = test_data.replace('_ignore', '')
                 task = 'es'
             else:
                 task = 'ner'
@@ -76,13 +76,13 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
                 dict_out_domain['f1'][task][train_data] = {}
                 dict_out_domain['recall'][task][train_data] = {}
                 dict_out_domain['precision'][task][train_data] = {}
-            dict_out_domain['f1'][task][train_data][test_data] = f1
-            dict_out_domain['recall'][task][train_data][test_data] = f1
-            dict_out_domain['precision'][task][train_data][test_data] = f1
+            dict_out_domain['f1'][task][train_data][test_data_raw] = f1
+            dict_out_domain['recall'][task][train_data][test_data_raw] = f1
+            dict_out_domain['precision'][task][train_data][test_data_raw] = f1
             if test_data == train_data:
-                dict_in_domain['f1'][task][test_data] = f1
-                dict_in_domain['recall'][task][test_data] = recall
-                dict_in_domain['precision'][task][test_data] = precision
+                dict_in_domain['f1'][task][test_data_raw] = f1
+                dict_in_domain['recall'][task][test_data_raw] = recall
+                dict_in_domain['precision'][task][test_data_raw] = precision
 
     prefix = '{}{}'.format('_panx' if panx_multi_lingual else '', '_lower' if lowercased else '')
     in_domain_file = './ckpt/summary_in_domain{}.json'.format(prefix)
