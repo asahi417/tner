@@ -6,12 +6,9 @@ from glob import glob
 
 data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
         "mit_restaurant", "mit_movie_trivia"]
-all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000",
-                   'all_lower']
+all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
 panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru"]
-data_lower = [
-    "ontonotes5_lower", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
-        "mit_restaurant", "mit_movie_trivia"]
+all_data_lower = data + ['all_lower']
 
 
 def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
@@ -113,7 +110,10 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
                 tmp_df = tmp_df.T[panx_data].T
             else:
                 tmp_df = tmp_df[data]
-                tmp_df = tmp_df.T[all_data].T
+                if lowercased:
+                    tmp_df = tmp_df.T[all_data_lower].T
+                else:
+                    tmp_df = tmp_df.T[all_data].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(task, metric, prefix))
             pprint(tmp_df)
 
