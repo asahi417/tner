@@ -98,13 +98,14 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
     if not lowercased:
         df.to_csv('./ckpt/summary_in_domain{}.csv'.format(prefix))
-    pprint(df)
+        pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
             if task not in dict_out_domain[metric].keys():
                 continue
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
+            pprint(tmp_df)
             if panx_multi_lingual:
                 tmp_df = tmp_df[panx_data]
                 tmp_df = tmp_df.T[panx_data].T
