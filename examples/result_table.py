@@ -10,7 +10,7 @@ all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all
 panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru"]
 
 
-def summary(panx_multi_lingual: bool = False):
+def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
     dict_in_domain = {'f1': {'es': {}, 'ner': {}}, 'recall': {'es': {}, 'ner': {}}, 'precision': {'es': {}, 'ner': {}}}
     dict_out_domain = {
         'f1': {'es': {}, 'ner': {}},
@@ -19,8 +19,14 @@ def summary(panx_multi_lingual: bool = False):
     }
     checkpoint_dir = './ckpt'
     for i in glob('{}/*'.format(checkpoint_dir)):
+        print(i)
         if not os.path.isdir(i):
             continue
+        if not lowercased and 'lower' in i:
+            continue
+        elif lowercased and ('lower' not in i or 'mit' not in i):
+            continue
+        print('pass')
 
         with open('{}/parameter.json'.format(i)) as f:
             param = json.load(f)
@@ -73,11 +79,13 @@ def summary(panx_multi_lingual: bool = False):
                 dict_in_domain['recall'][task][test_data] = recall
                 dict_in_domain['precision'][task][test_data] = precision
 
-    in_domain_file = './ckpt/summary_in_domain{}.json'.format('_panx' if panx_multi_lingual else '')
-    out_domain_file = './ckpt/summary_out_domain{}.json'.format('_panx' if panx_multi_lingual else '')
+    prefix = '{}{}'.format('_panx' if panx_multi_lingual else '', '_lower' if lowercased else '')
+    in_domain_file = './ckpt/summary_in_domain{}.json'.format(prefix)
+    out_domain_file = './ckpt/summary_out_domain{}.json'.format(prefix)
 
-    with open(in_domain_file, 'w') as f:
-        json.dump(dict_in_domain, f)
+    if not lowercased:
+        with open(in_domain_file, 'w') as f:
+            json.dump(dict_in_domain, f)
     with open(out_domain_file, 'w') as f:
         json.dump(dict_out_domain, f)
 
@@ -85,7 +93,8 @@ def summary(panx_multi_lingual: bool = False):
     in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
     in_result_key = list(dict_in_domain['f1']['ner'].keys())
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
-    df.to_csv('./ckpt/summary_in_domain{}.csv'.format('_panx' if panx_multi_lingual else ''))
+    if not lowercased:
+        df.to_csv('./ckpt/summary_in_domain{}.csv'.format(prefix))
     pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
@@ -99,11 +108,11 @@ def summary(panx_multi_lingual: bool = False):
             else:
                 tmp_df = tmp_df[data]
                 tmp_df = tmp_df.T[all_data].T
-            tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(
-                task, metric, '_panx' if panx_multi_lingual else ''))
+            tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(task, metric, prefix))
             pprint(tmp_df)
 
 
 if __name__ == '__main__':
     summary(False)
     summary(True)
+    summary(False, True)
