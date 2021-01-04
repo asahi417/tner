@@ -27,7 +27,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
         print(i)
         if not lowercased and 'lower' in i:
             continue
-        elif lowercased and not ('lower' in i or 'mit' in i):
+        elif lowercased and not ('lower' in i or 'mit_restaurant' in i or 'mit_movie_trivia' in i):
             continue
         print('pass')
 
@@ -36,6 +36,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
         if len(param['dataset']) > 1:
             total_step = param['total_step']
             if 'mit_restaurant' in param['dataset']:
+                assert 'mit_movie_trivia' in param['dataset']
                 train_data = 'all_{}'.format(total_step)
             else:
                 train_data = 'all_no_mit_{}'.format(total_step)
