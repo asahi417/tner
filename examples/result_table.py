@@ -8,6 +8,9 @@ data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004",
         "mit_restaurant", "mit_movie_trivia"]
 all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
 panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru"]
+data_lower = [
+    "ontonotes5_lower", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
+        "mit_restaurant", "mit_movie_trivia"]
 
 
 def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
@@ -95,7 +98,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
     if not lowercased:
         df.to_csv('./ckpt/summary_in_domain{}.csv'.format(prefix))
-    # pprint(df)
+    pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
             if task not in dict_out_domain[metric].keys():
@@ -109,7 +112,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
                 tmp_df = tmp_df[data]
                 tmp_df = tmp_df.T[all_data].T
             tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}{}.csv'.format(task, metric, prefix))
-            # pprint(tmp_df)
+            pprint(tmp_df)
 
 
 if __name__ == '__main__':
