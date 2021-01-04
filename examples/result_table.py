@@ -44,7 +44,7 @@ def summary(panx_multi_lingual: bool = False, lowercased: bool = False):
             train_data = param['dataset'][0]
         if panx_multi_lingual and train_data not in panx_data:
             continue
-        if not panx_multi_lingual and train_data not in all_data:
+        if not panx_multi_lingual and train_data not in all_data + all_data_lower:
             continue
 
         for a in glob('{}/test*.json'.format(i)):
