@@ -4,7 +4,8 @@ import pandas as pd
 from pprint import pprint
 from glob import glob
 
-panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru"]
+panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru", "panx_dataset/ko", "panx_dataset/es",
+             "panx_dataset/ar"]
 
 
 def summary():

@@ -193,7 +193,7 @@ For more information about the module, you may want to see [here](./tner/model.p
 As an example, we have [a commandline interface](./examples/example_inference.py) on top of the inference api. 
 
 ### Model Checkpoints
-We release NER model checkpoints trained with `tner` [here](https://cf-my.sharepoint.com/:f:/r/personal/ushioa_cardiff_ac_uk/Documents/tner?csf=1&web=1&e=95Ty6n).
+We release NER model checkpoints trained with `tner` [here](https://cf-my.sharepoint.com/:f:/g/personal/ushioa_cardiff_ac_uk/EsvFZx7tsrNOh1jkRRoCSx4BmprxtPivpU5Q3TgMqwKxyw).
 It includes models finetuned on each [dataset](#datasets), as well as one on all the data `all_15000`.
 As a language model, we use `xlm-roberta-large`, as those models are used in [later experiments](#experiment-with-xlm-r).
 To use it, one may need to create checkpoint directory `./ckpt` and put any checkpoint folders under the directory.
