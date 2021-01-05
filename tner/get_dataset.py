@@ -322,7 +322,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                 with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(CACHE_DIR), 'r') as zip_ref:
                     zip_ref.extractall('{}/'.format(CACHE_DIR))
             os.makedirs(data_path, exist_ok=True)
-            os.system('tar xzf {0}/panx_dataset/{1}", " -C {2}'.format(CACHE_DIR, panx_la, data_path))
+            os.system('tar xzf {0}/panx_dataset/{1}.tar.gz -C {2}'.format(CACHE_DIR, panx_la, data_path))
             for v in files_info.values():
                 os.system("sed -e 's/{0}://g' {1}/{2} > {1}/{2}.txt".format(panx_la, data_path, v.replace('.txt', '')))
                 os.system("rm -rf {0}/{1}".format(data_path, v.replace('.txt', '')))
