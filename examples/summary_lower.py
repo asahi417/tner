@@ -22,6 +22,9 @@ def summary():
 
         with open('{}/parameter.json'.format(i)) as f:
             param = json.load(f)
+        if param['transformers_model'] != "xlm-roberta-large":
+            continue
+
         if not param['lower_case']:
             if len(param['dataset']) > 1:
                 continue

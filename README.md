@@ -112,10 +112,8 @@ lamb O
 Words tagged with O are outside of named entities and the I-XXX tag is used for words inside a
 named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
 first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
-The custom dataset should has `train.txt` and `valid.txt` file in a same folder.
-As mention type, you need to use [the shared dictionary definition](./tner/get_dataset.py#L16) 
-
-Please take a look [sample custom data](examples/custom_dataset_sample). 
+The custom dataset should has `train.txt` and `valid.txt` file in a same folder. 
+Please take a look [sample custom data](examples/custom_dataset_sample).
 
 ### Model Finetuning
 Language model finetuning can be done with a few lines:
@@ -165,11 +163,11 @@ trainer.test(test_dataset='conll2003')
 This gives you a accuracy summary.
 Again, the `test_dataset` can be a path to custom dataset explained at [dataset section](#datasets).
 
-***Entity position detection:***  For better understanding of out-of-domain accuracy, we provide entity position detection
+***Entity span prediction:***  For better understanding of out-of-domain accuracy, we provide entity span prediction
 accuracy, which ignores the entity type and compute metrics only on the IOB entity position.
 
 ```python
-trainer.test(test_dataset='conll2003', ignore_entity_type=True)
+trainer.test(test_dataset='conll2003', entity_span_prediction=True)
 ```
 
 ***Reference:***    

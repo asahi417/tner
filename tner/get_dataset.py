@@ -150,7 +150,8 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                            label_to_id: dict = None,
                            fix_label_dict: bool = False,
                            lower_case: bool = False,
-                           custom_language: str = 'en'):
+                           custom_language: str = 'en',
+                           allow_new_entity: bool = True):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
@@ -158,6 +159,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     :param fix_label_dict: not augment label_to_id based on dataset if True
     :param lower_case: convert to lower case
     :param custom_language
+    :param allow_new_entity
     :return: formatted data, label_to_id
     """
     post_process_mecab = False
@@ -341,7 +343,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     label_to_id = dict() if label_to_id is None else label_to_id
     data_split_all, unseen_entity_set, label_to_id = decode_all_files(
         files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first,
-        to_bio=to_bio)
+        to_bio=to_bio, allow_new_entity=allow_new_entity)
 
     if post_process_mecab:
         logging.info('mecab post processing')
@@ -371,7 +373,8 @@ def decode_file(file_name: str,
                 label_to_id: Dict,
                 fix_label_dict: bool,
                 entity_first: bool = False,
-                to_bio: bool = False):
+                to_bio: bool = False,
+                allow_new_entity: bool = False):
     inputs, labels, seen_entity = [], [], []
     past_mention = 'O'
     with open(os.path.join(data_path, file_name), 'r') as f:
@@ -413,7 +416,9 @@ def decode_file(file_name: str,
                     #     input()
 
                     fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
-                    if len(fixed_mention) == 0:
+                    if len(fixed_mention) == 0 and allow_new_entity:
+                        tag = '-'.join([location, mention])
+                    elif len(fixed_mention) == 0:
                         tag = 'O'
                     else:
                         tag = '-'.join([location, fixed_mention[0]])
@@ -436,13 +441,13 @@ def decode_file(file_name: str,
 
 
 def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False,
-                     to_bio: bool = False):
+                     to_bio: bool = False, allow_new_entity: bool = False):
     data_split = dict()
     unseen_entity = None
     for name, filepath in files.items():
         label_to_id, unseen_entity_set, data_dict = decode_file(
             filepath, data_path=data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict,
-            entity_first=entity_first, to_bio=to_bio)
+            entity_first=entity_first, to_bio=to_bio, allow_new_entity=allow_new_entity)
         if unseen_entity is None:
             unseen_entity = unseen_entity_set
         else:

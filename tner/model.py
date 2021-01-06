@@ -237,7 +237,7 @@ class TrainTransformersNER:
 
     def test(self,
              test_dataset: str = None,
-             ignore_entity_type: bool = False,
+             entity_span_prediction: bool = False,
              lower_case: bool = False,
              batch_size_validation: int = None,
              max_seq_length_validation: int = None):
@@ -248,7 +248,7 @@ class TrainTransformersNER:
         test_dataset: str
             target dataset to test, alias of preset dataset (see tner.VALID_DATASET) or path to custom dataset folder
             eg) https://github.com/asahi417/tner/tree/master/tests/sample_data
-        ignore_entity_type: bool
+        entity_span_prediction: bool
             test without entity type (entity span detection)
         lower_case: bool
             converting test data into lower-cased
@@ -261,7 +261,7 @@ class TrainTransformersNER:
         else:
             dataset = test_dataset
         filename = 'test_{}{}{}.json'.format(
-            dataset.replace('/', '-'), '_ignore' if ignore_entity_type else '', '_lower' if lower_case else '')
+            dataset.replace('/', '-'), '_span' if entity_span_prediction else '', '_lower' if lower_case else '')
         filename = os.path.join(self.args.checkpoint_dir, filename)
         if os.path.exists(filename):
             return
@@ -282,7 +282,7 @@ class TrainTransformersNER:
         # run inference
         start_time = time()
         metrics = {}
-        params = dict(ignore_entity_type=ignore_entity_type, unseen_entity_set=self.unseen_entity_set)
+        params = dict(entity_span_prediction=entity_span_prediction, unseen_entity_set=self.unseen_entity_set)
         for k, v in data_loader.items():
             assert v is not None, '{} data split is not found'.format(k)
             metrics[k] = self.__epoch_valid(v, prefix=k, **params)
@@ -396,7 +396,7 @@ class TrainTransformersNER:
         return False
 
     def __epoch_valid(self, data_loader, prefix, writer=None,
-                      unseen_entity_set: set = None, ignore_entity_type: bool = False):
+                      unseen_entity_set: set = None, entity_span_prediction: bool = False):
         """ single epoch validation/test """
         # aggregate prediction and true label
         self.model.eval()
@@ -422,7 +422,7 @@ class TrainTransformersNER:
                                 _pred_list.append(__pred)
                 assert len(_pred_list) == len(_true_list)
                 if len(_true_list) > 0:
-                    if ignore_entity_type:
+                    if entity_span_prediction:
                         # ignore entity type and focus on entity position
                         _true_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _true_list]
                         _pred_list = [i if i == 'O' else '-'.join([i.split('-')[0], 'entity']) for i in _pred_list]
