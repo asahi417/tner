@@ -261,7 +261,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'.format(
                 os.path.join(data_path, 'valid.txt')))
         entity_first = True
-    elif data_name == 'ontonote5':
+    elif data_name == 'ontonotes5':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
