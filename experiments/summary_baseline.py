@@ -101,12 +101,14 @@ def summary(base_model: bool = False, lower: bool = False):
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
             pprint(tmp_df)
-            tmp_df = tmp_df[data]
             if task == 'es':
                 if lower:
+                    tmp_df = tmp_df[data_lower]
                     all_data = data_lower + ["all"]
                 else:
+                    tmp_df = tmp_df[data]
                     all_data = data + ["all"]
+                print(all_data, lower)
                 tmp_df = tmp_df.T[all_data].T
             else:
                 tmp_df = tmp_df.T['all'].T
