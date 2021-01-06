@@ -77,7 +77,7 @@ def summary():
         pprint(tmp_df)
         tmp_df = tmp_df[panx_data]
         tmp_df = tmp_df.T[panx_data].T
-        tmp_df.to_csv('{}/summary_out_domain.ner.panx.csv'.format(checkpoint_dir))
+        tmp_df.to_csv('{}/summary_out_domain.ner.{}.panx.csv'.format(checkpoint_dir, metric))
         pprint(tmp_df)
 
 
