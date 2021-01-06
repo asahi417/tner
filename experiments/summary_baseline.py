@@ -92,7 +92,7 @@ def summary(base_model: bool = False, lower: bool = False):
         in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
         in_result_key = list(dict_in_domain['f1']['ner'].keys())
         df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
-        df.to_csv('{}/summary_in_domain.base.csv'.format(checkpoint_dir))
+        df.to_csv('{}/summary_in_domain.csv'.format(checkpoint_dir))
         pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
