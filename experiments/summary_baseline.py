@@ -4,8 +4,8 @@ import pandas as pd
 from pprint import pprint
 from glob import glob
 
-data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin"]
-data_lower = data + ["mit_restaurant", "mit_movie_trivia"]
+data_ = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin"]
+data_lower = data_ + ["mit_restaurant", "mit_movie_trivia"]
 
 
 def summary(base_model: bool = False, lower: bool = False):
@@ -15,6 +15,10 @@ def summary(base_model: bool = False, lower: bool = False):
         'recall': {'es': {}, 'ner': {}},
         'precision': {'es': {}, 'ner': {}}
     }
+    if lower:
+        data = data_lower
+    else:
+        data = data_
     if base_model:
         if lower:
             checkpoint_dir = './ckpt/model_base_lower'
@@ -100,20 +104,17 @@ def summary(base_model: bool = False, lower: bool = False):
                 continue
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
-            pprint(tmp_df)
+            pprint(tmp_out)
+            pprint(tmp_df.columns)
             if task == 'es':
-                if lower:
-                    tmp_df = tmp_df[data_lower]
-                    all_data = data_lower + ["all"]
-                else:
-                    tmp_df = tmp_df[data]
-                    all_data = data + ["all"]
-                print(all_data, lower)
+                tmp_df = tmp_df[data]
+                all_data = data + ["all"]
                 tmp_df = tmp_df.T[all_data].T
             else:
                 tmp_df = tmp_df.T['all']
             tmp_df.to_csv('{}/summary_out_domain.{}.{}.csv'.format(checkpoint_dir, task, metric))
             pprint(tmp_df)
+
 
 if __name__ == '__main__':
     # summary(True, True)
