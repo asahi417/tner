@@ -68,7 +68,8 @@ class Argument:
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def version(self, parameter: dict = None, checkpoint: str = None, checkpoint_dir: str = './ckpt'):
+    def version(self, parameter: dict = None, checkpoint_prefix: str = None,
+                checkpoint: str = None, checkpoint_dir: str = './ckpt'):
         """ Checkpoint version
 
          Parameter
@@ -105,6 +106,8 @@ class Argument:
             with open(os.path.join(checkpoint_dir, 'tmp.json'), 'w') as _f:
                 json.dump(parameter, _f)
             new_checkpoint = self.md5(os.path.join(checkpoint_dir, 'tmp.json'))
+            if checkpoint_prefix is not None:
+                new_checkpoint = checkpoint_prefix + new_checkpoint
             new_checkpoint_dir = os.path.join(checkpoint_dir, new_checkpoint)
             os.makedirs(new_checkpoint_dir, exist_ok=True)
             shutil.move(os.path.join(checkpoint_dir, 'tmp.json'), os.path.join(new_checkpoint_dir, 'parameter.json'))

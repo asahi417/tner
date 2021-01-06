@@ -65,7 +65,8 @@ class TrainTransformersNER:
                  fp16: bool = False,
                  max_grad_norm: float = 1.0,
                  lower_case: bool = False,
-                 num_worker: int = 1):
+                 num_worker: int = 1,
+                 checkpoint_prefix: str = None):
         """ Named-Entity-Recognition (NER) trainer
 
          Parameter
@@ -123,7 +124,9 @@ class TrainTransformersNER:
             max_seq_length=max_seq_length,
             fp16=fp16,
             max_grad_norm=max_grad_norm,
-            lower_case=lower_case)
+            lower_case=lower_case,
+            checkpoint_prefix=checkpoint_prefix
+        )
 
         self.is_trained = self.args.model_statistics is not None
         # fix random seed

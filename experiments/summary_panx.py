@@ -4,9 +4,8 @@ import pandas as pd
 from pprint import pprint
 from glob import glob
 
-data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
-        "mit_restaurant", "mit_movie_trivia"]
-all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
+panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru", "panx_dataset/ko", "panx_dataset/es",
+             "panx_dataset/ar"]
 
 
 def summary(base_model: bool = False):
@@ -16,7 +15,10 @@ def summary(base_model: bool = False):
         'recall': {'es': {}, 'ner': {}},
         'precision': {'es': {}, 'ner': {}}
     }
-    checkpoint_dir = './ckpt'
+    if base_model:
+        checkpoint_dir = './ckpt/base'
+    else:
+        checkpoint_dir = './ckpt/large'
     for i in glob('{}/*'.format(checkpoint_dir)):
         if not os.path.isdir(i):
             continue
@@ -31,16 +33,9 @@ def summary(base_model: bool = False):
             continue
 
         if len(param['dataset']) > 1:
-            total_step = param['total_step']
-            if 'mit_restaurant' in param['dataset']:
-                assert 'mit_movie_trivia' in param['dataset']
-                train_data = 'all_{}'.format(total_step)
-            else:
-                train_data = 'all_no_mit_{}'.format(total_step)
-        else:
-            train_data = param['dataset'][0]
-
-        if train_data not in all_data:
+            continue
+        train_data = param['dataset'][0]
+        if train_data not in panx_data:
             continue
 
         for a in glob('{}/test*.json'.format(i)):
@@ -49,7 +44,7 @@ def summary(base_model: bool = False):
                 continue
             test_data = test_data.replace('-', '/')
             test_data_raw = test_data.replace('_ignore', '').replace('_lower', '')
-            if test_data_raw not in all_data:
+            if test_data_raw not in panx_data:
                 continue
 
             with open(a) as f:
@@ -80,9 +75,9 @@ def summary(base_model: bool = False):
     in_result_key = list(dict_in_domain['f1']['ner'].keys())
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
     if base_model:
-        df.to_csv('./ckpt/summary_in_domain.base.csv')
+        df.to_csv('{}/summary_in_domain.panx.base.csv'.format(checkpoint_dir))
     else:
-        df.to_csv('./ckpt/summary_in_domain.csv')
+        df.to_csv('{}}/summary_in_domain.panx.csv'.format(checkpoint_dir))
     pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
@@ -91,12 +86,12 @@ def summary(base_model: bool = False):
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
             pprint(tmp_df)
-            tmp_df = tmp_df[data]
-            tmp_df = tmp_df.T[all_data].T
+            tmp_df = tmp_df[panx_data]
+            tmp_df = tmp_df.T[panx_data].T
             if base_model:
-                tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.base.csv'.format(task, metric))
+                tmp_df.to_csv('{}/summary_out_domain_{}_{}.panx.base.csv'.format(checkpoint_dir))
             else:
-                tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.csv'.format(task, metric))
+                tmp_df.to_csv('{}/summary_out_domain_{}_{}.panx.csv'.format(checkpoint_dir))
             pprint(tmp_df)
 
 
