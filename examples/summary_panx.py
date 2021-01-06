@@ -8,7 +8,7 @@ panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru", "panx_data
              "panx_dataset/ar"]
 
 
-def summary():
+def summary(base_model: bool = False):
     dict_in_domain = {'f1': {'es': {}, 'ner': {}}, 'recall': {'es': {}, 'ner': {}}, 'precision': {'es': {}, 'ner': {}}}
     dict_out_domain = {
         'f1': {'es': {}, 'ner': {}},
@@ -22,7 +22,9 @@ def summary():
 
         with open('{}/parameter.json'.format(i)) as f:
             param = json.load(f)
-        if param['transformers_model'] != "xlm-roberta-large":
+        if not base_model and param['transformers_model'] != "xlm-roberta-large":
+            continue
+        if base_model and param['transformers_model'] != "xlm-roberta-base":
             continue
         if param['lower_case']:
             continue
@@ -69,7 +71,10 @@ def summary():
     in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
     in_result_key = list(dict_in_domain['f1']['ner'].keys())
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
-    df.to_csv('./ckpt/summary_in_domain.panx.csv')
+    if base_model:
+        df.to_csv('./ckpt/summary_in_domain.panx.base.csv')
+    else:
+        df.to_csv('./ckpt/summary_in_domain.panx.csv')
     pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
@@ -80,7 +85,10 @@ def summary():
             pprint(tmp_df)
             tmp_df = tmp_df[panx_data]
             tmp_df = tmp_df.T[panx_data].T
-            tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.panx.csv'.format(task, metric))
+            if base_model:
+                tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.panx.base.csv'.format(task, metric))
+            else:
+                tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.panx.csv'.format(task, metric))
             pprint(tmp_df)
 
 

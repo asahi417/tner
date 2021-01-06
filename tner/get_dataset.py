@@ -172,9 +172,9 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data", " https://github.com/swiseman/neighbor-tagging/raw/master/data", "'.
+            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
                       format(CACHE_DIR))
-            os.system('tar -xzf {0}/data", " -C {0}'.format(CACHE_DIR))
+            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
             for i in ['train', 'dev', 'test']:
                 conll_formatting(
                     file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
@@ -234,14 +234,14 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info = {'train': 'Genia4ERtask1.iob2', 'valid': 'Genia4EReval1.iob2'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/Genia4ERtraining", " http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining", "'.
+            os.system('wget -O {0}/Genia4ERtraining.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining.tar.gz'.
                       format(data_path))
-            os.system('tar -xzf {0}/Genia4ERtraining", " -C {0}'.format(data_path))
+            os.system('tar -xzf {0}/Genia4ERtraining.tar.gz -C {0}'.format(data_path))
             os.system('mv {0}/Genia4ERtraining/* {0}/'.format(data_path))
 
-            os.system('wget -O {0}/Genia4ERtest", " http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest", "'.
+            os.system('wget -O {0}/Genia4ERtest.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest.tar.gz'.
                       format(data_path))
-            os.system('tar -xzf {0}/Genia4ERtest", " -C {0}'.format(data_path))
+            os.system('tar -xzf {0}/Genia4ERtest.tar.gz -C {0}'.format(data_path))
             os.system('mv {0}/Genia4ERtest/* {0}/'.format(data_path))
     elif data_name == 'fin':  # https://www.aclweb.org/anthology/U15-1010.pdf
         files_info = {'train': 'FIN5.txt', 'valid': 'FIN3.txt'}
@@ -261,13 +261,13 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'.format(
                 os.path.join(data_path, 'valid.txt')))
         entity_first = True
-    elif data_name == 'ontonotes5':
+    elif data_name == 'ontonote5':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data", " https://github.com/swiseman/neighbor-tagging/raw/master/data", "'.
-                format(CACHE_DIR))
-            os.system('tar -xzf {0}/data", " -C {0}'.format(CACHE_DIR))
+            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
+                      format(CACHE_DIR))
+            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
             for i in ['train', 'dev', 'test']:
                 conll_formatting(
                     file_token=os.path.join(CACHE_DIR, 'data/onto/{}.words'.format(i)),

@@ -9,7 +9,7 @@ data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004",
 all_data = data + ["all_5000", "all_10000", "all_15000", "all_no_mit_5000", "all_no_mit_10000", "all_no_mit_15000"]
 
 
-def summary():
+def summary(base_model: bool = False):
     dict_in_domain = {'f1': {'es': {}, 'ner': {}}, 'recall': {'es': {}, 'ner': {}}, 'precision': {'es': {}, 'ner': {}}}
     dict_out_domain = {
         'f1': {'es': {}, 'ner': {}},
@@ -23,9 +23,10 @@ def summary():
 
         with open('{}/parameter.json'.format(i)) as f:
             param = json.load(f)
-        if param['transformers_model'] != "xlm-roberta-large":
+        if not base_model and param['transformers_model'] != "xlm-roberta-large":
             continue
-
+        if base_model and param['transformers_model'] != "xlm-roberta-base":
+            continue
         if param['lower_case']:
             continue
 
@@ -78,7 +79,10 @@ def summary():
     in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
     in_result_key = list(dict_in_domain['f1']['ner'].keys())
     df = pd.DataFrame(in_result, columns=in_result_key, index=columns).T
-    df.to_csv('./ckpt/summary_in_domain.csv')
+    if base_model:
+        df.to_csv('./ckpt/summary_in_domain.base.csv')
+    else:
+        df.to_csv('./ckpt/summary_in_domain.csv')
     pprint(df)
     for metric in ['f1', 'recall', 'precision']:
         for task in ['es', 'ner']:
@@ -89,7 +93,10 @@ def summary():
             pprint(tmp_df)
             tmp_df = tmp_df[data]
             tmp_df = tmp_df.T[all_data].T
-            tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.csv'.format(task, metric))
+            if base_model:
+                tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.base.csv'.format(task, metric))
+            else:
+                tmp_df.to_csv('./ckpt/summary_out_domain_{}_{}.csv'.format(task, metric))
             pprint(tmp_df)
 
 

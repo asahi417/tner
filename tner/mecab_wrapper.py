@@ -4,8 +4,8 @@ from typing import List
 from itertools import accumulate
 try:
     import MeCab
-except ImportError:
-    raise ImportError("Please install mecab-python3 `pip install mecab-python3==0.996.5` ")
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("Please install mecab-python3 `pip install mecab-python3==0.996.5` ")
 
 POS_MAPPER = {
     "名詞": "NOUN",

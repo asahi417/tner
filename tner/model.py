@@ -51,9 +51,9 @@ class TrainTransformersNER:
     """ Named-Entity-Recognition (NER) trainer """
 
     def __init__(self,
-                 dataset: (str, List) = None,
                  checkpoint: str = None,
                  checkpoint_dir: str = None,
+                 dataset: (str, List) = None,
                  transformers_model: str = 'xlm-roberta-large',
                  random_seed: int = 1234,
                  lr: float = 1e-5,
