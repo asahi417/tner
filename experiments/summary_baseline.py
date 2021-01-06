@@ -111,7 +111,7 @@ def summary(base_model: bool = False, lower: bool = False):
                 print(all_data, lower)
                 tmp_df = tmp_df.T[all_data].T
             else:
-                tmp_df = tmp_df.T['all'].T
+                tmp_df = tmp_df.T['all']
             tmp_df.to_csv('{}/summary_out_domain.{}.{}.csv'.format(checkpoint_dir, task, metric))
             pprint(tmp_df)
 
