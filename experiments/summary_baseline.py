@@ -4,9 +4,8 @@ import pandas as pd
 from pprint import pprint
 from glob import glob
 
-data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin",
-        "mit_restaurant", "mit_movie_trivia"]
-all_data = data + ["all"]
+data = ["ontonotes5", "conll2003",  "wnut2017", "panx_dataset/en", "bionlp2004", "bc5cdr", "fin"]
+data_lower = data + ["mit_restaurant", "mit_movie_trivia"]
 
 
 def summary(base_model: bool = False, lower: bool = False):
@@ -104,6 +103,10 @@ def summary(base_model: bool = False, lower: bool = False):
             pprint(tmp_df)
             tmp_df = tmp_df[data]
             if task == 'es':
+                if lower:
+                    all_data = data_lower + ["all"]
+                else:
+                    all_data = data + ["all"]
                 tmp_df = tmp_df.T[all_data].T
             else:
                 tmp_df = tmp_df.T['all'].T
