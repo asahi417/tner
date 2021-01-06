@@ -18,14 +18,14 @@ def summary(base_model: bool = False, lower: bool = False):
     }
     if base_model:
         if lower:
-            checkpoint_dir = './ckpt/base_lower'
+            checkpoint_dir = './ckpt/model_base_lower'
         else:
-            checkpoint_dir = './ckpt/base'
+            checkpoint_dir = './ckpt/model_base'
     else:
         if lower:
-            checkpoint_dir = './ckpt/large_lower'
+            checkpoint_dir = './ckpt/model_large_lower'
         else:
-            checkpoint_dir = './ckpt/large'
+            checkpoint_dir = './ckpt/model_large'
 
     for i in glob('{}/*'.format(checkpoint_dir)):
         if not os.path.isdir(i):
