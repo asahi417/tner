@@ -4,17 +4,14 @@ import pandas as pd
 from pprint import pprint
 from glob import glob
 
-panx_data = ["panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru", "panx_dataset/ko", "panx_dataset/es",
-             "panx_dataset/ar"]
+panx_data = [
+    "panx_dataset/en", "panx_dataset/ja", "panx_dataset/ru", "panx_dataset/ko", "panx_dataset/es", "panx_dataset/ar"
+]
 
 
-def summary():
-    dict_in_domain = {'f1': {'es': {}, 'ner': {}}, 'recall': {'es': {}, 'ner': {}}, 'precision': {'es': {}, 'ner': {}}}
-    dict_out_domain = {
-        'f1': {'es': {}, 'ner': {}},
-        'recall': {'es': {}, 'ner': {}},
-        'precision': {'es': {}, 'ner': {}}
-    }
+def summary(base_model: bool = False):
+    dict_in_domain = {'es': {}, 'ner': {}}
+    dict_out_domain = {'es': {}, 'ner': {}}
     checkpoint_dir = './ckpt/model_large'
     for i in glob('{}/*'.format(checkpoint_dir)):
         if not os.path.isdir(i):
