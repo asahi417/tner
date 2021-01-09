@@ -30,8 +30,6 @@ def summary(base_model: bool = False, lower: bool = False):
         else:
             checkpoint_dir = './ckpt/model_large'
 
-    print(checkpoint_dir)
-    input()
     print(glob('{}/*'.format(checkpoint_dir)))
     for i in glob('{}/*'.format(checkpoint_dir)):
         if not os.path.isdir(i):
