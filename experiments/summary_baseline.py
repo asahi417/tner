@@ -30,6 +30,7 @@ def summary(base_model: bool = False, lower: bool = False):
         else:
             checkpoint_dir = './ckpt/model_large'
 
+    print(glob('{}/*'.format(checkpoint_dir)))
     for i in glob('{}/*'.format(checkpoint_dir)):
         if not os.path.isdir(i):
             continue
@@ -46,7 +47,7 @@ def summary(base_model: bool = False, lower: bool = False):
         else:
             if param['lower_case']:
                 continue
-
+        print(i)
         if len(param['dataset']) > 1:
             train_data = 'all'
         else:
