@@ -70,13 +70,11 @@ def summary(base_model: bool = False, lower: bool = False):
             if test_data == train_data and train_data not in f1_in_domain[task].keys():
                 f1_in_domain[task][train_data] = f1
 
-    pprint(f1_in_domain)
-    pprint(f1_out_domain)
-
     if not lower:
         in_result = [list(f1_in_domain['ner'].values())]
         in_result_key = list(f1_in_domain['ner'].keys())
         df = pd.DataFrame(in_result, columns=in_result_key, index=['f1']).T
+        df = df.T[data].T
         pprint(df)
         df.to_csv('{}/summary_in_domain.f1.csv'.format(checkpoint_dir))
 
@@ -86,7 +84,6 @@ def summary(base_model: bool = False, lower: bool = False):
     tmp_df = tmp_df.T[all_data].T
     pprint(tmp_df)
     tmp_df.to_csv('{}/summary_out_domain.f1.span.csv'.format(checkpoint_dir))
-    input()
     tmp_df = pd.DataFrame(f1_out_domain['ner']).T
     tmp_df = tmp_df.T['all_english']
     pprint(tmp_df)
