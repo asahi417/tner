@@ -51,7 +51,8 @@ if __name__ == '__main__':
     if not trainer.is_trained:
         trainer.train(monitor_validation=opt.monitor_validation)
     else:
-        for i in opt.test_data.split(','):
+        test_data = [None] if opt.test_data is None else opt.test_data.split(',')
+        for i in test_data:
             trainer.test(test_dataset=i, entity_span_prediction=opt.test_entity_span, lower_case=opt.test_lower_case)
 
 

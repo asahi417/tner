@@ -92,7 +92,7 @@ def summary(base_model: bool = False, lower: bool = False):
 
 
 if __name__ == '__main__':
-    summary(False, True)
-    summary(False, False)
-    # summary(True, False)
-    # summary(True, True)
+    # summary(False, True)
+    # summary(False, False)
+    summary(True, False)
+    summary(True, True)
