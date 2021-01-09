@@ -55,10 +55,8 @@ def summary(base_model: bool = False, lower: bool = False):
             if train_data not in data:
                 continue
 
-        print(glob('{}/test*.json'.format(i)))
         for a in glob('{}/test*.json'.format(i)):
             test_data = a.split('test_')[-1].split('.json')[0]
-            print(test_data)
             if lower:
                 if 'lower' not in test_data:
                     continue
@@ -66,18 +64,11 @@ def summary(base_model: bool = False, lower: bool = False):
                 if 'lower' in test_data:
                     continue
 
-            print(test_data)
             test_data = test_data.replace('-', '/')
             test_data_raw = test_data.replace('_ignore', '').replace('_lower', '').replace('_span', '')
-            print(test_data_raw)
-            if lower:
-                if test_data_raw not in data_lower:
-                    continue
-            else:
-                if test_data_raw not in data:
-                    continue
+            if test_data_raw not in data:
+                continue
 
-            print(test_data)
             with open(a) as f:
                 test = json.load(f)
             if 'test' in test.keys():
@@ -129,7 +120,7 @@ def summary(base_model: bool = False, lower: bool = False):
 
 
 if __name__ == '__main__':
-    # summary(True, True)
     summary(True, False)
+    summary(True, True)
     # summary(False, True)
     # summary(False, False)
