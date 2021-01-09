@@ -107,7 +107,8 @@ def summary(base_model: bool = False, lower: bool = False):
                 continue
             tmp_out = dict_out_domain[metric][task]
             tmp_df = pd.DataFrame(tmp_out).T
-            pprint(tmp_df.columns, tmp_df.index)
+            pprint(tmp_df.columns)
+            pprint(tmp_df.T.columns)
             if task == 'es':
                 tmp_df = tmp_df[data]
                 all_data = data + ["all_english"]
