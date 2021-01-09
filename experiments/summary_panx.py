@@ -39,7 +39,7 @@ def summary():
                 continue
             test_data = test_data.replace('-', '/')
             test_data_raw = test_data.replace('_ignore', '').replace('_lower', '')
-            if 'ignore' in test_data:
+            if 'ignore' in test_data or 'span' in test_data:
                 continue
             if test_data_raw not in panx_data:
                 continue

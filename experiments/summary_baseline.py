@@ -64,7 +64,7 @@ def summary(base_model: bool = False, lower: bool = False):
                     continue
 
             test_data = test_data.replace('-', '/')
-            test_data_raw = test_data.replace('_ignore', '').replace('_lower', '')
+            test_data_raw = test_data.replace('_ignore', '').replace('_lower', '').replace('_span', '')
             if test_data_raw not in data:
                 continue
 
@@ -77,7 +77,7 @@ def summary(base_model: bool = False, lower: bool = False):
             f1 = round(metric['f1'], 2)
             recall = round(metric['recall'], 2)
             precision = round(metric['precision'], 2)
-            task = 'es' if 'ignore' in test_data else 'ner'
+            task = 'es' if 'ignore' in test_data or 'span' in test_data else 'ner'
 
             if train_data not in dict_out_domain['f1'][task].keys():
                 dict_out_domain['f1'][task][train_data] = {}
@@ -91,6 +91,8 @@ def summary(base_model: bool = False, lower: bool = False):
                 dict_in_domain['recall'][task][test_data_raw] = recall
                 dict_in_domain['precision'][task][test_data_raw] = precision
 
+    print(dict_in_domain)
+    print(dict_out_domain)
     if not lower:
         columns = ['recall', 'precision', 'f1']
         in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
@@ -117,7 +119,7 @@ def summary(base_model: bool = False, lower: bool = False):
 
 
 if __name__ == '__main__':
-    # summary(True, True)
-    # summary(True, False)
-    summary(False, True)
-    summary(False, False)
+    summary(True, True)
+    summary(True, False)
+    # summary(False, True)
+    # summary(False, False)
