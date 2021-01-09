@@ -23,7 +23,7 @@ def summary(base_model: bool = False, lower: bool = False):
         checkpoint_dir += '/model_large'
 
     if lower:
-        checkpoint_dir += 'lower'
+        checkpoint_dir += '_lower'
 
     print(checkpoint_dir)
     input()
