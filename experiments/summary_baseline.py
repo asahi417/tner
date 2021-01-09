@@ -85,6 +85,7 @@ def summary(base_model: bool = False, lower: bool = False):
     pprint(tmp_df)
     tmp_df.to_csv('{}/summary_out_domain.f1.span.csv'.format(checkpoint_dir))
     tmp_df = pd.DataFrame(f1_out_domain['ner']).T
+    tmp_df = tmp_df[data]
     tmp_df = tmp_df.T['all_english']
     pprint(tmp_df)
     tmp_df.to_csv('{}/summary_out_domain.f1.csv'.format(checkpoint_dir))
