@@ -3,6 +3,7 @@ from glob import glob
 
 ckpt = './ckpt'
 for i in glob('{}/*/*/*_ignore.json'):
+    print(i)
     os.rename(i, i.replace('_ignore', '_span'))
 
 # for i in glob('{}/*/*'):
