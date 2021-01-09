@@ -49,7 +49,7 @@ def summary(base_model: bool = False, lower: bool = False):
                 continue
         print(i)
         if len(param['dataset']) > 1:
-            train_data = 'all'
+            train_data = 'all_english'
         else:
             train_data = param['dataset'][0]
             if train_data not in data:
@@ -120,10 +120,10 @@ def summary(base_model: bool = False, lower: bool = False):
             pprint(tmp_df.columns)
             if task == 'es':
                 tmp_df = tmp_df[data]
-                all_data = data + ["all"]
+                all_data = data + ["all_english"]
                 tmp_df = tmp_df.T[all_data].T
             else:
-                tmp_df = tmp_df.T['all']
+                tmp_df = tmp_df.T['all_english']
             tmp_df.to_csv('{}/summary_out_domain.{}.{}.csv'.format(checkpoint_dir, task, metric))
             pprint(tmp_df)
 
