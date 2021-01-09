@@ -93,8 +93,8 @@ def summary(base_model: bool = False, lower: bool = False):
                 dict_in_domain['precision'][task][test_data_raw] = precision
         print(dict_out_domain)
         input()
-    print(dict_in_domain)
-    print(dict_out_domain)
+
+    pprint(dict_out_domain)
     if not lower:
         columns = ['recall', 'precision', 'f1']
         in_result = [list((dict_in_domain[c]['ner'].values())) for c in columns]
@@ -107,9 +107,13 @@ def summary(base_model: bool = False, lower: bool = False):
             if task not in dict_out_domain[metric].keys():
                 continue
             tmp_out = dict_out_domain[metric][task]
+
             tmp_df = pd.DataFrame(tmp_out).T
+            pprint(tmp_out)
+            print(metric, task)
             pprint(tmp_df.columns)
             pprint(tmp_df.T.columns)
+            input()
             if task == 'es':
                 tmp_df = tmp_df[data]
                 all_data = data + ["all_english"]
