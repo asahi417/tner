@@ -47,13 +47,13 @@ def summary(base_model: bool = False, lower: bool = False):
         else:
             if param['lower_case']:
                 continue
-        print(i)
         if len(param['dataset']) > 1:
             train_data = 'all_english'
         else:
             train_data = param['dataset'][0]
             if train_data not in data:
                 continue
+        print(i, train_data)
 
         for a in glob('{}/test*.json'.format(i)):
             test_data = a.split('test_')[-1].split('.json')[0]
@@ -91,7 +91,8 @@ def summary(base_model: bool = False, lower: bool = False):
                 dict_in_domain['f1'][task][test_data_raw] = f1
                 dict_in_domain['recall'][task][test_data_raw] = recall
                 dict_in_domain['precision'][task][test_data_raw] = precision
-
+        print(dict_out_domain)
+        input()
     print(dict_in_domain)
     print(dict_out_domain)
     if not lower:
