@@ -7,8 +7,8 @@ for i in glob('{}/*/*/*_ignore.json'.format(ckpt)):
 
 for i in glob('{}/*/*'.format(ckpt)):
     data_name = i.split('/')[-1]
-    is_lower = '_lower' in data_name
-    print(i, is_lower)
+    is_lower = '_lower' in i
+    print(i, is_lower, data_name)
     input()
     for _i in glob('{}/test*.json'.format(i)):
         if data_name in _i:
