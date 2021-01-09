@@ -66,7 +66,7 @@ def summary(base_model: bool = False, lower: bool = False):
 
             if train_data not in f1_out_domain[task].keys():
                 f1_out_domain[task][train_data] = {}
-            f1_out_domain[task][task][train_data][test_data_raw] = f1
+            f1_out_domain[task][train_data] = f1
             if test_data == train_data and test_data not in f1_in_domain[task].keys():
                 f1_in_domain[task][test_data] = f1
 
