@@ -58,6 +58,7 @@ def summary(base_model: bool = False, lower: bool = False):
         print(glob('{}/test*.json'.format(i)))
         for a in glob('{}/test*.json'.format(i)):
             test_data = a.split('test_')[-1].split('.json')[0]
+            print(test_data)
             if lower:
                 if 'lower' not in test_data:
                     continue
