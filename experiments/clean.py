@@ -2,7 +2,7 @@ import os
 from glob import glob
 
 ckpt = './ckpt'
-for i in glob('{}/*/*/*_ignore.json'):
+for i in glob('{}/*/*/*_ignore.json'.format(ckpt)):
     print(i)
     os.rename(i, i.replace('_ignore', '_span'))
 
