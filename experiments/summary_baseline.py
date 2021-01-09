@@ -64,11 +64,18 @@ def summary(base_model: bool = False, lower: bool = False):
                 if 'lower' in test_data:
                     continue
 
+            print(test_data)
             test_data = test_data.replace('-', '/')
             test_data_raw = test_data.replace('_ignore', '').replace('_lower', '').replace('_span', '')
-            if test_data_raw not in data:
-                continue
+            print(test_data_raw)
+            if lower:
+                if test_data_raw not in data_lower:
+                    continue
+            else:
+                if test_data_raw not in data:
+                    continue
 
+            print(test_data)
             with open(a) as f:
                 test = json.load(f)
             if 'test' in test.keys():
