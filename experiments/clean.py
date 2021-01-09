@@ -6,6 +6,8 @@ for i in glob('{}/*/*/*_ignore.json'.format(ckpt)):
     os.rename(i, i.replace('_ignore', '_span'))
 
 for i in glob('{}/*/*'.format(ckpt)):
+    if not os.path.isdir(i):
+        continue
     data_name = i.split('/')[-1]
     is_lower = '_lower' in i
     print(i, is_lower, data_name)
