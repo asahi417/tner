@@ -1,6 +1,5 @@
 """ Fine-tune transformers on NER dataset """
 import argparse
-from glob import glob
 from tner import VALID_DATASET
 from tner import TrainTransformersNER
 
@@ -23,13 +22,10 @@ def get_options():
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--monitor-validation', help='display validation after each epoch', action='store_true')
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
-    parser.add_argument('--test-data', help='test dataset (if not specified, use trained set)', default=None, type=str)
-    parser.add_argument('--test-lower-case', help='lower case all the test data', action='store_true')
-    parser.add_argument('--test-entity-span', help='evaluate entity span', action='store_true')
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     opt = get_options()
     # train model
     trainer = TrainTransformersNER(
@@ -48,11 +44,6 @@ if __name__ == '__main__':
         max_grad_norm=opt.max_grad_norm,
         lower_case=opt.lower_case
     )
-    if not trainer.is_trained:
-        trainer.train(monitor_validation=opt.monitor_validation)
-    else:
-        test_data = [None] if opt.test_data is None else opt.test_data.split(',')
-        for i in test_data:
-            trainer.test(test_dataset=i, entity_span_prediction=opt.test_entity_span, lower_case=opt.test_lower_case)
-
-
+    if trainer.is_trained:
+        raise ValueError('checkpoint exists at {}'.format(trainer.checkpoint))
+    trainer.train(monitor_validation=opt.monitor_validation)

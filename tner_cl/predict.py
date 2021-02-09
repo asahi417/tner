@@ -11,7 +11,7 @@ def get_options():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     opt = get_options()
     classifier = TransformersNER(checkpoint=opt.checkpoint)
     test_sentences = [

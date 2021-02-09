@@ -172,7 +172,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
+            os.system('wget -O {0}/data.tar.gz https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz'.
                       format(CACHE_DIR))
             os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
             for i in ['train', 'dev', 'test']:
@@ -180,6 +180,19 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                     file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
                     file_tag=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.nertags'.format(i)),
                     output_file=os.path.join(data_path, '{}.txt'.format(i)))
+    elif data_name == 'ontonotes5':
+        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
+        if not os.path.exists(data_path):
+            raise ValueError('please download Ontonotes5 from https://catalog.ldc.upenn.edu/LDC2013T19')
+            # os.makedirs(data_path, exist_ok=True)
+            # os.system('wget -O {0}/data.tar.gz https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz'.
+            #           format(CACHE_DIR))
+            # os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
+            # for i in ['train', 'dev', 'test']:
+            #     conll_formatting(
+            #         file_token=os.path.join(CACHE_DIR, 'data/onto/{}.words'.format(i)),
+            #         file_tag=os.path.join(CACHE_DIR, 'data/onto/{}.ner'.format(i)),
+            #         output_file=os.path.join(data_path, '{}.txt'.format(i)))
     elif data_name == 'bc5cdr':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
@@ -229,7 +242,6 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         convert_to_iob('CDR_DevelopmentSet.PubTator.txt', 'dev.txt')
         convert_to_iob('CDR_TestSet.PubTator.txt', 'test.txt')
         convert_to_iob('CDR_TrainingSet.PubTator.txt', 'train.txt')
-
     elif data_name == 'bionlp2004':  # https://www.aclweb.org/anthology/W04-1213.pdf
         files_info = {'train': 'Genia4ERtask1.iob2', 'valid': 'Genia4EReval1.iob2'}
         if not os.path.exists(data_path):
@@ -261,18 +273,6 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'.format(
                 os.path.join(data_path, 'valid.txt')))
         entity_first = True
-    elif data_name == 'ontonotes5':
-        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data.tar.gz https://github.com/swiseman/neighbor-tagging/raw/master/data.tar.gz'.
-                      format(CACHE_DIR))
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
-            for i in ['train', 'dev', 'test']:
-                conll_formatting(
-                    file_token=os.path.join(CACHE_DIR, 'data/onto/{}.words'.format(i)),
-                    file_tag=os.path.join(CACHE_DIR, 'data/onto/{}.ner'.format(i)),
-                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
     elif data_name == 'mit_movie_trivia':
         files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
         if not os.path.exists(data_path):

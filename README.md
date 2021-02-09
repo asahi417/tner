@@ -113,7 +113,7 @@ Words tagged with O are outside of named entities and the I-XXX tag is used for 
 named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
 first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
 The custom dataset should has `train.txt` and `valid.txt` file in a same folder. 
-Please take a look [sample custom data](examples/custom_dataset_sample).
+Please take a look [sample custom data](asset/custom_dataset_sample).
 
 ### Model Finetuning
 Language model finetuning can be done with a few lines:
