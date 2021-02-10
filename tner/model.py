@@ -5,7 +5,6 @@ import json
 import logging
 from time import time
 from typing import List
-from itertools import groupby
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 import transformers
@@ -16,42 +15,20 @@ from torch.utils.tensorboard import SummaryWriter
 
 from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
-from .tokenizer import Transforms
+from .tokenizer import Transforms, Dataset
 
 
 PROGRESS_INTERVAL = 100
-CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
-os.makedirs(CACHE_DIR, exist_ok=True)
 
-__all__ = ('TrainTransformersNER', 'TransformersNER')
-
-
-class Dataset(torch.utils.data.Dataset):
-    """ torch.utils.data.Dataset wrapper converting into tensor """
-    float_tensors = ['attention_mask']
-
-    def __init__(self, data: List):
-        self.data = data
-
-    def __len__(self):
-        return len(self.data)
-
-    def to_tensor(self, name, data):
-        if name in self.float_tensors:
-            return torch.tensor(data, dtype=torch.float32)
-        return torch.tensor(data, dtype=torch.long)
-
-    def __getitem__(self, idx):
-        return {k: self.to_tensor(k, v) for k, v in self.data[idx].items()}
+__all__ = 'TrainTransformersNER'
 
 
 class TrainTransformersNER:
     """ Named-Entity-Recognition (NER) trainer """
 
     def __init__(self,
-                 checkpoint: str = None,
                  checkpoint_dir: str = None,
                  dataset: (str, List) = None,
                  transformers_model: str = 'xlm-roberta-large',
@@ -66,7 +43,7 @@ class TrainTransformersNER:
                  max_grad_norm: float = 1.0,
                  lower_case: bool = False,
                  num_worker: int = 1,
-                 checkpoint_prefix: str = None):
+                 cache_dir: str = None):
         """ Named-Entity-Recognition (NER) trainer
 
          Parameter
@@ -108,12 +85,12 @@ class TrainTransformersNER:
         if num_worker == 1:
             os.environ["OMP_NUM_THREADS"] = "1"  # to turn off warning message
         self.num_worker = num_worker
+        self.cache_dir = cache_dir
 
         # checkpoint version
         self.args = Argument(
-            dataset=dataset,
             checkpoint_dir=checkpoint_dir,
-            checkpoint=checkpoint,
+            dataset=dataset,
             transformers_model=transformers_model,
             random_seed=random_seed,
             lr=lr,
@@ -124,19 +101,15 @@ class TrainTransformersNER:
             max_seq_length=max_seq_length,
             fp16=fp16,
             max_grad_norm=max_grad_norm,
-            lower_case=lower_case,
-            checkpoint_prefix=checkpoint_prefix
+            lower_case=lower_case
         )
 
-        self.is_trained = self.args.model_statistics is not None
         # fix random seed
         random.seed(self.args.random_seed)
         transformers.set_seed(self.args.random_seed)
         torch.manual_seed(self.args.random_seed)
         torch.cuda.manual_seed_all(self.args.random_seed)
 
-        self.label_to_id = self.args.label_to_id
-        self.id_to_label = None if self.label_to_id is None else {v: str(k) for k, v in self.label_to_id.items()}
         self.dataset_split = None
         self.language = None
         self.unseen_entity_set = None
@@ -149,37 +122,34 @@ class TrainTransformersNER:
         self.transforms = None
         self.__epoch = 0
         self.__step = 0
+        self.label_to_id = None
+        self.id_to_label = None
 
-    def __setup_data(self, dataset_name, lower_case):
-        """ set up dataset """
-        # assert self.dataset_split is None, "dataset has already been loaded"
-        if self.is_trained:
-            self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
-                dataset_name,
-                label_to_id=self.label_to_id,
-                fix_label_dict=True,
-                lower_case=lower_case)
-        else:
-            self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
-                dataset_name,
-                lower_case=lower_case)
-        self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
-
-    def __setup_model(self):
-        """ set up language model """
+    def __setup_model_data(self, dataset, lower_case):
+        """ set up data/language model """
         if self.model is not None:
             return
-        self.model = transformers.AutoModelForTokenClassification.from_pretrained(
-            self.args.transformers_model,
-            config=transformers.AutoConfig.from_pretrained(
+        if self.args.is_trained:
+            self.model = transformers.AutoModelForTokenClassification.from_pretrained(self.args.checkpoint_dir)
+            self.transforms = Transforms(self.args.checkpoint_dir)
+            self.label_to_id = self.model.config.label2id
+            self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
+                dataset, label_to_id=self.label_to_id, fix_label_dict=True, lower_case=lower_case)
+            self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
+        else:
+            self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
+                dataset, lower_case=lower_case)
+            self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
+            self.model = transformers.AutoModelForTokenClassification.from_pretrained(
                 self.args.transformers_model,
-                num_labels=len(self.id_to_label),
-                id2label=self.id_to_label,
-                label2id=self.label_to_id,
-                cache_dir=CACHE_DIR)
-        )
-        self.transforms = Transforms(self.args.transformers_model)
-        if not self.is_trained:
+                config=transformers.AutoConfig.from_pretrained(
+                    self.args.transformers_model,
+                    num_labels=len(self.label_to_id),
+                    id2label=self.id_to_label,
+                    label2id=self.label_to_id,
+                    cache_dir=self.cache_dir)
+            )
+            self.transforms = Transforms(self.args.transformers_model)
             # optimizer
             no_decay = ["bias", "LayerNorm.weight"]
             optimizer_grouped_parameters = [
@@ -192,9 +162,6 @@ class TrainTransformersNER:
             # scheduler
             self.scheduler = transformers.get_linear_schedule_with_warmup(
                 self.optimizer, num_warmup_steps=self.args.warmup_step, num_training_steps=self.args.total_step)
-        else:
-            # load check point
-            self.model.load_state_dict(self.args.model_statistics['model_state_dict'])
 
         # GPU allocation
         self.model.to(self.device)
@@ -209,8 +176,7 @@ class TrainTransformersNER:
                 self.scale_loss = amp.scale_loss
                 logging.info('using `apex.amp`')
             except ImportError:
-                raise ImportError(
-                    "Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
+                logging.exception("Skip apex: please install apex from https://www.github.com/nvidia/apex to use fp16")
 
         # multi-gpus
         if self.n_gpu > 1:
@@ -234,10 +200,6 @@ class TrainTransformersNER:
         return torch.utils.data.DataLoader(
             data_obj, num_workers=self.num_worker, batch_size=batch_size, shuffle=is_train, drop_last=is_train)
 
-    @property
-    def checkpoint(self):
-        return self.args.checkpoint_dir
-
     def test(self,
              test_dataset: str = None,
              entity_span_prediction: bool = False,
@@ -257,7 +219,7 @@ class TrainTransformersNER:
             converting test data into lower-cased
         """
         # setup model/dataset/data loader
-        assert self.is_trained, 'finetune model before'
+        assert self.args.is_trained, 'finetune model before'
         if test_dataset is None:
             assert len(self.args.dataset) == 1, "test dataset can not be determined"
             dataset = self.args.dataset[0]
@@ -271,8 +233,7 @@ class TrainTransformersNER:
         assert type(dataset) is str
         batch_size = batch_size_validation if batch_size_validation else self.args.batch_size
         max_seq_length = max_seq_length_validation if max_seq_length_validation else self.args.max_seq_length
-        self.__setup_data(dataset, lower_case)
-        self.__setup_model()
+        self.__setup_model_data(dataset, lower_case)
 
         if 'train' in self.dataset_split.keys():
             self.dataset_split.pop('train')
@@ -313,9 +274,8 @@ class TrainTransformersNER:
             max seq length for validation monitoring
         """
         # setup model/dataset/data loader
-        assert not self.is_trained, 'model has been already finetuned'
-        self.__setup_data(self.args.dataset, self.args.lower_case)
-        self.__setup_model()
+        assert not self.args.is_trained, 'model has been already finetuned'
+        self.__setup_model_data(self.args.dataset, self.args.lower_case)
         writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
 
         data_loader = {'train': self.__setup_loader('train', self.args.batch_size, self.args.max_seq_length)}
@@ -348,14 +308,12 @@ class TrainTransformersNER:
         except KeyboardInterrupt:
             logging.info('*** KeyboardInterrupt ***')
 
-        logging.info('[training completed, %0.2f sec in total]' % (time() - start_time))
-        model_wts = self.model.module.state_dict() if self.n_gpu > 1 else self.model.state_dict()
-        torch.save({'model_state_dict': model_wts}, os.path.join(self.args.checkpoint_dir, 'model.pt'))
-        with open(os.path.join(self.args.checkpoint_dir, 'label_to_id.json'), 'w') as f:
-            json.dump(self.label_to_id, f)
+        logging.info('[training completed, {} sec in total]'.format(time() - start_time))
+        self.model.model.save_pretrained(self.args.checkpoint_dir)
+        self.transforms.tokenizer.save_pretrained(self.args.checkpoint_dir)
         writer.close()
-        logging.info('ckpt saved at %s' % self.args.checkpoint_dir)
-        self.is_trained = True
+        logging.info('ckpt saved at {}'.format(self.args.checkpoint_dir))
+        self.args.is_trained = True
 
     def __epoch_train(self, data_loader, writer):
         """ single epoch training: returning flag which is True if training has been completed """
@@ -455,113 +413,3 @@ class TrainTransformersNER:
     def release_cache(self):
         if self.device == "cuda":
             torch.cuda.empty_cache()
-
-
-class TransformersNER:
-    """ Named-Entity-Recognition (NER) API for an inference """
-
-    def __init__(self, checkpoint: str):
-        """ Named-Entity-Recognition (NER) API for an inference
-
-         Parameter
-        ------------
-        checkpoint: str
-            path to model weight file
-        """
-        logging.info('*** initialize network ***')
-        checkpoint = checkpoint.replace('model.pt', '')
-
-        # checkpoint version
-        self.args = Argument(checkpoint=checkpoint)
-        if self.args.model_statistics is None:
-            raise ValueError('model is not trained')
-        self.label_to_id = self.args.label_to_id
-        self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
-        self.model = transformers.AutoModelForTokenClassification.from_pretrained(
-            self.args.transformers_model,
-            config=transformers.AutoConfig.from_pretrained(
-                self.args.transformers_model,
-                num_labels=len(self.id_to_label),
-                id2label=self.id_to_label,
-                label2id=self.label_to_id,
-                cache_dir=CACHE_DIR)
-        )
-        self.transforms = Transforms(self.args.transformers_model)
-        self.model.load_state_dict(self.args.model_statistics['model_state_dict'])
-
-        # GPU allocation
-        self.n_gpu = torch.cuda.device_count()
-        self.device = 'cuda' if self.n_gpu > 0 else 'cpu'
-        self.model.to(self.device)
-
-    @staticmethod
-    def decode_ner_tags(tag_sequence, tag_probability, non_entity: str = 'O'):
-        """ take tag sequence, return list of entity
-        input:  ["B-LOC", "O", "O", "B-ORG", "I-ORG", "O"]
-        return: [['LOC', [0, 1]], ['ORG', [3, 5]]]
-        """
-        assert len(tag_sequence) == len(tag_probability)
-        unique_type = list(set(i.split('-')[-1] for i in tag_sequence if i != non_entity))
-        result = []
-        for i in unique_type:
-            mask = [t.split('-')[-1] == i for t, p in zip(tag_sequence, tag_probability)]
-
-            # find blocks of True in a boolean list
-            group = list(map(lambda x: list(x[1]), groupby(mask)))
-            length = list(map(lambda x: len(x), group))
-            group_length = [[sum(length[:n]), sum(length[:n]) + len(g)] for n, g in enumerate(group) if all(g)]
-
-            # get entity
-            for g in group_length:
-                result.append([i, g])
-        result = sorted(result, key=lambda x: x[1][0])
-        return result
-
-    def predict(self, x: List, max_seq_length: int = 128):
-        """ Get prediction
-
-         Parameter
-        ----------------
-        x: list
-            batch of input texts
-        max_seq_length: int
-            maximum sequence length for running an inference
-
-         Return
-        ----------------
-        entities: list
-            list of dictionary where each consists of
-                'type': (str) entity type
-                'position': (list) start position and end position
-                'mention': (str) mention
-        """
-        self.model.eval()
-        encode_list = self.transforms.encode_plus_all(x, max_length=max_seq_length)
-        data_loader = torch.utils.data.DataLoader(Dataset(encode_list), batch_size=len(encode_list))
-        encode = list(data_loader)[0]
-        logit = self.model(**{k: v.to(self.device) for k, v in encode.items()}, return_dict=True)['logits']
-        entities = []
-        for n, e in enumerate(encode['input_ids'].cpu().tolist()):
-            sentence = self.transforms.tokenizer.decode(e, skip_special_tokens=True)
-
-            pred = torch.max(logit[n], dim=-1)[1].cpu().tolist()
-            activated = nn.Softmax(dim=-1)(logit[n])
-            prob = torch.max(activated, dim=-1)[0].cpu().tolist()
-            pred = [self.id_to_label[_p] for _p in pred]
-            tag_lists = self.decode_ner_tags(pred, prob)
-
-            _entities = []
-            for tag, (start, end) in tag_lists:
-                mention = self.transforms.tokenizer.decode(e[start:end], skip_special_tokens=True)
-                start_char = len(self.transforms.tokenizer.decode(e[:start], skip_special_tokens=True))
-                if sentence[start_char] == ' ':
-                    start_char += 1
-                end_char = start_char + len(mention)
-                if mention != sentence[start_char:end_char]:
-                    logging.warning('entity mismatch: {} vs {}'.format(mention, sentence[start_char:end_char]))
-                result = {'type': tag, 'position': [start_char, end_char], 'mention': mention,
-                          'probability': sum(prob[start: end])/(end - start)}
-                _entities.append(result)
-
-            entities.append({'entity': _entities, 'sentence': sentence})
-        return entities

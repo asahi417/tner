@@ -20,11 +20,10 @@ class Test(unittest.TestCase):
             logging.info('\n- data: {}, tag: {} ({})\n'.format(i, tags, len(tags)))
 
     def test_custom_data(self):
-        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner([path_to_custom_data])
+        tner.get_dataset_ner([path_to_custom_data])
 
     def test_multiple_data(self):
-        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner([
-            'conll2003', 'fin', 'ontonotes5', path_to_custom_data])
+        tner.get_dataset_ner(['conll2003', 'fin', 'ontonotes5', path_to_custom_data])
 
 
 if __name__ == "__main__":

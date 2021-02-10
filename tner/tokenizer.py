@@ -5,15 +5,14 @@ from itertools import chain, groupby
 from typing import List
 
 import transformers
+import torch
 from torch import nn
 
 
-CACHE_DIR = os.getenv("CACHE_DIR", './cache')
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
-os.makedirs(CACHE_DIR, exist_ok=True)
 
-__all__ = 'Transforms'
+__all__ = ('Transforms', 'Dataset')
 
 
 def additional_special_tokens(tokenizer):
@@ -34,15 +33,10 @@ def additional_special_tokens(tokenizer):
 class Transforms:
     """ NER specific transform pipeline"""
 
-    def __init__(self, transformer_tokenizer: str):
+    def __init__(self, transformer_tokenizer: str, cache_dir: str = None):
         """ NER specific transform pipeline """
-        self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=CACHE_DIR)
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=cache_dir)
         self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
-        # find tokenizer-depend prefix
-        # tokens = self.tokenizer.tokenize('get tokenizer specific prefix')
-        # tokens_encode = self.tokenizer.convert_ids_to_tokens(self.tokenizer.encode('get tokenizer specific prefix'))
-        # sp_token_prefix = tokens_encode[:tokens_encode.index(tokens[0])]
-        # print(sp_token_prefix, self.tokenizer.convert_tokens_to_ids(sp_token_prefix))
         self.prefix = self.__sp_token_prefix()
         # find special tokens to be added
         self.sp_token_start, _, self.sp_token_end = additional_special_tokens(self.tokenizer)
@@ -143,3 +137,21 @@ class Transforms:
     def tokenize(self, *args, **kwargs):
         return self.tokenizer.tokenize(*args, **kwargs)
 
+
+class Dataset(torch.utils.data.Dataset):
+    """ torch.utils.data.Dataset wrapper converting into tensor """
+    float_tensors = ['attention_mask']
+
+    def __init__(self, data: List):
+        self.data = data
+
+    def __len__(self):
+        return len(self.data)
+
+    def to_tensor(self, name, data):
+        if name in self.float_tensors:
+            return torch.tensor(data, dtype=torch.float32)
+        return torch.tensor(data, dtype=torch.long)
+
+    def __getitem__(self, idx):
+        return {k: self.to_tensor(k, v) for k, v in self.data[idx].items()}

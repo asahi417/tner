@@ -10,7 +10,7 @@ build
 dist
 
 data
-ckpt
+ckpt*
 vocab
 apex
 cache

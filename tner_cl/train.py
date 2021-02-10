@@ -6,11 +6,10 @@ from tner import TrainTransformersNER
 
 def get_options():
     parser = argparse.ArgumentParser(description='Fine-tune transformers on NER dataset')
-    parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
-    parser.add_argument('-d', '--data', help='dataset: {}'.format(VALID_DATASET), default='wnut_17', type=str)
+    parser.add_argument('-c', '--checkpoint_dir', help='checkpoint directory', default='./ckpt_0/ner_model', type=str)
+    parser.add_argument('-d', '--data', help='dataset: {}'.format(VALID_DATASET), default='wnut2017', type=str)
     parser.add_argument('-t', '--transformer', help='pretrained language model', default='xlm-roberta-large', type=str)
     parser.add_argument('-b', '--batch-size', help='batch size', default=32, type=int)
-    parser.add_argument('--checkpoint-dir', help='checkpoint directory', default=None, type=str)
     parser.add_argument("--max-grad-norm", default=1.0, type=float, help="Max gradient norm.")
     parser.add_argument('--max-seq-length', default=128, type=int,
                         help='max sequence length (use same length as used in pre-training if not provided)')
@@ -29,7 +28,6 @@ def main():
     opt = get_options()
     # train model
     trainer = TrainTransformersNER(
-        checkpoint=opt.checkpoint,
         checkpoint_dir=opt.checkpoint_dir,
         dataset=opt.data.split(','),
         transformers_model=opt.transformer,
@@ -44,6 +42,8 @@ def main():
         max_grad_norm=opt.max_grad_norm,
         lower_case=opt.lower_case
     )
-    if trainer.is_trained:
-        raise ValueError('checkpoint exists at {}'.format(trainer.checkpoint))
     trainer.train(monitor_validation=opt.monitor_validation)
+
+
+if __name__ == '__main__':
+    main()

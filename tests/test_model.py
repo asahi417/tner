@@ -21,17 +21,13 @@ class Test(unittest.TestCase):
                                           batch_size=1,
                                           transformers_model=transformers_model,
                                           checkpoint_dir='./tests/ckpt_1')
-        assert not model.is_trained
         model.train()
         model.test(test_dataset=data)
-        model.test(test_dataset=data, ignore_entity_type=True)
-        checkpoint = model.checkpoint
-        logging.info(checkpoint)
 
-        model = tner.TrainTransformersNER(checkpoint=checkpoint)
-        assert model.is_trained
+        logging.info(model.args.checkpoint_dir)
+
+        model = tner.TrainTransformersNER(model.args.checkpoint_dir)
         model.test(test_dataset=data)
-        model.test(test_dataset=data, ignore_entity_type=True)
 
 
 if __name__ == "__main__":

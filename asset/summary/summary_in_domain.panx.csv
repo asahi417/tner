@@ -1,0 +1,4 @@
+,recall,precision,f1
+panx_dataset/ja,87.96,85.17,86.54
+panx_dataset/ru,90.7,89.45,90.07
+panx_dataset/en,84.78,83.27,84.02

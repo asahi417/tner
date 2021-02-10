@@ -3,6 +3,8 @@ import os
 import zipfile
 import logging
 import re
+# import requests
+# import tarfile
 from typing import Dict, List
 from itertools import chain
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -22,8 +24,8 @@ PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "
         "csb", "fo", "ia", "la", "mt", "pnb", "so", "uz", "be-x-old", "cv", "fr", "id", "lb", "mwl", "ps", "sq", "vec",
         "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"]
 VALID_DATASET = ['conll2003', 'wnut2017', 'ontonotes5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
-                 'wiki_ja', 'wiki_news_ja', 'bc5cdr'] + ['panx_dataset/{}'.format(i) for i in [PANX]]
-CACHE_DIR = os.getenv("CACHE_DIR", './cache')
+                 'wiki_ja', 'wiki_news_ja', 'bc5cdr'] + ['panx_dataset/{}'.format(i) for i in PANX]
+CACHE_DIR = '{}/cache_tner'.format(os.path.expanduser('~'))
 
 # Shared label set across different dataset
 SHARED_NER_LABEL = {
@@ -151,7 +153,8 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                            fix_label_dict: bool = False,
                            lower_case: bool = False,
                            custom_language: str = 'en',
-                           allow_new_entity: bool = True):
+                           allow_new_entity: bool = True,
+                           cache_dir: str = None):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
@@ -166,19 +169,21 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     entity_first = False
     to_bio = False
     language = 'en'
-    data_path = os.path.join(CACHE_DIR, data_name)
+    cache_dir = cache_dir if cache_dir is not None else CACHE_DIR
+    os.makedirs(cache_dir, exist_ok=True)
+    data_path = os.path.join(cache_dir, data_name)
     logging.info('data_name: {}'.format(data_name))
     if data_name == 'conll2003':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
             os.system('wget -O {0}/data.tar.gz https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz'.
-                      format(CACHE_DIR))
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
+                      format(cache_dir))
+            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(cache_dir))
             for i in ['train', 'dev', 'test']:
                 conll_formatting(
-                    file_token=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.words'.format(i)),
-                    file_tag=os.path.join(CACHE_DIR, 'data/conll2003/conll2003-{}.nertags'.format(i)),
+                    file_token=os.path.join(cache_dir, 'data/conll2003/conll2003-{}.words'.format(i)),
+                    file_tag=os.path.join(cache_dir, 'data/conll2003/conll2003-{}.nertags'.format(i)),
                     output_file=os.path.join(data_path, '{}.txt'.format(i)))
     elif data_name == 'ontonotes5':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
@@ -186,12 +191,12 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             raise ValueError('please download Ontonotes5 from https://catalog.ldc.upenn.edu/LDC2013T19')
             # os.makedirs(data_path, exist_ok=True)
             # os.system('wget -O {0}/data.tar.gz https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz'.
-            #           format(CACHE_DIR))
-            # os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(CACHE_DIR))
+            #           format(cache_dir))
+            # os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(cache_dir))
             # for i in ['train', 'dev', 'test']:
             #     conll_formatting(
-            #         file_token=os.path.join(CACHE_DIR, 'data/onto/{}.words'.format(i)),
-            #         file_tag=os.path.join(CACHE_DIR, 'data/onto/{}.ner'.format(i)),
+            #         file_token=os.path.join(cache_dir, 'data/onto/{}.words'.format(i)),
+            #         file_tag=os.path.join(cache_dir, 'data/onto/{}.ner'.format(i)),
             #         output_file=os.path.join(data_path, '{}.txt'.format(i)))
     elif data_name == 'bc5cdr':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
@@ -318,13 +323,13 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info = {'valid': 'dev.txt', 'train': 'train.txt', 'test': 'test.txt'}
         panx_la = data_name.split('/')[1]
         if not os.path.exists(data_path):
-            if not os.path.exists(os.path.join(CACHE_DIR, 'panx_dataset')):
-                assert os.path.exists(os.path.join(CACHE_DIR, 'AmazonPhotos.zip')), 'download from {0} to {1}'.format(
-                    'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN', CACHE_DIR)
-                with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(CACHE_DIR), 'r') as zip_ref:
-                    zip_ref.extractall('{}/'.format(CACHE_DIR))
+            if not os.path.exists(os.path.join(cache_dir, 'panx_dataset')):
+                assert os.path.exists(os.path.join(cache_dir, 'AmazonPhotos.zip')), 'download from {0} to {1}'.format(
+                    'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN', cache_dir)
+                with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(cache_dir), 'r') as zip_ref:
+                    zip_ref.extractall('{}/'.format(cache_dir))
             os.makedirs(data_path, exist_ok=True)
-            os.system('tar xzf {0}/panx_dataset/{1}.tar.gz -C {2}'.format(CACHE_DIR, panx_la, data_path))
+            os.system('tar xzf {0}/panx_dataset/{1}.tar.gz -C {2}'.format(cache_dir, panx_la, data_path))
             for v in files_info.values():
                 os.system("sed -e 's/{0}://g' {1}/{2} > {1}/{2}.txt".format(panx_la, data_path, v.replace('.txt', '')))
                 os.system("rm -rf {0}/{1}".format(data_path, v.replace('.txt', '')))

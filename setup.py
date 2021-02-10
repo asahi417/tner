@@ -2,15 +2,15 @@ from setuptools import setup, find_packages
 
 with open('README.md', 'r') as f:
     readme = f.read()
-
+version = '0.0.1'
 setup(
     name='tner',
     packages=find_packages(exclude=["asset", "examples", "static", "templates", "tests"]),
-    version='0.0.0',
+    version=version,
     license='MIT',
     description='Transformer-based named entity recognition',
     url='https://github.com/asahi417/tner',
-    download_url="https://github.com/asahi417/tner/archive/0.0.0.tar.gz",
+    download_url="https://github.com/asahi417/tner/archive/{}.tar.gz".format(version),
     keywords=['ner', 'nlp', 'language-model'],
     long_description=readme,
     long_description_content_type="text/markdown",

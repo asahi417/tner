@@ -15,7 +15,7 @@ MODEL_CKPT = os.getenv('MODEL_CKPT', './ckpt/all_english_no_lower_case')
 if MODEL_CKPT == '':
     MODEL = None
 else:
-    MODEL = TransformersNER(checkpoint=MODEL_CKPT)
+    MODEL = TransformersNER(MODEL_CKPT)
 DUMMY = {
     'sentence': 'Jacob Collier lives in London',
     'entity': [

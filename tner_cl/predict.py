@@ -7,15 +7,15 @@ from tner import TransformersNER
 
 def get_options():
     parser = argparse.ArgumentParser(description='command line tool to test finetuned NER model',)
-    parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
+    parser.add_argument('-c', '--checkpoint-dir', help='checkpoint to load', default=None, type=str)
     return parser.parse_args()
 
 
 def main():
     opt = get_options()
-    classifier = TransformersNER(checkpoint=opt.checkpoint)
+    classifier = TransformersNER(opt.checkpoint_dir)
     test_sentences = [
-        'I live in United States, but Microsoft asks me to move to Japan.',
+        'I live in United States.',
         'I have an Apple computer.',
         'I like to eat an apple.'
     ]
@@ -31,3 +31,7 @@ def main():
             continue
         else:
             pprint(classifier.predict([_inp]))
+
+
+if __name__ == '__main__':
+    main()
