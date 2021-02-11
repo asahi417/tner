@@ -8,7 +8,7 @@ from glob import glob
 
 def get_options():
     parser = argparse.ArgumentParser(description='command line tool to test finetuned NER model',)
-    parser.add_argument('-c', '--checkpoint-dir', help='checkpoint to load', required=True, type=str)
+    parser.add_argument('-c', '--checkpoint-dir', help='checkpoint to load', default=None, type=str)
     return parser.parse_args()
 
 
