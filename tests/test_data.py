@@ -12,7 +12,8 @@ class Test(unittest.TestCase):
     """ Test get_benchmark_dataset """
 
     def test_data(self):
-        for i in tner.VALID_DATASET:
+        # for i in tner.VALID_DATASET:
+        for i in ['ontonotes5']:
             if 'panx' in i:
                 continue
             unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner([i])

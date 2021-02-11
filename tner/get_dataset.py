@@ -3,8 +3,8 @@ import os
 import zipfile
 import logging
 import re
-# import requests
-# import tarfile
+import requests
+import tarfile
 from typing import Dict, List
 from itertools import chain
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -82,6 +82,27 @@ SHARED_NER_LABEL = {
 }
 
 __all__ = ("get_dataset_ner", "VALID_DATASET", "SHARED_NER_LABEL")
+
+
+def open_compressed_file(url, cache_dir):
+    path = wget(url, cache_dir)
+    if path.endswith('.tar.gz'):
+        tar = tarfile.open(path, "r:gz")
+        tar.extractall(cache_dir)
+        tar.close()
+    elif path.endswith('.zip'):
+        with zipfile.ZipFile(path, 'r') as zip_ref:
+            zip_ref.extractall(cache_dir)
+    else:
+        raise ValueError('unknown identifier {}'.format(path))
+
+
+def wget(url, cache_dir):
+    filename = os.path.basename(url)
+    with open('{}/{}'.format(cache_dir, filename), "wb") as f:
+        r = requests.get(url)
+        f.write(r.content)
+    return '{}/{}'.format(cache_dir, filename)
 
 
 def get_dataset_ner(data_names: (List, str) = None,
@@ -170,8 +191,8 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     to_bio = False
     language = 'en'
     cache_dir = cache_dir if cache_dir is not None else CACHE_DIR
-    os.makedirs(cache_dir, exist_ok=True)
     data_path = os.path.join(cache_dir, data_name)
+    os.makedirs(data_path, exist_ok=True)
     logging.info('data_name: {}'.format(data_name))
     if data_name == 'conll2003':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
@@ -188,16 +209,23 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     elif data_name == 'ontonotes5':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
-            raise ValueError('please download Ontonotes5 from https://catalog.ldc.upenn.edu/LDC2013T19')
-            # os.makedirs(data_path, exist_ok=True)
+            # raise ValueError('please download Ontonotes5 from https://catalog.ldc.upenn.edu/LDC2013T19')
+            url = "https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz"
+            path = wget(url, cache_dir)
+            if not os.path.exists(path):
+                open_tar()
+                with open(path, "wb") as f:
+                    r = requests.get(url)
+                    f.write(r.content)
             # os.system('wget -O {0}/data.tar.gz https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz'.
             #           format(cache_dir))
-            # os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(cache_dir))
-            # for i in ['train', 'dev', 'test']:
-            #     conll_formatting(
-            #         file_token=os.path.join(cache_dir, 'data/onto/{}.words'.format(i)),
-            #         file_tag=os.path.join(cache_dir, 'data/onto/{}.ner'.format(i)),
-            #         output_file=os.path.join(data_path, '{}.txt'.format(i)))
+
+            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(cache_dir))
+            for i in ['train', 'dev', 'test']:
+                conll_formatting(
+                    file_token=os.path.join(cache_dir, 'data/onto/{}.words'.format(i)),
+                    file_tag=os.path.join(cache_dir, 'data/onto/{}.ner'.format(i)),
+                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
     elif data_name == 'bc5cdr':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
