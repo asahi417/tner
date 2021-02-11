@@ -3,7 +3,7 @@ import shutil
 from glob import glob
 
 for i in ['./ckpt/model_large', './ckpt/model_large_lower', './ckpt/model_base','./ckpt/model_base_lower']:
-    prefix = '~/Projects/transformers_model_hub/tner-xlm-roberta'
+    prefix = '/home/asahiushio/Projects/transformers_model_hub/tner-xlm-roberta'
     if 'large' in i:
         prefix += '-large'
     else:
