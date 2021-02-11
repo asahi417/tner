@@ -3,6 +3,7 @@ import json
 import torch
 import transformers
 import os
+from glob import glob
 
 
 def get_options():
@@ -40,4 +41,10 @@ def convert(checkpoint: str):
 
 if __name__ == '__main__':
     opt = get_options()
-    convert(opt.checkpoint_dir)
+    if opt.checkpoint_dir is not None:
+        convert(opt.checkpoint_dir)
+    else:
+        for i in glob('./ckpt/*/*'):
+            print('converting: {}'.format(i))
+            convert(i)
+
