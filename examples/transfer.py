@@ -16,8 +16,6 @@ for i in ['./ckpt/model_large', './ckpt/model_large_lower', './ckpt/model_base',
         if os.path.isdir(i_):
             for i__ in glob('{}/*'.format(i_)):
                 shutil.move(i__, prefix+'-'+os.path.basename(i_).replace('_', '-'))
-            break
-    break
 
 
 
