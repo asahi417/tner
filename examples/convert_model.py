@@ -45,6 +45,7 @@ if __name__ == '__main__':
         convert(opt.checkpoint_dir)
     else:
         for i in glob('./ckpt/*/*'):
-            print('converting: {}'.format(i))
-            convert(i)
+            if os.path.isdir(i):
+                print('converting: {}'.format(i))
+                convert(i)
 
