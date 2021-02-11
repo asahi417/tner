@@ -13,6 +13,10 @@ def get_options():
 
 
 def convert(checkpoint: str):
+    checkpoint_file = '{}/model.pt'.format(checkpoint)
+    if not os.path.exists(checkpoint_file):
+        return
+
     with open('{}/parameter.json'.format(checkpoint), 'r') as f:
         config = json.load(f)
     with open('{}/label_to_id.json'.format(checkpoint), 'r') as f:
@@ -28,7 +32,7 @@ def convert(checkpoint: str):
             label2id=label_to_id,
             cache_dir='./cache')
     )
-    checkpoint_file = '{}/model.pt'.format(checkpoint)
+
     stats = torch.load(checkpoint_file, map_location='cpu')
     model.load_state_dict(stats['model_state_dict'])
     model.save_pretrained(checkpoint)
@@ -44,7 +48,8 @@ if __name__ == '__main__':
     if opt.checkpoint_dir is not None:
         convert(opt.checkpoint_dir)
     else:
-        for i in glob('./ckpt/*/*'):
+        # for i in glob('./ckpt/*/*'):
+        for i in glob('/home/asahiushio/Projects/transformers_model_hub/*'):
             if os.path.isdir(i):
                 print('converting: {}'.format(i))
                 convert(i)
