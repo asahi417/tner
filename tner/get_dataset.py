@@ -8,9 +8,10 @@ import tarfile
 import shutil
 from typing import Dict, List
 from itertools import chain
+from tqdm import tqdm
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
-from .mecab_wrapper import MeCabWrapper
+from .japanese_tokenizer import SudachiWrapper
 
 STOPWORDS = ['None', '#']
 PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "bh", "de", "fy", "io", "lmo", "nap",
@@ -25,7 +26,7 @@ PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "
         "csb", "fo", "ia", "la", "mt", "pnb", "so", "uz", "be-x-old", "cv", "fr", "id", "lb", "mwl", "ps", "sq", "vec",
         "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"]
 VALID_DATASET = ['conll2003', 'wnut2017', 'ontonotes5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
-                 'bc5cdr'] + ['panx_dataset/{}'.format(i) for i in PANX]  # 'wiki_ja', 'wiki_news_ja'
+                 'bc5cdr'] + ['panx_dataset_{}'.format(i) for i in PANX]  # 'wiki_ja', 'wiki_news_ja'
 CACHE_DIR = '{}/cache_tner'.format(os.path.expanduser('~'))
 
 # Shared label set across different dataset
@@ -185,7 +186,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     :param allow_new_entity
     :return: formatted data, label_to_id
     """
-    post_process_mecab = False
+    post_process_ja = False
     entity_first = False
     to_bio = False
     language = 'en'
@@ -340,14 +341,16 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     #             format(data_path))
     elif 'panx_dataset' in data_name:
         files_info = {'valid': 'dev.txt', 'train': 'train.txt', 'test': 'test.txt'}
-        panx_la = data_name.split('/')[1]
+        panx_la = data_name.split('_')[-1]
         if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            if not os.path.exists(os.path.join(cache_dir, 'panx_dataset')):
-                assert os.path.exists(os.path.join(cache_dir, 'AmazonPhotos.zip')), 'download from {0} to {1}'.format(
-                    'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN', cache_dir)
+            if not os.path.exists('{}/panx_dataset'.format(cache_dir)):
+                assert os.path.exists('{}/AmazonPhotos.zip'.format(cache_dir)),\
+                    'download `AmazonPhotos.zip` from ' \
+                    'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN ' \
+                    'and locate it at `{}/AmazonPhotos.zip`'.format(cache_dir)
                 with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(cache_dir), 'r') as zip_ref:
                     zip_ref.extractall('{}/'.format(cache_dir))
+            os.makedirs(data_path, exist_ok=True)
             tar = tarfile.open('{0}/panx_dataset/{1}.tar.gz'.format(cache_dir, panx_la), "r:gz")
             tar.extractall(data_path)
             tar.close()
@@ -356,7 +359,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                 os.system("rm -rf {0}/{1}".format(data_path, v.replace('.txt', '')))
         if panx_la == 'ja':
             language = 'ja'
-            post_process_mecab = True
+            post_process_ja = True
     else:
         # for custom data
         data_path = data_name
@@ -371,13 +374,13 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first,
         to_bio=to_bio, allow_new_entity=allow_new_entity)
 
-    if post_process_mecab:
-        logging.info('mecab post processing')
+    if post_process_ja:
+        logging.info('Japanese tokenization post processing')
         id_to_label = {v: k for k, v in label_to_id.items()}
-        label_fixer = MeCabWrapper()
+        label_fixer = SudachiWrapper()
         data, label = [], []
         for k, v in data_split_all.items():
-            for x, y in zip(v['data'], v['label']):
+            for x, y in tqdm(zip(v['data'], v['label'])):
                 y = [id_to_label[_y] for _y in y]
                 _data, _label = label_fixer.fix_ja_labels(inputs=x, labels=y)
                 _label = [label_to_id[_y] for _y in _label]

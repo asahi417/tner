@@ -10,7 +10,7 @@ class Test(unittest.TestCase):
     """ Test MeCabWrapper """
 
     def test_mecab(self):
-        _tokenizer = tner.MeCabWrapper()
+        _tokenizer = tner.SudachiWrapper()
         logging.info(_tokenizer.tokenize("日本ではサラリーマンが金曜日を華金と呼ぶ"))
         logging.info(_tokenizer.tokenize("日本ではサラリーマンが金曜日を華金と呼ぶ", return_pos=True))
 

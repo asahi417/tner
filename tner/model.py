@@ -50,7 +50,6 @@ class TrainTransformersNER:
         -----------------
         dataset: list
             list of dataset for training, alias of preset dataset (see tner.VALID_DATASET) or path to custom dataset
-            folder such as https://github.com/asahi417/tner/tree/master/tests/sample_data
             eg) ['panx_dataset/en', 'conll2003', 'tests/custom_dataset_sample']
         checkpoint: str
             checkpoint folder to load weight

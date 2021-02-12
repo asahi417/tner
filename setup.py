@@ -28,8 +28,8 @@ setup(
     test_suite='tests',
     install_requires=[
         'Pillow>=7.1.0',
-        # 'mecab-python3==0.996.5',  # this version can only work
-        'mecab-python3',  # this version can only work
+        'sudachipy',
+        'sudachidict_core',
         'uvicorn==0.11.8',
         'jinja2==2.11.2',
         'aiofiles==0.5.0',
