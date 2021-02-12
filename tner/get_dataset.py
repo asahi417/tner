@@ -5,6 +5,7 @@ import logging
 import re
 import requests
 import tarfile
+import shutil
 from typing import Dict, List
 from itertools import chain
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -24,7 +25,7 @@ PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "
         "csb", "fo", "ia", "la", "mt", "pnb", "so", "uz", "be-x-old", "cv", "fr", "id", "lb", "mwl", "ps", "sq", "vec",
         "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"]
 VALID_DATASET = ['conll2003', 'wnut2017', 'ontonotes5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
-                 'wiki_ja', 'wiki_news_ja', 'bc5cdr'] + ['panx_dataset/{}'.format(i) for i in PANX]
+                 'bc5cdr'] + ['panx_dataset/{}'.format(i) for i in PANX]  # 'wiki_ja', 'wiki_news_ja'
 CACHE_DIR = '{}/cache_tner'.format(os.path.expanduser('~'))
 
 # Shared label set across different dataset
@@ -86,15 +87,13 @@ __all__ = ("get_dataset_ner", "VALID_DATASET", "SHARED_NER_LABEL")
 
 def open_compressed_file(url, cache_dir):
     path = wget(url, cache_dir)
-    if path.endswith('.tar.gz'):
+    if path.endswith('.tar.gz') or path.endswith('.tgz'):
         tar = tarfile.open(path, "r:gz")
         tar.extractall(cache_dir)
         tar.close()
     elif path.endswith('.zip'):
         with zipfile.ZipFile(path, 'r') as zip_ref:
             zip_ref.extractall(cache_dir)
-    else:
-        raise ValueError('unknown identifier {}'.format(path))
 
 
 def wget(url, cache_dir):
@@ -192,47 +191,34 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     language = 'en'
     cache_dir = cache_dir if cache_dir is not None else CACHE_DIR
     data_path = os.path.join(cache_dir, data_name)
-    os.makedirs(data_path, exist_ok=True)
     logging.info('data_name: {}'.format(data_name))
-    if data_name == 'conll2003':
+
+    if data_name in ['ontonotes5', 'conll2003']:
+
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/data.tar.gz https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz'.
-                      format(cache_dir))
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(cache_dir))
-            for i in ['train', 'dev', 'test']:
-                conll_formatting(
-                    file_token=os.path.join(cache_dir, 'data/conll2003/conll2003-{}.words'.format(i)),
-                    file_tag=os.path.join(cache_dir, 'data/conll2003/conll2003-{}.nertags'.format(i)),
-                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
-    elif data_name == 'ontonotes5':
-        files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
-        if not os.path.exists(data_path):
             # raise ValueError('please download Ontonotes5 from https://catalog.ldc.upenn.edu/LDC2013T19')
-            url = "https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz"
-            path = wget(url, cache_dir)
-            if not os.path.exists(path):
-                open_tar()
-                with open(path, "wb") as f:
-                    r = requests.get(url)
-                    f.write(r.content)
-            # os.system('wget -O {0}/data.tar.gz https://github.com/asahi417/neighbor-tagging/blob/master/data.tar.gz'.
-            #           format(cache_dir))
-
-            os.system('tar -xzf {0}/data.tar.gz -C {0}'.format(cache_dir))
+            url = 'https://github.com/asahi417/neighbor-tagging/raw/master/data.tar.gz'
+            open_compressed_file(url, data_path)
             for i in ['train', 'dev', 'test']:
-                conll_formatting(
-                    file_token=os.path.join(cache_dir, 'data/onto/{}.words'.format(i)),
-                    file_tag=os.path.join(cache_dir, 'data/onto/{}.ner'.format(i)),
-                    output_file=os.path.join(data_path, '{}.txt'.format(i)))
+                if data_name == 'ontonotes5':
+                    conll_formatting(
+                        file_token='{}/data/onto/{}.words'.format(data_path, i),
+                        file_tag='{}/data/onto/{}.ner'.format(data_path, i),
+                        output_file='{}/{}.txt'.format(data_path, i))
+                else:
+                    conll_formatting(
+                        file_token='{}/data/conll2003/conll2003-{}.words'.format(data_path, i),
+                        file_tag='{}/data/conll2003/conll2003-{}.nertags'.format(data_path, i),
+                        output_file='{}/{}.txt'.format(data_path, i))
     elif data_name == 'bc5cdr':
         files_info = {'train': 'train.txt', 'valid': 'dev.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/CDR_Data.zip https://github.com/JHnlp/BioCreative-V-CDR-Corpus/raw/master/CDR_Data.zip'.format(data_path))
-            os.system('unzip {0}/CDR_Data.zip -d {0}'.format(data_path))
-            os.system('mv {0}/CDR_Data/CDR.Corpus.v010516/*.txt {0}/'.format(data_path))
+            url = 'https://github.com/JHnlp/BioCreative-V-CDR-Corpus/raw/master/CDR_Data.zip'
+            open_compressed_file(url, data_path)
+            shutil.move('{}/CDR_Data/CDR.Corpus.v010516'.format(data_path), data_path)
 
         def __process_single(_r):
             title, body = _r.split('\n')[:2]
@@ -272,92 +258,99 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                 tokens, tags = list(zip(*token_tag))
                 conll_formatting(tokens=tokens, tags=tags, output_file=os.path.join(data_path, export), sentence_division='.')
 
-        convert_to_iob('CDR_DevelopmentSet.PubTator.txt', 'dev.txt')
-        convert_to_iob('CDR_TestSet.PubTator.txt', 'test.txt')
-        convert_to_iob('CDR_TrainingSet.PubTator.txt', 'train.txt')
+        convert_to_iob('CDR.Corpus.v010516/CDR_DevelopmentSet.PubTator.txt', 'dev.txt')
+        convert_to_iob('CDR.Corpus.v010516/CDR_TestSet.PubTator.txt', 'test.txt')
+        convert_to_iob('CDR.Corpus.v010516/CDR_TrainingSet.PubTator.txt', 'train.txt')
     elif data_name == 'bionlp2004':  # https://www.aclweb.org/anthology/W04-1213.pdf
         files_info = {'train': 'Genia4ERtask1.iob2', 'valid': 'Genia4EReval1.iob2'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/Genia4ERtraining.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining.tar.gz'.
-                      format(data_path))
-            os.system('tar -xzf {0}/Genia4ERtraining.tar.gz -C {0}'.format(data_path))
-            os.system('mv {0}/Genia4ERtraining/* {0}/'.format(data_path))
+            url = 'http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining.tar.gz'
+            open_compressed_file(url, data_path)
+            # shutil.move('{0}/Genia4ERtraining'.format(data_path), data_path)
 
-            os.system('wget -O {0}/Genia4ERtest.tar.gz http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest.tar.gz'.
-                      format(data_path))
-            os.system('tar -xzf {0}/Genia4ERtest.tar.gz -C {0}'.format(data_path))
-            os.system('mv {0}/Genia4ERtest/* {0}/'.format(data_path))
+            url = 'http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest.tar.gz'
+            open_compressed_file(url, data_path)
+            # shutil.move('{0}/Genia4ERtest'.format(data_path), data_path)
+
     elif data_name == 'fin':  # https://www.aclweb.org/anthology/U15-1010.pdf
         files_info = {'train': 'FIN5.txt', 'valid': 'FIN3.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0}/financial_risk_assessment.tgz https://people.eng.unimelb.edu.au/tbaldwin/resources/finance-sec/financial_risk_assessment.tgz'.
-                      format(data_path))
-            os.system('tar -xzf {0}/financial_risk_assessment.tgz -C {0}'.format(data_path))
-            os.system('mv {0}/dataset/* {0}/'.format(data_path))
+            url = 'https://people.eng.unimelb.edu.au/tbaldwin/resources/finance-sec/financial_risk_assessment.tgz'
+            open_compressed_file(url, data_path)
+            for v in files_info.values():
+                shutil.move('{}/dataset/{}'.format(data_path, v), data_path)
         to_bio = True
     elif data_name == 'mit_restaurant':
-        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
+        files_info = {'train': 'restauranttrain.bio', 'valid': 'restauranttest.bio'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttrain.bio'.format(
-                os.path.join(data_path, 'train.txt')))
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'.format(
-                os.path.join(data_path, 'valid.txt')))
+            url = 'https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttrain.bio'
+            open_compressed_file(url, data_path)
+            url = 'https://groups.csail.mit.edu/sls/downloads/restaurant/restauranttest.bio'
+            open_compressed_file(url, data_path)
         entity_first = True
     elif data_name == 'mit_movie_trivia':
-        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
+        files_info = {'train': 'trivia10k13train.bio', 'valid': 'trivia10k13test.bio'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13train.bio'.format(
-                os.path.join(data_path, 'train.txt')))
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13test.bio'.format(
-                os.path.join(data_path, 'valid.txt')))
-        entity_first = True
-    elif data_name == 'mit_movie':
-        files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/engtrain.bio'.format(
-                os.path.join(data_path, 'train.txt')))
-            os.system('wget -O {0} https://groups.csail.mit.edu/sls/downloads/movie/engtest.bio'.format(
-                os.path.join(data_path, 'valid.txt')))
+            url = 'https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13train.bio'
+            open_compressed_file(url, data_path)
+            url = 'https://groups.csail.mit.edu/sls/downloads/movie/trivia10k13test.bio'
+            open_compressed_file(url, data_path)
         entity_first = True
     elif data_name == 'wnut2017':
-        files_info = {'train': 'train.txt.tmp', 'valid': 'dev.txt.tmp', 'test': 'test.txt.tmp'}
+        files_info = {'train': 'train.txt', 'valid': 'valid.txt', 'test': 'test.txt'}
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-            os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/wnut17train.conll'  | tr '\t' ' ' > {}/train.txt.tmp".format(data_path))
-            os.system("curl -L 'https://github.com/leondz/emerging_entities_17/raw/master/emerging.dev.conll' | tr '\t' ' ' > {}/dev.txt.tmp".format(data_path))
-            os.system("curl -L 'https://raw.githubusercontent.com/leondz/emerging_entities_17/master/emerging.test.annotated' | tr '\t' ' ' > {}/test.txt.tmp".format(data_path))
-    elif data_name == 'wiki_ja':
-        files_info = {'test': 'test.txt'}
-        language = 'ja'
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system(
-                'wget -O {0}/test.txt https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt'.
-                format(data_path))
-    elif data_name == 'wiki_news_ja':
-        files_info = {'test': 'test.txt'}
-        language = 'ja'
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-            os.system(
-                'wget -O {0}/test.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
-                format(data_path))
+            url = 'https://github.com/leondz/emerging_entities_17/raw/master/wnut17train.conll'
+            open_compressed_file(url, data_path)
+            with open('{}/wnut17train.conll'.format(data_path), 'r') as f:
+                with open('{}/train.txt'.format(data_path), 'w') as f_w:
+                    f_w.write(f.read().replace('\t', ' '))
+
+            url = 'https://github.com/leondz/emerging_entities_17/raw/master/emerging.dev.conll'
+            open_compressed_file(url, data_path)
+            with open('{}/emerging.dev.conll'.format(data_path), 'r') as f:
+                with open('{}/valid.txt'.format(data_path), 'w') as f_w:
+                    f_w.write(f.read().replace('\t', ' '))
+
+            url = 'https://raw.githubusercontent.com/leondz/emerging_entities_17/master/emerging.test.annotated'
+            open_compressed_file(url, data_path)
+            with open('{}/emerging.test.annotated'.format(data_path), 'r') as f:
+                with open('{}/test.txt'.format(data_path), 'w') as f_w:
+                    f_w.write(f.read().replace('\t', ' '))
+
+    # elif data_name == 'wiki_ja':
+    #     files_info = {'test': 'test.txt'}
+    #     language = 'ja'
+    #     if not os.path.exists(data_path):
+    #         os.makedirs(data_path, exist_ok=True)
+    #         os.system(
+    #             'wget -O {0}/test.txt https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt'.
+    #             format(data_path))
+    # elif data_name == 'wiki_news_ja':
+    #     files_info = {'test': 'test.txt'}
+    #     language = 'ja'
+    #     if not os.path.exists(data_path):
+    #         os.makedirs(data_path, exist_ok=True)
+    #         os.system(
+    #             'wget -O {0}/test.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
+    #             format(data_path))
     elif 'panx_dataset' in data_name:
         files_info = {'valid': 'dev.txt', 'train': 'train.txt', 'test': 'test.txt'}
         panx_la = data_name.split('/')[1]
         if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
             if not os.path.exists(os.path.join(cache_dir, 'panx_dataset')):
                 assert os.path.exists(os.path.join(cache_dir, 'AmazonPhotos.zip')), 'download from {0} to {1}'.format(
                     'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN', cache_dir)
                 with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(cache_dir), 'r') as zip_ref:
                     zip_ref.extractall('{}/'.format(cache_dir))
-            os.makedirs(data_path, exist_ok=True)
-            os.system('tar xzf {0}/panx_dataset/{1}.tar.gz -C {2}'.format(cache_dir, panx_la, data_path))
+            tar = tarfile.open('{0}/panx_dataset/{1}.tar.gz'.format(cache_dir, panx_la), "r:gz")
+            tar.extractall(data_path)
+            tar.close()
             for v in files_info.values():
                 os.system("sed -e 's/{0}://g' {1}/{2} > {1}/{2}.txt".format(panx_la, data_path, v.replace('.txt', '')))
                 os.system("rm -rf {0}/{1}".format(data_path, v.replace('.txt', '')))

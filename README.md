@@ -14,8 +14,8 @@ Also we release all the NER model checkpoints, where the most generalized model 
 1. **[Setup](#get-started)**
 2. **[Language Model Finetuning on NER](#language-model-finetuning-on-ner)**
     - *[Datasets](#datasets):* Built-in datasets and custom dataset
-    - *[Model Finetuning](#model-finetuning):* Model training [colab notebook](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-    - *[Model Evaluation](#model-evaluation):* In/out of domain evaluation [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+    - *[Model Finetuning](#model-finetuning):* Model training [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+    - *[Model Evaluation](#model-evaluation):* In/out of domain evaluation [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
     - *[Model Inference API](#model-inference-api):* An API to get prediction from models
     - *[Model Checkpoints](#model-checkpoints)* : Released model checkpoints
 3. **[Experiment with XLM-R](#experiment-with-xlm-r):** Cross-domain analysis of XLM-R
