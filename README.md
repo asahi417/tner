@@ -3,20 +3,16 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/tner.svg)](https://pypi.python.org/pypi/tner/)
 [![PyPI status](https://img.shields.io/pypi/status/tner.svg)](https://pypi.python.org/pypi/tner/)
 
-![](asset/api.gif)
-
 # T-NER  
-
 <p align="center">
-  <img src="./asset/diagram.png" width="600">
+  <img src="./asset/api.gif" width="600">
 </p>
-
 
 ***`T-NER`*** is a python tool to analyse language model finetuning on named-entity-recognition (NER). 
 It has an easy interface to finetune models, test on cross-domain datasets, where we compile 9 publicly available NER datasets.
 Models can be deployed immediately on our web app for qualitative analysis, and the API for a micro service.
 Also we release all the NER model checkpoints, where the most generalized model trained on all the dataset, has 43 entity types.    
- 
+
 ### Table of Contents  
 1. **[Setup](#get-started)**
 2. **[Language Model Finetuning on NER](#language-model-finetuning-on-ner)**
