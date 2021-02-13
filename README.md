@@ -1,3 +1,9 @@
+[![license](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/asahi417/tner/blob/master/LICENSE)
+[![PyPI version](https://badge.fury.io/py/tner.svg)](https://badge.fury.io/py/tner)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/tner.svg)](https://pypi.python.org/pypi/tner/)
+[![PyPI status](https://img.shields.io/pypi/status/tner.svg)](https://pypi.python.org/pypi/tner/)
+
+
 # T-NER: Transformers NER  
 
 <p align="center">
