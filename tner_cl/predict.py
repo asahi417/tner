@@ -7,13 +7,13 @@ from tner import TransformersNER
 
 def get_options():
     parser = argparse.ArgumentParser(description='command line tool to test finetuned NER model',)
-    parser.add_argument('-c', '--checkpoint-dir', help='checkpoint to load', default=None, type=str)
+    parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
     return parser.parse_args()
 
 
 def main():
     opt = get_options()
-    classifier = TransformersNER(opt.checkpoint_dir)
+    classifier = TransformersNER(opt.checkpoint)
     test_sentences = [
         'I live in United States.',
         'I have an Apple computer.',

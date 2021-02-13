@@ -42,46 +42,50 @@ class TrainTransformersNER:
                  fp16: bool = False,
                  max_grad_norm: float = 1.0,
                  lower_case: bool = False,
-                 num_worker: int = 1,
+                 num_worker: int = 0,
                  cache_dir: str = None):
         """ Named-Entity-Recognition (NER) trainer
 
          Parameter
         -----------------
-        dataset: list
-            list of dataset for training, alias of preset dataset (see tner.VALID_DATASET) or path to custom dataset
-            eg) ['panx_dataset/en', 'conll2003', 'tests/custom_dataset_sample']
-        checkpoint: str
-            checkpoint folder to load weight
         checkpoint_dir: str
-            checkpoint directory ('checkpoint_dir/checkpoint' is regarded as a checkpoint path)
+            Checkpoint folder to log the model relevant files such as weight file. Once it's generated, one can use the
+            directory for transformers.AutoModelForTokenClassification.from_pretrained as well as model sharing on
+            transformers model hub.
+        dataset: list or str
+            List or str of dataset for training, alias of preset dataset (see tner.VALID_DATASET) or
+            path to custom dataset
+            eg) ['panx_dataset/en', 'conll2003', 'tests/custom_dataset_sample']
         transformers_model: str
-            language model alias from huggingface (https://huggingface.co/transformers/v2.2.0/pretrained_models.html)
+            Model name from transformers model hub or path to local checkpoint directory, on which we perform
+            finetunig or testing.
         random_seed: int
-            random seed through the experiment
+            Random seed through the experiment
         lr: float
-            learning rate
+            Learning rate
         total_step: int
-            total training step
+            Total training step
         warmup_step: int
-            step for linear warmup
+            Step for linear warmup
         weight_decay: float
-            parameter for weight decay
+            Parameter for weight decay
         batch_size: int
-            batch size for training
+            Batch size for training
         max_seq_length: int
-            language model's maximum sequence length
+            Language model's maximum sequence length
         fp16: bool
-            training with mixture precision mode
+            Training with mixture precision mode
         max_grad_norm: float
-            gradient clipping
+            Gradient clipping
         lower_case: bool
-            convert the dataset into lowercase
+            Convert the training dataset into lowercase
         num_worker: int
-            number of worker for torch.Dataloader class
+            Number of worker for torch.Dataloader class
+        cache_dir: str
+            Cache directory for transformers
         """
         logging.info('*** initialize network ***')
-        if num_worker == 1:
+        if num_worker <= 1:
             os.environ["OMP_NUM_THREADS"] = "1"  # to turn off warning message
         self.num_worker = num_worker
         self.cache_dir = cache_dir
@@ -123,14 +127,15 @@ class TrainTransformersNER:
         self.__step = 0
         self.label_to_id = None
         self.id_to_label = None
+        self.__train_called = False
 
     def __setup_model_data(self, dataset, lower_case):
         """ set up data/language model """
         if self.model is not None:
             return
         if self.args.is_trained:
-            self.model = transformers.AutoModelForTokenClassification.from_pretrained(self.args.checkpoint_dir)
-            self.transforms = Transforms(self.args.checkpoint_dir)
+            self.model = transformers.AutoModelForTokenClassification.from_pretrained(self.args.transformers_model)
+            self.transforms = Transforms(self.args.transformers_model, cache_dir=self.cache_dir)
             self.label_to_id = self.model.config.label2id
             self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
                 dataset, label_to_id=self.label_to_id, fix_label_dict=True, lower_case=lower_case)
@@ -139,28 +144,29 @@ class TrainTransformersNER:
             self.dataset_split, self.label_to_id, self.language, self.unseen_entity_set = get_dataset_ner(
                 dataset, lower_case=lower_case)
             self.id_to_label = {v: str(k) for k, v in self.label_to_id.items()}
-            self.model = transformers.AutoModelForTokenClassification.from_pretrained(
+            config = transformers.AutoConfig.from_pretrained(
                 self.args.transformers_model,
-                config=transformers.AutoConfig.from_pretrained(
-                    self.args.transformers_model,
-                    num_labels=len(self.label_to_id),
-                    id2label=self.id_to_label,
-                    label2id=self.label_to_id,
-                    cache_dir=self.cache_dir)
-            )
-            self.transforms = Transforms(self.args.transformers_model)
-            # optimizer
-            no_decay = ["bias", "LayerNorm.weight"]
-            optimizer_grouped_parameters = [
-                {"params": [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
-                 "weight_decay": self.args.weight_decay},
-                {"params": [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)],
-                 "weight_decay": 0.0}]
-            self.optimizer = transformers.AdamW(optimizer_grouped_parameters, lr=self.args.lr, eps=1e-8)
+                num_labels=len(self.label_to_id),
+                id2label=self.id_to_label,
+                label2id=self.label_to_id,
+                cache_dir=self.cache_dir)
 
-            # scheduler
-            self.scheduler = transformers.get_linear_schedule_with_warmup(
-                self.optimizer, num_warmup_steps=self.args.warmup_step, num_training_steps=self.args.total_step)
+            self.model = transformers.AutoModelForTokenClassification.from_pretrained(
+                self.args.transformers_model, config=config)
+            self.transforms = Transforms(self.args.transformers_model, cache_dir=self.cache_dir)
+
+        # optimizer
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {"params": [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
+             "weight_decay": self.args.weight_decay},
+            {"params": [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)],
+             "weight_decay": 0.0}]
+        self.optimizer = transformers.AdamW(optimizer_grouped_parameters, lr=self.args.lr, eps=1e-8)
+
+        # scheduler
+        self.scheduler = transformers.get_linear_schedule_with_warmup(
+            self.optimizer, num_warmup_steps=self.args.warmup_step, num_training_steps=self.args.total_step)
 
         # GPU allocation
         self.model.to(self.device)
@@ -210,12 +216,11 @@ class TrainTransformersNER:
          Parameter
         -------------
         test_dataset: str
-            target dataset to test, alias of preset dataset (see tner.VALID_DATASET) or path to custom dataset folder
-            eg) https://github.com/asahi417/tner/tree/master/tests/sample_data
+            Dataset to test, alias of preset dataset (see tner.VALID_DATASET) or path to custom dataset folder
         entity_span_prediction: bool
-            test without entity type (entity span detection)
+            Test without entity type (entity span detection)
         lower_case: bool
-            converting test data into lower-cased
+            Converting test data into lower-cased
         """
         # setup model/dataset/data loader
         assert self.args.is_trained, 'finetune model before'
@@ -225,7 +230,9 @@ class TrainTransformersNER:
         else:
             dataset = test_dataset
         filename = 'test_{}{}{}.json'.format(
-            dataset.replace('/', '-'), '_span' if entity_span_prediction else '', '_lower' if lower_case else '')
+            os.path.basename(dataset) if 'panx' not in dataset else dataset.replace('/', '-'),
+            '_span' if entity_span_prediction else '',
+            '_lower' if lower_case else '')
         filename = os.path.join(self.args.checkpoint_dir, filename)
         if os.path.exists(filename):
             return
@@ -266,14 +273,17 @@ class TrainTransformersNER:
          Parameter
         -------------
         monitor_validation: bool
-            display validation result at the end of each epoch
+            Display validation result at the end of each epoch
         batch_size_validation: int
-            batch size for validation monitoring
+            Batch size for validation monitoring
         max_seq_length_validation: int
-            max seq length for validation monitoring
+            Max seq length for validation monitoring
         """
         # setup model/dataset/data loader
-        assert not self.args.is_trained, 'model has been already finetuned'
+        if self.__train_called:
+            raise ValueError("`train` can be called once per instant")
+        if self.args.is_trained:
+            logging.warning('finetuning model, that has been already finetuned')
         self.__setup_model_data(self.args.dataset, self.args.lower_case)
         writer = SummaryWriter(log_dir=self.args.checkpoint_dir)
 
@@ -308,11 +318,12 @@ class TrainTransformersNER:
             logging.info('*** KeyboardInterrupt ***')
 
         logging.info('[training completed, {} sec in total]'.format(time() - start_time))
-        self.model.model.save_pretrained(self.args.checkpoint_dir)
+        self.model.save_pretrained(self.args.checkpoint_dir)
         self.transforms.tokenizer.save_pretrained(self.args.checkpoint_dir)
         writer.close()
         logging.info('ckpt saved at {}'.format(self.args.checkpoint_dir))
         self.args.is_trained = True
+        self.__train_called = True
 
     def __epoch_train(self, data_loader, writer):
         """ single epoch training: returning flag which is True if training has been completed """
@@ -355,8 +366,8 @@ class TrainTransformersNER:
 
         return False
 
-    def __epoch_valid(self, data_loader, prefix, writer=None,
-                      unseen_entity_set: set = None, entity_span_prediction: bool = False):
+    def __epoch_valid(self, data_loader, prefix, writer=None, unseen_entity_set: set = None,
+                      entity_span_prediction: bool = False):
         """ single epoch validation/test """
         # aggregate prediction and true label
         self.model.eval()

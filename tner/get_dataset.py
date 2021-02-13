@@ -27,7 +27,7 @@ PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "
         "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"]
 VALID_DATASET = ['conll2003', 'wnut2017', 'ontonotes5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
                  'bc5cdr'] + ['panx_dataset_{}'.format(i) for i in PANX]  # 'wiki_ja', 'wiki_news_ja'
-CACHE_DIR = '{}/cache_tner'.format(os.path.expanduser('~'))
+CACHE_DIR = '{}/.cache/tner'.format(os.path.expanduser('~'))
 
 # Shared label set across different dataset
 SHARED_NER_LABEL = {
@@ -241,10 +241,8 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                     lambda _x: len(_x) > 0, map(lambda m: m.replace(' ', ''), re.split(r'\b', text[last_end:start]))
                 ))
                 last_end = end
-
                 _tokens += _tokens_tmp
                 _tags += ['O'] * len(_tokens_tmp)
-
                 _mention_token = mention.split(' ')
                 _tokens += _mention_token
                 _tags += ['B-{}'.format(entity_type)] + ['I-{}'.format(entity_type)] * (len(_mention_token) - 1)
@@ -268,12 +266,8 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             os.makedirs(data_path, exist_ok=True)
             url = 'http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Train/Genia4ERtraining.tar.gz'
             open_compressed_file(url, data_path)
-            # shutil.move('{0}/Genia4ERtraining'.format(data_path), data_path)
-
             url = 'http://www.nactem.ac.uk/GENIA/current/Shared-tasks/JNLPBA/Evaluation/Genia4ERtest.tar.gz'
             open_compressed_file(url, data_path)
-            # shutil.move('{0}/Genia4ERtest'.format(data_path), data_path)
-
     elif data_name == 'fin':  # https://www.aclweb.org/anthology/U15-1010.pdf
         files_info = {'train': 'FIN5.txt', 'valid': 'FIN3.txt'}
         if not os.path.exists(data_path):
@@ -322,23 +316,6 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             with open('{}/emerging.test.annotated'.format(data_path), 'r') as f:
                 with open('{}/test.txt'.format(data_path), 'w') as f_w:
                     f_w.write(f.read().replace('\t', ' '))
-
-    # elif data_name == 'wiki_ja':
-    #     files_info = {'test': 'test.txt'}
-    #     language = 'ja'
-    #     if not os.path.exists(data_path):
-    #         os.makedirs(data_path, exist_ok=True)
-    #         os.system(
-    #             'wget -O {0}/test.txt https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt'.
-    #             format(data_path))
-    # elif data_name == 'wiki_news_ja':
-    #     files_info = {'test': 'test.txt'}
-    #     language = 'ja'
-    #     if not os.path.exists(data_path):
-    #         os.makedirs(data_path, exist_ok=True)
-    #         os.system(
-    #             'wget -O {0}/test.txt https://github.com/Hironsan/IOB2Corpus/raw/master/ja.wikipedia.conll'.
-    #             format(data_path))
     elif 'panx_dataset' in data_name:
         files_info = {'valid': 'dev.txt', 'train': 'train.txt', 'test': 'test.txt'}
         panx_la = data_name.split('_')[-1]
@@ -439,10 +416,6 @@ def decode_file(file_name: str,
                         location = 'I'
                     elif to_bio:
                         location = 'B'
-
-                    # if len([k for k, v in SHARED_NER_LABEL.items() if mention in v]) == 0:
-                    #     print(tag)
-                    #     input()
 
                     fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
                     if len(fixed_mention) == 0 and allow_new_entity:

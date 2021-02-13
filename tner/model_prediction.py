@@ -8,7 +8,6 @@ import torch
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
-from .checkpoint_versioning import Argument
 from .tokenizer import Transforms, Dataset
 
 __all__ = 'TransformersNER'
@@ -17,20 +16,18 @@ __all__ = 'TransformersNER'
 class TransformersNER:
     """ Named-Entity-Recognition (NER) API for an inference """
 
-    def __init__(self, checkpoint_dir: str):
+    def __init__(self, transformers_model: str, cache_dir: str = None):
         """ Named-Entity-Recognition (NER) API for an inference
 
          Parameter
         ------------
-        checkpoint_dir: str
-            path to model directory
+        transformers_model: str
+            model name on transformers model hub or path to model directory
         """
         logging.info('*** initialize network ***')
-        # checkpoint version
-        self.args = Argument(checkpoint_dir=checkpoint_dir)
-        self.model = transformers.AutoModelForTokenClassification.from_pretrained(self.args.checkpoint_dir)
+        self.model = transformers.AutoModelForTokenClassification.from_pretrained(transformers_model)
         self.id_to_label = {v: str(k) for k, v in self.model.config.label2id.items()}
-        self.transforms = Transforms(self.args.checkpoint_dir)
+        self.transforms = Transforms(transformers_model, cache_dir=cache_dir)
 
         # GPU allocation
         self.n_gpu = torch.cuda.device_count()

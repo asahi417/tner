@@ -11,7 +11,7 @@ class Test(unittest.TestCase):
 
     def test(self):
         transforms = tner.Transforms('roberta-base')
-        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner(['ontonote5'])
+        unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner('ontonotes5')
         tokens = unified_data['valid']['data'][:10]
         labels = unified_data['valid']['label'][:10]
         features = transforms.encode_plus_all(

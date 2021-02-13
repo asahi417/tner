@@ -4,7 +4,7 @@
 [![PyPI status](https://img.shields.io/pypi/status/tner.svg)](https://pypi.python.org/pypi/tner/)
 
 
-# T-NER: Transformers NER  
+# T-NER  
 
 <p align="center">
   <img src="./asset/diagram.png" width="600">

@@ -13,11 +13,11 @@ VICTORY O
 LONDON B-LOC
 1996-08-30 O
 
-West B-MISC
-Indian I-MISC
+West B-TAG1
+Indian I-TAG1
 all-rounder O
-Phil B-PER
-Simmons I-PER
+Phil B-TAG2
+Simmons I-TAG2
 took O
 four O
 for O
@@ -118,8 +118,8 @@ for O
 with O
 England B-LOC
 discard O
-Andy B-PER
-Caddick I-PER
+Andy B-TAG2
+Caddick I-TAG2
 taking O
 three O
 for O
