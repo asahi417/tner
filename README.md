@@ -3,7 +3,7 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/tner.svg)](https://pypi.python.org/pypi/tner/)
 [![PyPI status](https://img.shields.io/pypi/status/tner.svg)](https://pypi.python.org/pypi/tner/)
 
-![](asset/api_hq.gif)
+![](asset/api.gif)
 
 # T-NER  
 
