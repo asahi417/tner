@@ -12,7 +12,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 NER_MODEL = os.getenv('NER_MODEL', 'asahi417/tner-xlm-roberta-large-ontonotes5')
-MODEL = TransformersNER(NER_MODEL)
 DEBUG = False
 DUMMY = {
     'sentence': 'Jacob Collier lives in London',
@@ -20,6 +19,8 @@ DUMMY = {
         {'mention': 'Jacob Collier', 'position': [0, 13], 'probability': 0.8, 'type': 'person'},
         {'mention': 'London', 'position': [23, 29], 'probability': 0.8, 'type': 'location'}
     ]}
+if not DEBUG:
+    MODEL = TransformersNER(NER_MODEL)
 
 
 @app.get("/", response_class=HTMLResponse)
