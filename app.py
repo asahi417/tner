@@ -11,11 +11,9 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-MODEL_CKPT = os.getenv('MODEL_CKPT', './ckpt/all_english_no_lower_case')
-if MODEL_CKPT == '':
-    MODEL = None
-else:
-    MODEL = TransformersNER(MODEL_CKPT)
+NER_MODEL = os.getenv('NER_MODEL', 'asahi417/tner-xlm-roberta-large-ontonotes5')
+MODEL = TransformersNER(NER_MODEL)
+DEBUG = False
 DUMMY = {
     'sentence': 'Jacob Collier lives in London',
     'entity': [
@@ -26,7 +24,7 @@ DUMMY = {
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "model_ckpt": MODEL_CKPT})
+    return templates.TemplateResponse("index.html", {"request": request, "model_ckpt": NER_MODEL})
 
 
 @app.post("/process")
@@ -34,7 +32,7 @@ async def process(request: Request):
     data_json = await request.json()
     input_text = data_json['input_text']
     max_len = int(data_json['max_len'])
-    if MODEL is None:
+    if DEBUG:
         ner_result = DUMMY
     else:
         ner_result = MODEL.predict([input_text], max_seq_length=max_len)[0]
