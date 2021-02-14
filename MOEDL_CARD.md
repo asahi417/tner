@@ -25,7 +25,7 @@ model = tner.TransformersNER("model-name")
 ```
 
 ### To use with transformers
-```"model-name"
+```python
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 tokenizer = AutoTokenizer.from_pretrained("model-name")
 model = AutoModelForTokenClassification.from_pretrained("model-name")
