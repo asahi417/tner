@@ -18,8 +18,8 @@ Finally, we release 46 XLM-RoBERTa model finetuned on NER on [transformers model
 2. **[Model Finetuning](#model-finetuning)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
 3. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
 4. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]
-4. **[Web API](#web-app):** Model deployment on a web-app   
-5. **[Datasets](#datasets):** Built-in datasets and custom dataset
+5. **[Web API](#web-app):** Model deployment on a web-app   
+6. **[Datasets](#datasets):** Built-in datasets and custom dataset
 
 ## Get Started
 Install pip package
