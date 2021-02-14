@@ -5,7 +5,7 @@
 
 # T-NER  
 <p align="center">
-  <img src="./asset/api.gif" width="600">
+  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="600">
 </p>
 
 ***TNER*** is a python tool to analyse language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
