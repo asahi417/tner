@@ -45,7 +45,7 @@ and open your browser http://0.0.0.0:8000 once it's ready.
 You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
 `NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
 
-***Acknowledgement*** The App interface is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
+***Acknowledgement*** The App interface is heavily inspired by [this repository](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
 
 
 ## Model Finetuning
