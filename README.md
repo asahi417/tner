@@ -15,11 +15,11 @@ Finally, we release 46 XLM-RoBERTa model finetuned on NER on [transformers model
 
 ### Table of Contents  
 1. **[Setup](#get-started)**
-2. **[Model Finetuning](#model-finetuning)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-3. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-4. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-5. **[Web API](#web-app)**
-6. **[Datasets](#datasets)**[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+2. **[Web API](#web-app)**
+3. **[Model Finetuning](#model-finetuning)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+4. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+5. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+6. **[Datasets](#datasets)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
 
 ## Get Started
 Install pip package
@@ -30,6 +30,23 @@ or directly from the repository for the latest version.
 ```shell script
 pip install git+https://github.com/asahi417/tner
 ```
+
+## Web App
+To start the web app, first clone the repository
+```shell script
+git clone https://github.com/asahi417/tner
+cd tner
+```
+then launch the server by
+```shell script
+uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
+```
+and open your browser http://0.0.0.0:8000 once it's ready.
+You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
+`NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
+
+***Acknowledgement*** The App interface is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
+
 
 ## Model Finetuning
 Language model finetuning on NER can be done with a few lines:
@@ -94,22 +111,6 @@ classifier.predict(test_sentences)
 ```shell script
 tner-predict [-h] [-c CHECKPOINT]
 ```
-
-## Web App
-To start the web app, first clone the repository
-```shell script
-git clone https://github.com/asahi417/tner
-cd tner
-```
-then launch the server by
-```shell script
-uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
-```
-and open your browser http://0.0.0.0:8000 once it's ready.
-You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
-`NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
-
-***Acknowledgement*** The App interface is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
 
 ## Datasets
 Public datasets that can be fetched with TNER is summarized here.
