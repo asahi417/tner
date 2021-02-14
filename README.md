@@ -32,15 +32,10 @@ pip install git+https://github.com/asahi417/tner
 ```
 
 ## Model Finetuning
-<p align="center">
-  <img src="./asset/tb_valid.png" width="600">
-  <br><i>Fig 1: Tensorboard visualization</i>
-</p>
-
 Language model finetuning on NER can be done with a few lines:
 ```python
 import tner
-trainer = tner.TrainTransformersNER(checkpoint_dir='path-to-checkpoint', dataset="data-name", transformers_model="language-model-name")
+trainer = tner.TrainTransformersNER(checkpoint_dir='path-to-checkpoint', dataset="data-name", transformers_model="transformers-model")
 trainer.train()
 ```
 where `transformers_model` is a pre-trained model name from [transformers model hub](https://huggingface.co/models) and
@@ -59,40 +54,35 @@ trainer = tner.TrainTransformersNER(checkpoint_dir='./ckpt_merged', dataset=["on
 ```
 [Custom dataset](#custom-dataset) can be also added to it eg) `dataset=["ontonotes5", "./examples/custom_datas_ample"]`.
 
-***Command line tool:*** TNER provides a CL tool to finetune model.
-```
+***Command line tool:*** Model finetune with CL tool.
+```shell script
 tner-train [-h] [-c CHECKPOINT_DIR] [-d DATA] [-t TRANSFORMER] [-b BATCH_SIZE] [--max-grad-norm MAX_GRAD_NORM] [--max-seq-length MAX_SEQ_LENGTH] [--random-seed RANDOM_SEED] [--lr LR] [--total-step TOTAL_STEP] [--warmup-step WARMUP_STEP] [--weight-decay WEIGHT_DECAY] [--fp16] [--monitor-validation] [--lower-case]
 ```
 
 ## Model Evaluation
-To evaluate NER models, here we explain how to proceed in/out of domain evaluation by micro F1 score.
-Supposing that your model's checkpoint is `./ckpt/xxx/`. 
-
+Evaluation of NER models are easily done in/out of domain setting.
 ```python
 import tner
-trainer = tner.TrainTransformersNER(checkpoint='./ckpt/xxx')
-trainer.test(test_dataset='conll2003')
+trainer = tner.TrainTransformersNER(checkpoint_dir='path-to-checkpoint', transformers_model="language-model-name")
+trainer.test(test_dataset='data-name')
 ```
-This gives you a accuracy summary.
-Again, the `test_dataset` can be a path to custom dataset explained at [dataset section](#datasets).
 
-***Entity span prediction:***  For better understanding of out-of-domain accuracy, we provide entity span prediction
-accuracy, which ignores the entity type and compute metrics only on the IOB entity position.
-
+***Entity span prediction:***  For better understanding of out-of-domain accuracy, we provide the entity span prediction
+pipeline, which ignores the entity type and compute metrics only on the IOB entity position.
 ```python
-trainer.test(test_dataset='conll2003', entity_span_prediction=True)
+trainer.test(test_dataset='data-name', entity_span_prediction=True)
 ```
 
-***Reference:***    
-- [colab notebook](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-- [example_train_eval.py](helper/example_train_eval.py)
+***Command line tool:*** Model evaluation with CL tool.
+```shell script
+tner-test [-h] -c CHECKPOINT_DIR [--lower-case] [--test-data TEST_DATA] [--test-lower-case] [--test-entity-span]
+```
 
 ### Model Inference API
-To work on model as a part of pipeline, we provide an API to get prediction from trained model.
-
+If you just want a prediction from a finetuned NER model, here is the best option for you.
 ```python
 import tner
-classifier = tner.TransformersNER(checkpoint='path-to-checkpoint-dir')
+classifier = tner.TransformersNER('transformers-model')
 test_sentences = [
     'I live in United States, but Microsoft asks me to move to Japan.',
     'I have an Apple computer.',
@@ -100,15 +90,10 @@ test_sentences = [
 ]
 classifier.predict(test_sentences)
 ```
-For more information about the module, you may want to see [here](./tner/model.py#L411).
-As an example, we have [a commandline interface](./examples/example_inference.py) on top of the inference api. 
-
-### Model Checkpoints
-We release NER model checkpoints trained with `tner` [here](https://cf-my.sharepoint.com/:f:/g/personal/ushioa_cardiff_ac_uk/EsvFZx7tsrNOh1jkRRoCSx4BmprxtPivpU5Q3TgMqwKxyw).
-It includes models finetuned on each [dataset](#datasets), as well as one on all the data `all_15000`.
-As a language model, we use `xlm-roberta-large`, as those models are used in [later experiments](#experiment-with-xlm-r).
-To use it, one may need to create checkpoint directory `./ckpt` and put any checkpoint folders under the directory.
-
+***Command line tool:*** Model inference with CL tool.
+```shell script
+tner-predict [-h] [-c CHECKPOINT]
+```
 
 ## Web App
 To start the web app, first clone the repository
