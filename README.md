@@ -16,13 +16,13 @@ Finally, we release 46 XLM-RoBERTa model finetuned on NER on [transformers model
 ### Table of Contents  
 1. **[Setup](#get-started)**
 2. **[Language Model Finetuning on NER](#language-model-finetuning-on-ner)**
-    - *[Datasets](#datasets):* Built-in datasets and custom dataset
     - *[Model Finetuning](#model-finetuning):* [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
     - *[Model Evaluation](#model-evaluation):* [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
     - *[Model Inference API](#model-inference-api):* An API to get prediction from models
     - *[Model Checkpoints](#model-checkpoints)* : Released model checkpoints
 3. **[Released Checkpoints of finetuned XLM-R](#experiment-with-xlm-r):** Cross-domain analysis of XLM-R
 4. **[Web API](#web-app):** Model deployment on a web-app   
+5. **[Datasets](#datasets):** Built-in datasets and custom dataset
 
 ## Get Started
 Install pip package
@@ -40,24 +40,6 @@ pip install git+https://github.com/asahi417/tner
   <img src="./asset/tb_valid.png" width="600">
   <br><i>Fig 1: Tensorboard visualization</i>
 </p>
-
-### Datasets
-Following built-in NER datasets are available via `tner`.   
-
-|                                   Name (`alias`)                                                                      |         Genre        |    Language   | Entity types | Data size (train/valid/test) | Note |
-|:---------------------------------------------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
-| OntoNotes 5 ([`ontonotes5`](https://www.aclweb.org/anthology/N06-2015.pdf))                                           | News, Blog, Dialogue | English       |           18 |   59,924/8,582/8,262 |  | 
-| CoNLL 2003 ([`conll2003`](https://www.aclweb.org/anthology/W03-0419.pdf))                                             | News                 | English       |            4 |   14,041/3,250/3,453 |  |
-| WNUT 2017 ([`wnut2017`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))                                            | SNS                  | English       |            6 |    1,000/1,008/1,287 |  |
-| FIN ([`fin`](https://www.aclweb.org/anthology/U15-1010.pdf))                                                          | Finance              | English       |            4 |          1,164/-/303 |  |
-| BioNLP 2004 ([`bionlp2004`](https://www.aclweb.org/anthology/W04-1213.pdf))                                           | Chemical             | English       |            5 |       18,546/-/3,856 |  |
-| BioCreative V CDR ([`bc5cdr`](https://biocreative.bioinformatics.udel.edu/media/store/files/2015/BC5CDRoverview.pdf)) | Medical              | English       |            2 |    5,228/5,330/5,865 | split into sentences to reduce sequence length |
-| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf))                  | Wikipedia            | 282 languages |            3 | 20,000/10,000/10,000 |  |
-| Japanese Wikipedia ([`wiki_ja`](https://github.com/Hironsan/IOB2Corpus))                                              | Wikipedia            | Japanese      |            8 |              -/-/500 | test set only |
-| Japanese WikiNews ([`wiki_news_ja`](https://github.com/Hironsan/IOB2Corpus))                                          | Wikipedia            | Japanese      |           10 |            -/-/1,000 | test set only |
-| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))                                      | Restaurant review    | English       |            8 |        7,660/-/1,521 | lower-cased |
-| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))                                         | Movie review         | English       |           12 |        7,816/-/1,953 | lower-cased |
-
 
 One can specify cache directory by an environment variable `CACHE_DIR`, which set as `./cache` as default.
 The data API provide all the above dataset by one line, although data doesn't need to be loaded manually for training (see [model training section](#model-finetuning).   
@@ -85,35 +67,6 @@ where `data` consists of following structured data.
 
 The list of all the datasets can be found at `tner.VALID_DATASET`.
 
-***WikiAnn dataset***  
-All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need 
-first create the cache directory (`./cache` as the default but can be change through an environment variable `CACHE_DIR`)
-and you then need to manually download data from
-[here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1) 
-(note that it will download as `AmazonPhotos.zip`) to the cache folder.
-
-***Custom Dataset***  
-To go beyond the public datasets, user can use their own dataset by formatting them into
-the IOB format described in [CoNLL 2003 NER shared task paper](https://www.aclweb.org/anthology/W03-0419.pdf),
-where all data files contain one word per line with empty lines representing sentence boundaries.
-At the end of each line there is a tag which states whether the current word is inside a named entity or not.
-The tag also encodes the type of named entity. Here is an example sentence:
-```
-EU B-ORG
-rejects O
-German B-MISC
-call O
-to O
-boycott O
-British B-MISC
-lamb O
-. O
-```
-Words tagged with O are outside of named entities and the I-XXX tag is used for words inside a
-named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
-first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
-The custom dataset should has `train.txt` and `valid.txt` file in a same folder. 
-Please take a look [sample custom data](asset/custom_dataset_sample).
 
 ### Model Finetuning
 Language model finetuning can be done with a few lines:
@@ -262,19 +215,64 @@ Notes:
 - We release all the checkpoints used in the experiments. Take a look [here](#model-checkpoints). 
 
 ## Web App
-![](./asset/api.png)
-We provide a quick web App. Please [clone and install the repo](#get-started) firstly.  
-1. [Train a model](#model-finetuning) or [download our checkpoint](#model-checkpoints).
-If you use your own checkpoint, set the path to the checkpoint folder by `export MODEL_CKPT=<path-to-your-checkpoint-folder>`.  
-
-2. Run the app, and open your browser http://0.0.0.0:8000    
-
+To start the web app, first clone the repository
+```shell script
+git clone https://github.com/asahi417/tner
+cd tner
+```
+then launch the server by
 ```shell script
 uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
+and open your browser http://0.0.0.0:8000 once it's ready.
+You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
+`NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
 
-### Acknowledgement
-The App interface is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
+***Acknowledgement*** The App interface is heavily inspired by [Multiple-Choice-Question-Generation-T5-and-Text2Text](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
+
+## Datasets
+Public datasets that can be fetched with TNER is summarized here.
+
+|                                   Name (`alias`)                                                                      |         Genre        |    Language   | Entity types | Data size (train/valid/test) | Note |
+|:---------------------------------------------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
+| OntoNotes 5 ([`ontonotes5`](https://www.aclweb.org/anthology/N06-2015.pdf))                                           | News, Blog, Dialogue | English       |           18 |   59,924/8,582/8,262 |  | 
+| CoNLL 2003 ([`conll2003`](https://www.aclweb.org/anthology/W03-0419.pdf))                                             | News                 | English       |            4 |   14,041/3,250/3,453 |  |
+| WNUT 2017 ([`wnut2017`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))                                            | SNS                  | English       |            6 |    1,000/1,008/1,287 |  |
+| FIN ([`fin`](https://www.aclweb.org/anthology/U15-1010.pdf))                                                          | Finance              | English       |            4 |          1,164/-/303 |  |
+| BioNLP 2004 ([`bionlp2004`](https://www.aclweb.org/anthology/W04-1213.pdf))                                           | Chemical             | English       |            5 |       18,546/-/3,856 |  |
+| BioCreative V CDR ([`bc5cdr`](https://biocreative.bioinformatics.udel.edu/media/store/files/2015/BC5CDRoverview.pdf)) | Medical              | English       |            2 |    5,228/5,330/5,865 | split into sentences to reduce sequence length |
+| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf))                  | Wikipedia            | 282 languages |            3 | 20,000/10,000/10,000 |  |
+| Japanese Wikipedia ([`wiki_ja`](https://github.com/Hironsan/IOB2Corpus))                                              | Wikipedia            | Japanese      |            8 |              -/-/500 | test set only |
+| Japanese WikiNews ([`wiki_news_ja`](https://github.com/Hironsan/IOB2Corpus))                                          | Wikipedia            | Japanese      |           10 |            -/-/1,000 | test set only |
+| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))                                      | Restaurant review    | English       |            8 |        7,660/-/1,521 | lower-cased |
+| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))                                         | Movie review         | English       |           12 |        7,816/-/1,953 | lower-cased |
 
 
+***WikiAnn dataset***  
+All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need to manually download data from
+[here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1)
+(note that it will download as `AmazonPhotos.zip`) to the cache folder, which is `~/.cache/tner` as a default but can be changed by `cache_dir` argument in [training instance](https://github.com/asahi417/tner/blob/master/tner/model.py#L46) or [inference instance](https://github.com/asahi417/tner/blob/master/tner/model_prediction.py#L19).
+
+### Custom Dataset
+To go beyond the public datasets, user can use their own dataset by formatting them into
+the IOB format described in [CoNLL 2003 NER shared task paper](https://www.aclweb.org/anthology/W03-0419.pdf),
+where all data files contain one word per line with empty lines representing sentence boundaries.
+At the end of each line there is a tag which states whether the current word is inside a named entity or not.
+The tag also encodes the type of named entity. Here is an example sentence:
+```
+EU B-ORG
+rejects O
+German B-MISC
+call O
+to O
+boycott O
+British B-MISC
+lamb O
+. O
+```
+Words tagged with O are outside of named entities and the I-XXX tag is used for words inside a
+named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
+first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
+The custom dataset should has `train.txt` and `valid.txt` file in a same folder. 
+Please take a look [sample custom data](https://github.com/asahi417/tner/tree/master/examples/custom_dataset_sample).
 
