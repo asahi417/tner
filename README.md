@@ -8,33 +8,30 @@
   <img src="./asset/api.gif" width="600">
 </p>
 
-***`T-NER`*** is a python tool to analyse language model finetuning on named-entity-recognition (NER). 
-It has an easy interface to finetune models, test on cross-domain datasets, where we compile 9 publicly available NER datasets.
-Models can be deployed immediately on our web app for qualitative analysis, and the API for a micro service.
-Also we release all the NER model checkpoints, where the most generalized model trained on all the dataset, has 43 entity types.    
+***`TNER`*** is a python tool to analyse language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
+It has an easy interface to finetune models, test on cross-domain datasets with 9 publicly available NER datasets as well as custom datasets.
+All models finetuned with `tner` can be deploy on our web app for visualization.
+Finally, we release 46 XLM-RoBERTa model finetuned on NER on [transformers model hub](https://huggingface.co/models?search=asahi417/tner).
 
 ### Table of Contents  
 1. **[Setup](#get-started)**
 2. **[Language Model Finetuning on NER](#language-model-finetuning-on-ner)**
     - *[Datasets](#datasets):* Built-in datasets and custom dataset
-    - *[Model Finetuning](#model-finetuning):* Model training [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-    - *[Model Evaluation](#model-evaluation):* In/out of domain evaluation [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+    - *[Model Finetuning](#model-finetuning):* [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+    - *[Model Evaluation](#model-evaluation):* [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
     - *[Model Inference API](#model-inference-api):* An API to get prediction from models
     - *[Model Checkpoints](#model-checkpoints)* : Released model checkpoints
-3. **[Experiment with XLM-R](#experiment-with-xlm-r):** Cross-domain analysis of XLM-R
+3. **[Released Checkpoints of finetuned XLM-R](#experiment-with-xlm-r):** Cross-domain analysis of XLM-R
 4. **[Web API](#web-app):** Model deployment on a web-app   
 
 ## Get Started
-Install via pip
+Install pip package
+```shell script
+pip install tner
+```
+or directly from the repository for the latest version.
 ```shell script
 pip install git+https://github.com/asahi417/tner
-```
-
-or clone and install libraries.
-```shell script
-git clone https://github.com/asahi417/tner
-cd tner
-pip install -r requirement.txt
 ```
 
 ## Language Model Finetuning on NER
