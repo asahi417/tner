@@ -33,12 +33,7 @@ model = AutoModelForTokenClassification.from_pretrained("model-name")
 
 
 ## Experimental Results
-## Experiment with XLM-R
-We finetune [XLM-R](https://arxiv.org/pdf/1911.02116.pdf) (`xlm-roberta-large`) on each dataset and
-evaluate it on in-domain/cross-domain/cross-lingual setting. Moreover, we show that `xlm-roberta-large` is capable of
-learning all the domain, by the result on the combined dataset.
-
-Firstly, we report in-domain baseline on each dataset, where the metrics are quite close to, or even outperform current SoTA (Oct, 2020).
+Here we show a few experimental results on our released XLM-R models with in-domain/cross-domain/cross-lingual setting. Firstly, we report in-domain baseline on each dataset, where the metrics are quite close to, or even outperform current SoTA (Oct, 2020).
 Through the section, we use test F1 score. 
 
 | Dataset            | Recall | Precision | F1    |  SoTA F1  |                    SoTA reference                    |
@@ -72,16 +67,14 @@ Due to that, we employ entity-span f1 score for our metric of domain adaptation.
 | `mit_movie_trivia` | 11.97      | 0.0       | 0.0      | 0.0             | 0.0        | 0.0    | 0.0   | 0.0            | _73.1_           | 
 
 
-Here, one can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task.
+One can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task.
 Now, we train NER model on all the dataset and report the result.
 Each models were trained on all datasets for `5000`, `10000`, and `15000` steps.
 As you can see, the accuracy is altogether close to what attained from from single dataset model, indicating `xlm-roberta-large` at least can learn all the features in each domain.  
 
 |                 | `ontonotes5` | `conll2003` | `wnut2017` | `panx_dataset/en` | `bionlp2004` | `bc5cdr` | `fin`   | `mit_restaurant` | `mit_movie_trivia` | 
 |:---------------:|:------------:|:-----------:|:----------:|:-----------------:|:------------:|:--------:|:-------:|:----------------:|:------------------:| 
-| `all_5000`      | 85.67        | 88.28       | 51.11      | 79.22             | 70.8         | 79.56    | 74.72   | 78.57            | 66.64              | 
-| `all_10000`     | 87.18        | 89.76       | 53.12      | 82.03             | 73.03        | 82.8     | 75.93   | 81.27            | 71.04              | 
-| `all_15000`     | 87.91        | 89.8        | 55.48      | 82.29             | 73.76        | 84.25    | 74.77   | 81.44            | 72.33              | 
+| `all_english`   | 87.91        | 89.8        | 55.48      | 82.29             | 73.76        | 84.25    | 74.77   | 81.44            | 72.33              | 
 
 Finally, we show cross-lingual transfer metrics over a few `WikiAnn` datasets.
 
@@ -90,10 +83,3 @@ Finally, we show cross-lingual transfer metrics over a few `WikiAnn` datasets.
 | `panx_dataset/en` | 84.02             | 46.37             | 73.18             | 
 | `panx_dataset/ja` | 53.6              | 86.54             | 45.75             | 
 | `panx_dataset/ru` | 60.49             | 53.38             | 90.07             | 
-
-
-Notes:  
-- Configuration can be found in [training script](examples/example_train_eval.py).
-- F1 score is based on [seqeval](https://pypi.org/project/seqeval/) library, where is span based measure.
-- For Japanese dataset, we process each sentence from a collection of characters into proper token by [mecab](https://pypi.org/project/mecab-python3/), so is not directly compatible with prior work.
-- We release all the checkpoints used in the experiments. Take a look [here](#model-checkpoints). 
