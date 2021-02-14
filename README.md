@@ -15,9 +15,9 @@ Finally, we release 46 XLM-RoBERTa model finetuned on NER on [transformers model
 
 ### Table of Contents  
 1. **[Setup](#get-started)**
-2. **[Model Finetuning](#model-finetuning):** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-3. **[Model Evaluation](#model-evaluation):** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-4. **[Model Inference API](#model-inference-api):** An API to get prediction from models
+2. **[Model Finetuning](#model-finetuning)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+3. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+4. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]
 4. **[Web API](#web-app):** Model deployment on a web-app   
 5. **[Datasets](#datasets):** Built-in datasets and custom dataset
 
@@ -78,7 +78,7 @@ trainer.test(test_dataset='data-name', entity_span_prediction=True)
 tner-test [-h] -c CHECKPOINT_DIR [--lower-case] [--test-data TEST_DATA] [--test-lower-case] [--test-entity-span]
 ```
 
-### Model Inference API
+## Model Inference
 If you just want a prediction from a finetuned NER model, here is the best option for you.
 ```python
 import tner
