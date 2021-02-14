@@ -14,7 +14,7 @@ __all__ = 'Argument'
 class Argument:
     """ Model training arguments manager """
 
-    def __init__(self, checkpoint_dir: str = './tner_ckpt', **kwargs):
+    def __init__(self, checkpoint_dir: str, **kwargs):
         """ Model training arguments manager
 
          Parameter
@@ -23,6 +23,7 @@ class Argument:
             Directory to organize the checkpoint files
         kwargs: model arguments
         """
+        assert type(checkpoint_dir) is str
         self.checkpoint_dir, self.parameter, self.is_trained = self.version(checkpoint_dir, parameter=kwargs)
         logging.info('checkpoint: {}'.format(self.checkpoint_dir))
         for k, v in self.parameter.items():

@@ -15,13 +15,12 @@ class Test(unittest.TestCase):
 
     def test_train_finetuned_model(self):
         model = tner.TrainTransformersNER(
-            dataset=[data],
+            './tests/ckpt_test/finetuned',
+            dataset=data,
             total_step=2,
             warmup_step=1,
             batch_size=1,
-            checkpoint_dir='./tests/ckpt_test/finetuned',
-            transformers_model='asahi417/tner-xlm-roberta-large-ontonotes5'
-            )
+            transformers_model='asahi417/tner-xlm-roberta-large-ontonotes5')
         model.train()
         model.test(test_dataset=data)
         # clean up dir
@@ -29,13 +28,18 @@ class Test(unittest.TestCase):
 
     def test_test_finetuned_model(self):
         model = tner.TrainTransformersNER(
-            transformers_model='asahi417/tner-xlm-roberta-large-ontonotes5',
-            checkpoint_dir='./tests/ckpt_test/finetuned')
+            './tests/ckpt_test/finetuned', transformers_model='asahi417/tner-xlm-roberta-large-ontonotes5')
         model.test(test_dataset=data)
         model.test(test_dataset=data, entity_span_prediction=True)
         assert os.path.exists(model.args.checkpoint_dir)
         # clean up dir
         shutil.rmtree('./tests/ckpt_test')
+
+    def test_no_checkpoint(self):
+        try:
+            tner.TrainTransformersNER(dataset='wnut2017', transformers_model=transformers_model)
+        except TypeError:
+            pass
 
     def test_train(self):
         # model training/test

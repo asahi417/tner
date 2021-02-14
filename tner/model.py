@@ -29,7 +29,7 @@ class TrainTransformersNER:
     """ Named-Entity-Recognition (NER) trainer """
 
     def __init__(self,
-                 checkpoint_dir: str = None,
+                 checkpoint_dir: str,
                  dataset: (str, List) = None,
                  transformers_model: str = 'xlm-roberta-large',
                  random_seed: int = 1234,

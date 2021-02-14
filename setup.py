@@ -39,6 +39,7 @@ setup(
         'tensorboard',
         'torch',
         'transformers',
+        'sentencepiece',
         'seqeval',
         'segtok'
     ],
