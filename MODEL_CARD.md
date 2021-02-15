@@ -13,6 +13,7 @@ For example
 - `asahi417/tner-xlm-roberta-base-uncased-conll2003`: XLM-R base model finetuned on lowercased CoNLL2003 dataset
 - `asahi417/tner-xlm-roberta-large-all-english`: XLM-R large model finetuned on all English datasets
 
+The list of all public models can be checked [here](https://huggingface.co/models?search=asahi417/tner).
 The training parameter used in TNER to finetune each model, is stored at `https://huggingface.co/{model-name}/blob/main/parameter.json`.
 Eg) The training parameter of `asahi417/tner-xlm-roberta-large-all-english` is [here](https://huggingface.co/asahi417/tner-xlm-roberta-large-all-english/blob/main/parameter.json).
 
@@ -33,8 +34,7 @@ model = AutoModelForTokenClassification.from_pretrained("model-name")
 
 
 ## Experimental Results
-Here we show a few experimental results on our released XLM-R models with in-domain/cross-domain/cross-lingual setting. Firstly, we report in-domain baseline on each dataset, where the metrics are quite close to, or even outperform current SoTA (Oct, 2020).
-Through the section, we use test F1 score. 
+Here we show a few experimental results on our released XLM-R large models with in-domain/cross-domain/cross-lingual setting. Firstly, we report in-domain baseline on each dataset, where the metrics are quite close to, or even outperform current SoTA (Oct, 2020).
 
 | Dataset            | Recall | Precision | F1    |  SoTA F1  |                    SoTA reference                    |
 |:------------------:|:------:|:---------:|:-----:|:---------:|:----------------------------------------------------:|
@@ -50,9 +50,8 @@ Through the section, we use test F1 score.
 | `mit_restaurant`   | 80.64  | 78.64     | 79.63 | - | - |
 | `mit_movie_trivia` | 73.14  | 69.42     | 71.23 | - | - |
 
-Then, we run evaluation of each model on different dataset to see its domain adaptation capacity in English.
-As the entities are different among those dataset, we can't compare them by ordinary entity-type F1 score like above.
-Due to that, we employ entity-span f1 score for our metric of domain adaptation. 
+
+Then, we report entity-span prediction in across dataset.
 
 |  Train\Test        | `ontonotes5` | `conll2003` | `wnut2017` | `panx_dataset/en` | `bionlp2004` | `bc5cdr` | `fin`   | `mit_restaurant` | `mit_movie_trivia` | 
 |:------------------:|:----------:|:---------:|:--------:|:---------------:|:----------:|:------:|:-----:|:--------------:|:----------------:| 
@@ -66,17 +65,13 @@ Due to that, we employ entity-span f1 score for our metric of domain adaptation.
 | `mit_restaurant`   | 5.68       | 18.37     | 21.2     | 24.07           | 0.0        | 0.0    | 18.06 | _83.4_         | 0.0              | 
 | `mit_movie_trivia` | 11.97      | 0.0       | 0.0      | 0.0             | 0.0        | 0.0    | 0.0   | 0.0            | _73.1_           | 
 
-
-One can see that none of the models transfers well on the other dataset, which indicates the difficulty of domain transfer in NER task.
-Now, we train NER model on all the dataset and report the result.
-Each models were trained on all datasets for `5000`, `10000`, and `15000` steps.
-As you can see, the accuracy is altogether close to what attained from from single dataset model, indicating `xlm-roberta-large` at least can learn all the features in each domain.  
+Finally, we finetune on all the English data by just concatenating them.
 
 |                 | `ontonotes5` | `conll2003` | `wnut2017` | `panx_dataset/en` | `bionlp2004` | `bc5cdr` | `fin`   | `mit_restaurant` | `mit_movie_trivia` | 
 |:---------------:|:------------:|:-----------:|:----------:|:-----------------:|:------------:|:--------:|:-------:|:----------------:|:------------------:| 
 | `all_english`   | 87.91        | 89.8        | 55.48      | 82.29             | 73.76        | 84.25    | 74.77   | 81.44            | 72.33              | 
 
-Finally, we show cross-lingual transfer metrics over a few `WikiAnn` datasets.
+Additionally, here is the cross-lingual transfer metrics across a few `WikiAnn` datasets.
 
 |  Train\Test       | `panx_dataset/en` | `panx_dataset/ja` | `panx_dataset/ru` | 
 |:-----------------:|:-----------------:|:-----------------:|:-----------------:| 
