@@ -11,7 +11,7 @@
 ***TNER*** is a python tool to analyse language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models, test on cross-domain datasets with 9 publicly available NER datasets as well as custom datasets.
 All models finetuned with TNER can be deploy on our web app for visualization.
-Finally, we release 46 XLM-RoBERTa model finetuned on NER on [transformers model hub](https://github.com/asahi417/tner/blob/master/MOEDL_CARD.md).
+Finally, we release 46 XLM-RoBERTa model finetuned on NER on transformers model hub, [see here for model cards](https://github.com/asahi417/tner/blob/master/MOEDL_CARD.md).
 
 ### Table of Contents  
 1. **[Setup](#get-started)**
