@@ -11,15 +11,17 @@
 ***TNER*** is a python tool to analyse language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models, test on cross-domain datasets with 9 publicly available NER datasets as well as custom datasets.
 All models finetuned with TNER can be deploy on our web app for visualization.
-Finally, we release 46 XLM-RoBERTa model finetuned on NER on transformers model hub, [see here for model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
+
+***PreTrained Models*** We release 46 XLM-RoBERTa model finetuned on NER on transformers model hub, [see here for model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
 
 ### Table of Contents  
 1. **[Setup](#get-started)**
 2. **[Web API](#web-app)**
-3. **[Model Finetuning](#model-finetuning)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-4. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-5. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing)
-6. **[Datasets](#datasets)**
+3. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)
+4. **[Model Finetuning](#model-finetuning)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
+5. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
+6. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing)
+7. **[Datasets](#datasets)**
 
 ## Get Started
 Install pip package
