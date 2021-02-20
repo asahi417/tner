@@ -4,7 +4,7 @@ All the models are [XLM-R](https://arxiv.org/pdf/1911.02116.pdf), finetuned on n
 
 ## Model Name
 Model name is organized as `asahi417/tner-xlm-roberta-{model_type}-{dataset}`, where `model_type` is either `base` or `large` and `dataset` corresponds to 
-the alias of [dataset](https://github.com/asahi417/tner/blob/master/README.md#datasets). In addition to individual model, we train on the English merged dataset by 
+the alias of [dataset](https://github.com/asahi417/tner/blob/master/README.md#datasets). In addition to each individual model, we train on the English merged dataset by 
 concatenating all the English NER dataset, that denoted as `all-english`.
 We also release model finetuned on lowercased dataset, which is called `asahi417/tner-xlm-roberta-{model_type}-uncased-{dataset}`.
 
