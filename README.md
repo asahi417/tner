@@ -8,11 +8,11 @@
   <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="600">
 </p>
 
-***TNER*** is a python tool to analyse language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
-It has an easy interface to finetune models, test on cross-domain datasets with 9 publicly available NER datasets as well as custom datasets.
+***TNER*** is a python tool for language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
+It has an easy interface to finetune models and test on cross-domain and multilingual datasets. TNER currently integrates 9 publicly available NER datasets an enables an easy integration of custom datasets.
 All models finetuned with TNER can be deploy on our web app for visualization.
 
-***PreTrained Model Release:*** We release 46 XLM-RoBERTa model finetuned on NER on transformers model hub, [see here for model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
+***PreTrained Models Release:*** We release 46 XLM-RoBERTa models finetuned on NER on the HuggingFace transformers model hub, [see here for more details and model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
 
 ### Table of Contents  
 1. **[Setup](#get-started)**
@@ -43,7 +43,7 @@ then launch the server by
 ```shell script
 uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
-and open your browser http://0.0.0.0:8000 once it's ready.
+and open your browser http://0.0.0.0:8000 once ready.
 You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
 `NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
 
@@ -65,21 +65,21 @@ To show validation accuracy at the end of each epoch,
 ```python
 trainer.train(monitor_validation=True)
 ```
-and to tune training parameter such as batch size, epoch, learning rate, please take a look [the argument description](https://github.com/asahi417/tner/blob/master/tner/model.py#L47).
+and to tune training parameters such as batch size, epoch, learning rate, please take a look [the argument description](https://github.com/asahi417/tner/blob/master/tner/model.py#L47).
 
-***Train on multiple datasets:*** Model can be trained on a concatenation of multiple datasets by proviing a list of data name.
+***Train on multiple datasets:*** Model can be trained on a concatenation of multiple datasets by providing a list of dataset names.
 ```python
 trainer = tner.TrainTransformersNER(checkpoint_dir='./ckpt_merged', dataset=["ontonotes5", "conll2003"], transformers_model="xlm-roberta-base")
 ```
-[Custom dataset](#custom-dataset) can be also added to it eg) `dataset=["ontonotes5", "./examples/custom_datas_ample"]`.
+[Custom datasets](#custom-dataset) can be also added to it, e.g. `dataset=["ontonotes5", "./examples/custom_data_sample"]`.
 
-***Command line tool:*** Model finetune with CL tool.
+***Command line tool:*** Finetune models with the command line (CL).
 ```shell script
 tner-train [-h] [-c CHECKPOINT_DIR] [-d DATA] [-t TRANSFORMER] [-b BATCH_SIZE] [--max-grad-norm MAX_GRAD_NORM] [--max-seq-length MAX_SEQ_LENGTH] [--random-seed RANDOM_SEED] [--lr LR] [--total-step TOTAL_STEP] [--warmup-step WARMUP_STEP] [--weight-decay WEIGHT_DECAY] [--fp16] [--monitor-validation] [--lower-case]
 ```
 
 ## Model Evaluation
-Evaluation of NER models are easily done in/out of domain setting.
+Evaluation of NER models is easily done for in/out of domain settings.
 ```python
 import tner
 trainer = tner.TrainTransformersNER(checkpoint_dir='path-to-checkpoint', transformers_model="language-model-name")
@@ -92,7 +92,7 @@ pipeline, which ignores the entity type and compute metrics only on the IOB enti
 trainer.test(test_dataset='data-name', entity_span_prediction=True)
 ```
 
-***Command line tool:*** Model evaluation with CL tool.
+***Command line tool:*** Model evaluation with CL.
 ```shell script
 tner-test [-h] -c CHECKPOINT_DIR [--lower-case] [--test-data TEST_DATA] [--test-lower-case] [--test-entity-span]
 ```
@@ -109,13 +109,13 @@ test_sentences = [
 ]
 classifier.predict(test_sentences)
 ```
-***Command line tool:*** Model inference with CL tool.
+***Command line tool:*** Model inference with CL.
 ```shell script
 tner-predict [-h] [-c CHECKPOINT]
 ```
 
 ## Datasets
-Public datasets that can be fetched with TNER is summarized here.
+Public datasets that can be fetched with TNER are summarized here.
 
 |                                   Name (`alias`)                                                                      |         Genre        |    Language   | Entity types | Data size (train/valid/test) | Note |
 |:---------------------------------------------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
@@ -137,7 +137,7 @@ To take a closer look into each dataset, one may want to use `tner.get_dataset_n
 import tner
 data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner('data-name')
 ```
-where `data` consists of following structured data.
+where `data` consists of the following structured format.
 ```
 {
     'train': {
@@ -155,12 +155,12 @@ where `data` consists of following structured data.
 ```
 
 ***WikiAnn dataset***  
-All the dataset should be fetched automatically but not `panx_dataset/*` dataset, as you need to manually download data from
+All the datasets should be fetched automatically but not `panx_dataset/*` dataset, as you need to manually download data from
 [here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1)
 (note that it will download as `AmazonPhotos.zip`) to the cache folder, which is `~/.cache/tner` as a default but can be changed by `cache_dir` argument in [training instance](https://github.com/asahi417/tner/blob/master/tner/model.py#L46) or [inference instance](https://github.com/asahi417/tner/blob/master/tner/model_prediction.py#L19).
 
 ### Custom Dataset
-To go beyond the public datasets, user can use their own dataset by formatting them into
+To go beyond the public datasets, users can use their own datasets by formatting them into
 the IOB format described in [CoNLL 2003 NER shared task paper](https://www.aclweb.org/anthology/W03-0419.pdf),
 where all data files contain one word per line with empty lines representing sentence boundaries.
 At the end of each line there is a tag which states whether the current word is inside a named entity or not.
@@ -179,6 +179,6 @@ lamb O
 Words tagged with O are outside of named entities and the I-XXX tag is used for words inside a
 named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
 first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
-The custom dataset should has `train.txt` and `valid.txt` file in a same folder. 
+The custom dataset should have `train.txt` and `valid.txt` files in a same folder. 
 Please take a look [sample custom data](https://github.com/asahi417/tner/tree/master/examples/custom_dataset_sample).
 
