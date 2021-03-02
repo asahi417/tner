@@ -34,7 +34,10 @@ model = AutoModelForTokenClassification.from_pretrained("model-name")
 
 
 ## Experimental Results
-Here we show a few experimental results on our released XLM-R large models with in-domain/cross-domain/cross-lingual setting. Firstly, we report in-domain baseline on each dataset, where the metrics are quite close to, or even outperform current SoTA (Oct, 2020).
+Here we show a few experimental results on our released XLM-R large models with in-domain/cross-domain/cross-lingual setting. 
+**Please take a look our paper for more results ([paper](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf))**.
+
+Firstly, we report in-domain baseline on each dataset, where the metrics are quite close to, or even outperform current SoTA (Oct, 2020).
 
 | Dataset            | Recall | Precision | F1    |  SoTA F1  |                    SoTA reference                    |
 |:------------------:|:------:|:---------:|:-----:|:---------:|:----------------------------------------------------:|
@@ -70,11 +73,3 @@ Finally, we finetune on all the English data by just concatenating them.
 |                 | `ontonotes5` | `conll2003` | `wnut2017` | `panx_dataset/en` | `bionlp2004` | `bc5cdr` | `fin`   | `mit_restaurant` | `mit_movie_trivia` | 
 |:---------------:|:------------:|:-----------:|:----------:|:-----------------:|:------------:|:--------:|:-------:|:----------------:|:------------------:| 
 | `all_english`   | 87.91        | 89.8        | 55.48      | 82.29             | 73.76        | 84.25    | 74.77   | 81.44            | 72.33              | 
-
-Additionally, here is the cross-lingual transfer metrics across a few `WikiAnn` datasets.
-
-|  Train\Test       | `panx_dataset/en` | `panx_dataset/ja` | `panx_dataset/ru` | 
-|:-----------------:|:-----------------:|:-----------------:|:-----------------:| 
-| `panx_dataset/en` | 84.02             | 46.37             | 73.18             | 
-| `panx_dataset/ja` | 53.6              | 86.54             | 45.75             | 
-| `panx_dataset/ru` | 60.49             | 53.38             | 90.07             | 
