@@ -8,9 +8,11 @@
   <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="600">
 </p>
 
+
 ***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models and test on cross-domain and multilingual datasets. TNER currently integrates 9 publicly available NER datasets an enables an easy integration of custom datasets.
-All models finetuned with TNER can be deploy on our web app for visualization.
+All models finetuned with T-NER can be deploy on our web app for visualization.
+Our paper demonstrating T-NER has been accepted EACL 2021 🎉 Paper link is [here](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf).
 
 ***PreTrained Models Release:*** We release 46 XLM-RoBERTa models finetuned on NER on the HuggingFace transformers model hub, [see here for more details and model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
 
@@ -22,6 +24,7 @@ All models finetuned with TNER can be deploy on our web app for visualization.
 5. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
 6. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing)
 7. **[Datasets](#datasets)**
+8. **[Reference](#reference-paper)**
 
 ## Get Started
 Install pip package
@@ -182,3 +185,12 @@ first word of the second entity will be tagged B-XXX in order to show that it st
 The custom dataset should have `train.txt` and `valid.txt` files in a same folder. 
 Please take a look [sample custom data](https://github.com/asahi417/tner/tree/master/examples/custom_dataset_sample).
 
+
+## Reference paper
+If you use any of these resources, please cite the following paper:
+
+@InProceedings{ushio2021tner,
+  author = 	"Asahi, Ushio and Camacho-Collados, Jose",
+  title = 	"T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition",
+  booktitle = "Proceedings of EACL: System Demonstrations",
+  year = 	"2021",}
