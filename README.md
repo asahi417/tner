@@ -192,7 +192,7 @@ Please take a look [sample custom data](https://github.com/asahi417/tner/tree/ma
 If you use any of these resources, please cite the following paper:
 ```
 @InProceedings{ushio2021tner,
-  author    = "Asahi, Ushio and Camacho-Collados, Jose",
+  author    = "Ushio, Asahi and Camacho-Collados, Jose",
   title     = "T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition",
   booktitle = "Proceedings of EACL: System Demonstrations",
   year      = "2021"
