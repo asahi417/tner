@@ -8,7 +8,7 @@
   <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="600">
 </p>
 
-***TNER*** is a python tool for language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
+***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models and test on cross-domain and multilingual datasets. TNER currently integrates 9 publicly available NER datasets an enables an easy integration of custom datasets.
 All models finetuned with TNER can be deploy on our web app for visualization.
 
