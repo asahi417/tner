@@ -10,11 +10,11 @@
 
 
 ***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
-It has an easy interface to finetune models and test on cross-domain and multilingual datasets. TNER currently integrates 9 publicly available NER datasets an enables an easy integration of custom datasets.
+It has an easy interface to finetune models and test on cross-domain and multilingual datasets. T-NER currently integrates 9 publicly available NER datasets an enables an easy integration of custom datasets.
 All models finetuned with T-NER can be deploy on our web app for visualization.
 
-***Paper Accepted:*** Our paper demonstrating T-NER has been accepted EACL 2021 🎉 
-Please find our preprint [here](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf)!
+***Paper Accepted:*** Our paper demonstrating T-NER has been accepted to EACL 2021 🎉 
+Please find the paper [here](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf)!
 
 ***PreTrained Models:*** We release 46 XLM-RoBERTa models finetuned on NER on the HuggingFace transformers model hub, [see here for more details and model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
 
