@@ -120,7 +120,7 @@ tner-predict [-h] [-c CHECKPOINT]
 ```
 
 ## Datasets
-Public datasets that can be fetched with TNER are summarized here.
+Public datasets that can be fetched with TNER are summarized here. Please cite the corresponding reference if using one of these datasets.
 
 |                                   Name (`alias`)                                                                      |         Genre        |    Language   | Entity types | Data size (train/valid/test) | Note |
 |:---------------------------------------------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
