@@ -189,7 +189,7 @@ Please take a look [sample custom data](https://github.com/asahi417/tner/tree/ma
 
 
 ## Reference paper
-If you use any of these resources, please cite the following paper:
+If you use any of these resources, please cite the following [paper](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf):
 ```
 @InProceedings{ushio2021tner,
   author    = "Ushio, Asahi and Camacho-Collados, Jose",
