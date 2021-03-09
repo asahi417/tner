@@ -1,5 +1,6 @@
 """ Fine-tune transformers on NER dataset """
 import argparse
+import logging
 from tner import VALID_DATASET
 from tner import TrainTransformersNER
 
@@ -21,11 +22,14 @@ def get_options():
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--monitor-validation', help='display validation after each epoch', action='store_true')
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
+    parser.add_argument('--debug', help='show debug log', action='store_true')
     return parser.parse_args()
 
 
 def main():
     opt = get_options()
+    level = logging.DEBUG if opt.debug else logging.INFO
+    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=level, datefmt='%Y-%m-%d %H:%M:%S')
     # train model
     trainer = TrainTransformersNER(
         checkpoint_dir=opt.checkpoint_dir,

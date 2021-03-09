@@ -159,11 +159,6 @@ where `data` consists of the following structured format.
 }
 ```
 
-***WikiAnn dataset***  
-All the datasets should be fetched automatically but not `panx_dataset/*` dataset, as you need to manually download data from
-[here](https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN?_encoding=UTF8&%2AVersion%2A=1&%2Aentries%2A=0&mgh=1)
-(note that it will download as `AmazonPhotos.zip`) to the cache folder, which is `~/.cache/tner` as a default but can be changed by `cache_dir` argument in [training instance](https://github.com/asahi417/tner/blob/master/tner/model.py#L46) or [inference instance](https://github.com/asahi417/tner/blob/master/tner/model_prediction.py#L19).
-
 ### Custom Dataset
 To go beyond the public datasets, users can use their own datasets by formatting them into
 the IOB format described in [CoNLL 2003 NER shared task paper](https://www.aclweb.org/anthology/W03-0419.pdf),

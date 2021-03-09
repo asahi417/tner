@@ -6,7 +6,6 @@ import shutil
 import logging
 import requests
 from glob import glob
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 __all__ = 'Argument'
 

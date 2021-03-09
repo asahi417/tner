@@ -5,8 +5,6 @@ import json
 import logging
 from time import time
 from typing import List
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-
 import transformers
 import torch
 from torch import nn
@@ -17,7 +15,7 @@ from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
 from .tokenizer import Transforms, Dataset
 
-
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 PROGRESS_INTERVAL = 100
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
