@@ -9,10 +9,9 @@ import shutil
 from typing import Dict, List
 from itertools import chain
 from tqdm import tqdm
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-
 from .japanese_tokenizer import SudachiWrapper
 
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 STOPWORDS = ['None', '#']
 PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "bh", "de", "fy", "io", "lmo", "nap",
         "rm", "sv", "vls", "als", "bn", "diq", "ga", "is", "ln", "nds", "ro", "sw", "vo", "am", "bo", "dv", "gan", "it",
@@ -191,6 +190,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
     to_bio = False
     language = 'en'
     cache_dir = cache_dir if cache_dir is not None else CACHE_DIR
+    os.makedirs(cache_dir, exist_ok=True)
     data_path = os.path.join(cache_dir, data_name)
     logging.info('data_name: {}'.format(data_name))
 
@@ -318,16 +318,11 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
                     f_w.write(f.read().replace('\t', ' '))
     elif 'panx_dataset' in data_name:
         files_info = {'valid': 'dev.txt', 'train': 'train.txt', 'test': 'test.txt'}
-        panx_la = data_name.split('_')[-1]
+        panx_la = data_name.replace('/', '_').split('_')[-1]
         if not os.path.exists(data_path):
-            if not os.path.exists('{}/panx_dataset'.format(cache_dir)):
-                assert os.path.exists('{}/AmazonPhotos.zip'.format(cache_dir)),\
-                    'download `AmazonPhotos.zip` from ' \
-                    'https://www.amazon.com/clouddrive/share/d3KGCRCIYwhKJF0H3eWA26hjg2ZCRhjpEQtDL70FSBN ' \
-                    'and locate it at `{}/AmazonPhotos.zip`'.format(cache_dir)
-                with zipfile.ZipFile('{}/AmazonPhotos.zip'.format(cache_dir), 'r') as zip_ref:
-                    zip_ref.extractall('{}/'.format(cache_dir))
             os.makedirs(data_path, exist_ok=True)
+            url = 'https://github.com/asahi417/neighbor-tagging/releases/download/0.0.0/wikiann.zip'
+            open_compressed_file(url, cache_dir)
             tar = tarfile.open('{0}/panx_dataset/{1}.tar.gz'.format(cache_dir, panx_la), "r:gz")
             tar.extractall(data_path)
             tar.close()

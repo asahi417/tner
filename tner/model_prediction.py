@@ -1,8 +1,6 @@
 import logging
 from typing import List
 from itertools import groupby
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-
 import transformers
 import torch
 from torch import nn
