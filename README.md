@@ -22,11 +22,19 @@ Paper [here](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNE
 1. **[Setup](#get-started)**
 2. **[Web API](#web-app)**
 3. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
-4. **[Model Finetuning](#model-finetuning)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing)
-5. **[Model Evaluation](#model-evaluation)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing)
-6. **[Model Inference](#model-inference)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing)
+4. **[Model Finetuning](#model-finetuning)**
+5. **[Model Evaluation](#model-evaluation)**
+6. **[Model Inference](#model-inference)** 
 7. **[Datasets](#datasets)**
 8. **[Reference](#reference-paper)**
+
+### Google Colab Examples
+| Description               | Link  |
+|---------------------------|-------|
+| Model Finetuning          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing) |
+| Model Evaluation          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing) |
+| Model Prediction          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing) |
+| Multilingual NER Workflow | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Mq0UisC2dwlVMP9ar2Cf6h5b1T-7Tdwb?usp=sharing) |
 
 ## Get Started
 Install pip package
