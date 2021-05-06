@@ -9,12 +9,11 @@
 </p>
 
 
-***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER), available via [pip](https://pypi.org/project/tner/). 
+***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER) implemented in pytorch, available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models and test on cross-domain and multilingual datasets. T-NER currently integrates 9 publicly available NER datasets and enables an easy integration of custom datasets.
 All models finetuned with T-NER can be deploy on our web app for visualization.
 
-***Paper Accepted:*** Our paper demonstrating T-NER has been accepted to EACL 2021 🎉 
-Paper [here](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf).
+***Paper Accepted:*** Our paper demonstrating T-NER has been accepted to EACL 2021 🎉 [paper link](https://www.aclweb.org/anthology/2021.eacl-demos.7/).
 
 ***PreTrained Models:*** We release 46 XLM-RoBERTa models finetuned on NER on the HuggingFace transformers model hub, [see here for more details and model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
 
@@ -194,10 +193,17 @@ Please take a look [sample custom data](https://github.com/asahi417/tner/tree/ma
 ## Reference paper
 If you use any of these resources, please cite the following [paper](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf):
 ```
-@InProceedings{ushio2021tner,
-  author    = "Ushio, Asahi and Camacho-Collados, Jose",
-  title     = "T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition",
-  booktitle = "Proceedings of EACL: System Demonstrations",
-  year      = "2021"
-  }
+@inproceedings{ushio-camacho-collados-2021-ner,
+    title = "{T}-{NER}: An All-Round Python Library for Transformer-based Named Entity Recognition",
+    author = "Ushio, Asahi  and
+      Camacho-Collados, Jose",
+    booktitle = "Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations",
+    month = apr,
+    year = "2021",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2021.eacl-demos.7",
+    pages = "53--62",
+    abstract = "Language model (LM) pretraining has led to consistent improvements in many NLP downstream tasks, including named entity recognition (NER). In this paper, we present T-NER (Transformer-based Named Entity Recognition), a Python library for NER LM finetuning. In addition to its practical utility, T-NER facilitates the study and investigation of the cross-domain and cross-lingual generalization ability of LMs finetuned on NER. Our library also provides a web app where users can get model predictions interactively for arbitrary text, which facilitates qualitative model evaluation for non-expert programmers. We show the potential of the library by compiling nine public NER datasets into a unified format and evaluating the cross-domain and cross- lingual performance across the datasets. The results from our initial experiments show that in-domain performance is generally competitive across datasets. However, cross-domain generalization is challenging even with a large pretrained LM, which has nevertheless capacity to learn domain-specific features if fine- tuned on a combined dataset. To facilitate future research, we also release all our LM checkpoints via the Hugging Face model hub.",
+}
 ```
