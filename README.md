@@ -194,10 +194,17 @@ Please take a look [sample custom data](https://github.com/asahi417/tner/tree/ma
 ## Reference paper
 If you use any of these resources, please cite the following [paper](https://github.com/asahi417/tner/blob/master/asset/2021_01_EACL_TNER.pdf):
 ```
-@InProceedings{ushio2021tner,
-  author    = "Ushio, Asahi and Camacho-Collados, Jose",
-  title     = "T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition",
-  booktitle = "Proceedings of EACL: System Demonstrations",
-  year      = "2021"
-  }
+@inproceedings{ushio-camacho-collados-2021-ner,
+    title = "{T}-{NER}: An All-Round Python Library for Transformer-based Named Entity Recognition",
+    author = "Ushio, Asahi  and
+      Camacho-Collados, Jose",
+    booktitle = "Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations",
+    month = apr,
+    year = "2021",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2021.eacl-demos.7",
+    pages = "53--62",
+    abstract = "Language model (LM) pretraining has led to consistent improvements in many NLP downstream tasks, including named entity recognition (NER). In this paper, we present T-NER (Transformer-based Named Entity Recognition), a Python library for NER LM finetuning. In addition to its practical utility, T-NER facilitates the study and investigation of the cross-domain and cross-lingual generalization ability of LMs finetuned on NER. Our library also provides a web app where users can get model predictions interactively for arbitrary text, which facilitates qualitative model evaluation for non-expert programmers. We show the potential of the library by compiling nine public NER datasets into a unified format and evaluating the cross-domain and cross- lingual performance across the datasets. The results from our initial experiments show that in-domain performance is generally competitive across datasets. However, cross-domain generalization is challenging even with a large pretrained LM, which has nevertheless capacity to learn domain-specific features if fine- tuned on a combined dataset. To facilitate future research, we also release all our LM checkpoints via the Hugging Face model hub.",
+}
 ```
