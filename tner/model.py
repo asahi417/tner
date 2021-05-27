@@ -293,7 +293,6 @@ class TrainTransformersNER:
 
         # start experiment
         start_time = time()
-        logging.info('data_loader: %s' % str(list(data_loader.keys())))
         logging.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
         try:
             while True:

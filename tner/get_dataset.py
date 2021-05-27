@@ -9,6 +9,7 @@ import shutil
 from typing import Dict, List
 from itertools import chain
 from tqdm import tqdm
+from glob import glob
 from .japanese_tokenizer import SudachiWrapper
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -339,7 +340,20 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         if not os.path.exists(data_path):
             raise ValueError('unknown dataset: %s' % data_path)
         else:
-            files_info = {'train': 'train.txt', 'valid': 'valid.txt'}
+            files = glob('{}/*.txt'.format(data_path))
+            logging.info('formatting custom dataset from {}'.format(data_path))
+            files_info = {}
+            for _file in files:
+                _file = os.path.basename(_file)
+                if _file == 'train.txt':
+                    files_info['train'] = _file
+                elif _file in ['valid.txt', 'val.txt', 'validation.txt']:
+                    files_info['valid'] = _file
+                elif _file == 'test.txt':
+                    files_info['test'] = _file
+            assert 'train' in files_info, 'training set not found, make sure you have `train.txt` in the folder'
+            logging.info('found following files: {}'.format(files_info))
+            logging.info('note that files should be named as either `valid.txt`, `test.txt`, or `train.txt` ')
 
     label_to_id = dict() if label_to_id is None else label_to_id
     data_split_all, unseen_entity_set, label_to_id = decode_all_files(
