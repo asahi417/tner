@@ -200,6 +200,12 @@ class TrainTransformersNER:
             language=self.language,
             max_length=max_seq_length)
         data_obj = Dataset(features)
+
+        if is_train:
+            assert len(data_obj) >= batch_size, 'training data only has {0} entries and batch size' \
+                                                'exceeded {0} < {1}, please make sure the batch size ' \
+                                                'is at least less than the entire training data size.'.format(
+                len(data_obj), batch_size)
         return torch.utils.data.DataLoader(
             data_obj, num_workers=self.num_worker, batch_size=batch_size, shuffle=is_train, drop_last=is_train)
 
@@ -293,7 +299,7 @@ class TrainTransformersNER:
 
         # start experiment
         start_time = time()
-        logging.info('*** start training from step %i, epoch %i ***' % (self.__step, self.__epoch))
+        logging.info('*** start training from step {}, epoch {} ***'.format(self.__step, self.__epoch))
         try:
             while True:
                 if_training_finish = self.__epoch_train(data_loader['train'], writer=writer)
