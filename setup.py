@@ -33,7 +33,7 @@ setup(
         'uvicorn==0.11.8',
         'jinja2==2.11.3',
         'aiofiles==0.5.0',
-        'fastapi==0.61.0',
+        'fastapi==0.65.2',
         'matplotlib==3.3.1',
         'toml',
         'tensorboard',
