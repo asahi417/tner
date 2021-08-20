@@ -3,7 +3,7 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/tner.svg)](https://pypi.python.org/pypi/tner/)
 [![PyPI status](https://img.shields.io/pypi/status/tner.svg)](https://pypi.python.org/pypi/tner/)
 
-# T-NER  
+# T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition  
 <p align="center">
   <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="600">
 </p>
