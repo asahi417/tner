@@ -191,7 +191,7 @@ Please take a look [sample custom data](https://github.com/asahi417/tner/tree/ma
 
 
 ## Reference paper
-If you use any of these resources, please cite the following [paper](https://www.aclweb.org/anthology/2021.eacl-demos.7.pdf):
+If you use any of these resources, please cite the following [paper](https://aclanthology.org/2021.eacl-demos.7/):
 ```
 @inproceedings{ushio-camacho-collados-2021-ner,
     title = "{T}-{NER}: An All-Round Python Library for Transformer-based Named Entity Recognition",
