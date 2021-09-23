@@ -1,0 +1,9 @@
+,data,label,label size,train,valid,test,max token size (train),min token size (train),avg token size (train)
+0,conll2003,"['location', 'organization', 'other', 'person']",4,14041,3250,3453.0,113,1,14.501673669966527
+1,wnut2017,"['corporation', 'group', 'location', 'person', 'product', 'work of art']",6,3394,1009,1287.0,41,1,18.481437831467296
+2,ontonotes5,"['cardinal number', 'date', 'event', 'facility', 'geopolitical area', 'group', 'language', 'law', 'location', 'money', 'ordinal number', 'organization', 'percent', 'person', 'product', 'quantity', 'time', 'work of art']",18,59924,8528,8262.0,210,1,18.16370736265937
+3,fin,"['location', 'organization', 'other', 'person']",4,1164,303,,413,1,35.22422680412371
+4,bionlp2004,"['cell line', 'cell type', 'dna', 'protein', 'rna']",5,18546,3856,,204,2,26.557802221503287
+5,bc5cdr,"['chemical', 'disease']",2,5228,5330,5865.0,133,1,20.910864575363426
+6,panx_dataset_en,"['location', 'organization', 'person']",3,20000,10000,10000.0,439,2,8.0197
+7,cache/SemEval2022-Task11_Train-Dev/EN-English,"['corporation', 'group', 'location', 'person', 'product', 'work of art']",6,15300,800,,41,2,16.552091503267974

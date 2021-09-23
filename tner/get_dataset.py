@@ -40,9 +40,9 @@ SHARED_NER_LABEL = {
     "percent": ["PERCENT", "PNT"],
     "other": ["OTHER", "MISC"],
     "money": ["MONEY", "MNY", "Price"],
-    "corporation": ["corporation"],  # Wnut 17
-    "group": ["group", "NORP"],
-    "product": ["product", "PRODUCT"],
+    "corporation": ["corporation", "CORP"],  # Wnut 17
+    "group": ["group", "NORP", "GRP"],
+    "product": ["product", "PRODUCT", "PROD"],
     "rating": ["Rating", 'RATING'],  # restaurant review
     "amenity": ["Amenity"],
     "restaurant": ["Restaurant_Name"],
@@ -70,7 +70,7 @@ SHARED_NER_LABEL = {
     "quantity": ['QUANTITY'],
     "law": ['LAW'],
     "geopolitical area": ['GPE'],
-    "work of art": ["WORK_OF_ART", "creative-work"],
+    "work of art": ["WORK_OF_ART", "creative-work", "CW"],
     "facility": ["FAC"],
     "language": ["LANGUAGE"],
     "event": ["EVENT"],
@@ -340,16 +340,16 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         if not os.path.exists(data_path):
             raise ValueError('unknown dataset: %s' % data_path)
         else:
-            files = glob('{}/*.txt'.format(data_path))
+            files = glob('{}/*.txt'.format(data_path)) + glob('{}/*.conll'.format(data_path))
             logging.info('formatting custom dataset from {}'.format(data_path))
             files_info = {}
             for _file in files:
                 _file = os.path.basename(_file)
-                if _file == 'train.txt':
+                if 'train' in _file:
                     files_info['train'] = _file
-                elif _file in ['valid.txt', 'val.txt', 'validation.txt']:
+                elif 'dev' in _file or 'val' in _file:
                     files_info['valid'] = _file
-                elif _file == 'test.txt':
+                elif 'test' in _file:
                     files_info['test'] = _file
             assert 'train' in files_info, 'training set not found, make sure you have `train.txt` in the folder'
             logging.info('found following files: {}'.format(files_info))
@@ -396,6 +396,11 @@ def decode_file(file_name: str,
         sentence, entity = [], []
         for n, line in enumerate(f):
             line = line.strip()
+
+            # MultiCoNER has header
+            if line.startswith('# id '):
+                continue
+
             if len(line) == 0 or line.startswith("-DOCSTART-"):
                 if len(sentence) != 0:
                     assert len(sentence) == len(entity)
@@ -404,6 +409,8 @@ def decode_file(file_name: str,
                     sentence, entity = [], []
             else:
                 ls = line.split()
+                # MultiCoNER separate token and tag by 'in _ _ O' so need to ignore '_'
+                ls = [i for i in ls if i != '_']
                 if len(ls) < 2:
                     continue
                 # Examples could have no label for mode = "test"
