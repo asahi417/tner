@@ -24,3 +24,4 @@ for i in data_list:
 
 df = pd.DataFrame(stats)
 df.to_csv('examples/scripts/data_statistics.csv')
+
