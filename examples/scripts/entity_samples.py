@@ -79,5 +79,5 @@ for i in data_list:
 
         overlap_mean[i][_key] = len(set(entity_eval).intersection(set(entity_train)))/len(list(set(entity_eval))) * 100
 
-# TODO ovelap is not saved
+# TODO overlap is not saved
 pd.DataFrame(overlap_mean).to_csv('examples/scripts/entity_samples.overlap_mean.csv')
