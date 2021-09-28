@@ -1,5 +1,8 @@
+from itertools import permutations
+
 import pandas as pd
 from tner import get_dataset_ner
+
 
 data_list = ['conll2003', 'wnut2017', 'ontonotes5', 'fin', 'bionlp2004',
              'bc5cdr', 'panx_dataset_en']
@@ -39,6 +42,42 @@ for i in data_list:
                 output[_type][i][current_label] += [' '.join(place_holder)]
         output[_type][i] = {k: sorted(v) for k, v in output[_type][i].items()}
 
+
 for k, v in output.items():
     df = pd.DataFrame(v)
     df.to_csv('examples/scripts/entity_samples.{}.csv'.format(k))
+
+overlap = {}
+overlap_mean = {}
+# types = permutations(['train', 'valid', 'test'], 2)
+types = [('test', 'train'), ('valid', 'train')]
+
+for i in data_list:
+
+    overlap[i] = {}
+    overlap_mean[i] = {}
+
+    for a_name, b_name in types:
+        if i not in output[a_name] or i not in output[b_name]:
+            continue
+        a = output[a_name][i]
+        b = output[b_name][i]
+        # _key = '({0} AND {1})/|{0}|'.format(a_name, b_name)
+        _key = a_name
+        overlap[i][_key] = {}
+
+        entity_train = []
+        entity_eval = []
+
+        for entity_type in a.keys():
+
+            entity_train += a[entity_type]
+            entity_eval += b[entity_type]
+
+            overlap[i][_key][entity_type] = \
+                len(set(a[entity_type]).intersection(set(b[entity_type])))/len(a[entity_type]) * 100
+
+        overlap_mean[i][_key] = len(set(entity_eval).intersection(set(entity_train)))/len(list(set(entity_eval))) * 100
+
+# TODO ovelap is not saved
+pd.DataFrame(overlap_mean).to_csv('examples/scripts/entity_samples.overlap_mean.csv')
