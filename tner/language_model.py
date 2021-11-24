@@ -94,7 +94,8 @@ class TransformersNER:
             constraints=allowed_transitions(constraint_type="BIO", labels=self.model.config.id2label)
         )
         if 'crf_state_dict' in self.model.config.to_dict().keys():
-            self.crf_layer.load_state_dict(self.model.config.crf_state_dict)
+            state = {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
+            self.crf_layer.load_state_dict(state)
             self.crf = True
 
         # load pre processor
@@ -121,7 +122,7 @@ class TransformersNER:
         self.model.eval()
 
     def save(self, save_dir):
-        self.model.config.update({'crf_state_dict': dict(self.crf_layer.state_dict())})
+        self.model.config.update({'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
         if self.parallel:
             self.model.module.save_pretrained(save_dir)
         else:
