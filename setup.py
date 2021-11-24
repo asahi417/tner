@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 with open('README.md', 'r') as f:
     readme = f.read()
-version = '0.0.8'
+version = '0.1.0'
 setup(
     name='tner',
     packages=find_packages(exclude=["asset", "examples", "static", "templates", "tests"]),
@@ -36,20 +36,19 @@ setup(
         'fastapi==0.65.2',
         'matplotlib==3.3.1',
         'toml',
-        'tensorboard',
         'torch',
         'transformers',
         'sentencepiece',
         'seqeval',
         'segtok',
-        'pandas'
+        'pandas',
+        'allennlp'
     ],
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
             'tner-train = tner_cl.train:main',
-            'tner-test = tner_cl.test:main',
-            'tner-predict = tner_cl.predict:main'
+            'tner-train-search = tner_cl.train:main'
         ],
     }
 )

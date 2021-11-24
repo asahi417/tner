@@ -12,21 +12,22 @@ from tqdm import tqdm
 from glob import glob
 from .japanese_tokenizer import SudachiWrapper
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 STOPWORDS = ['None', '#']
-PANX = ["ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "bh", "de", "fy", "io", "lmo", "nap",
-        "rm", "sv", "vls", "als", "bn", "diq", "ga", "is", "ln", "nds", "ro", "sw", "vo", "am", "bo", "dv", "gan", "it",
-        "lt", "ne", "ru", "szl", "wa", "an", "br", "el", "gd", "ja", "lv", "nl", "rw", "ta", "war", "ang", "bs", "eml",
-        "gl", "jbo", "map-bms", "nn", "sa", "te", "wuu", "ar", "ca", "en", "gn", "jv", "mg", "no", "sah", "tg", "xmf",
-        "arc", "cbk-zam", "eo", "gu", "ka", "mhr", "nov", "scn", "th", "yi", "arz", "cdo", "es", "hak", "kk", "mi",
-        "oc", "sco", "tk", "yo", "as", "ce", "et", "he", "km", "min", "or", "sd", "tl", "zea", "ast", "ceb", "eu", "hi",
-        "kn", "mk", "os", "sh", "tr", "zh-classical", "ay", "ckb", "ext", "hr", "ko", "ml", "pa", "si", "tt",
-        "zh-min-nan", "az", "co", "fa", "hsb", "ksh", "mn", "pdc", "simple", "ug", "zh-yue", "ba", "crh", "fi", "hu",
-        "ku", "mr", "pl", "sk", "uk", "zh", "bar", "cs", "fiu-vro", "hy", "ky", "ms", "pms", "sl", "ur", "bat-smg",
-        "csb", "fo", "ia", "la", "mt", "pnb", "so", "uz", "be-x-old", "cv", "fr", "id", "lb", "mwl", "ps", "sq", "vec",
-        "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"]
+panx_language_list = [
+    "ace", "bg", "da", "fur", "ilo", "lij", "mzn", "qu", "su", "vi", "af", "bh", "de", "fy", "io", "lmo", "nap",
+    "rm", "sv", "vls", "als", "bn", "diq", "ga", "is", "ln", "nds", "ro", "sw", "vo", "am", "bo", "dv", "gan", "it",
+    "lt", "ne", "ru", "szl", "wa", "an", "br", "el", "gd", "ja", "lv", "nl", "rw", "ta", "war", "ang", "bs", "eml",
+    "gl", "jbo", "map-bms", "nn", "sa", "te", "wuu", "ar", "ca", "en", "gn", "jv", "mg", "no", "sah", "tg", "xmf",
+    "arc", "cbk-zam", "eo", "gu", "ka", "mhr", "nov", "scn", "th", "yi", "arz", "cdo", "es", "hak", "kk", "mi",
+    "oc", "sco", "tk", "yo", "as", "ce", "et", "he", "km", "min", "or", "sd", "tl", "zea", "ast", "ceb", "eu", "hi",
+    "kn", "mk", "os", "sh", "tr", "zh-classical", "ay", "ckb", "ext", "hr", "ko", "ml", "pa", "si", "tt",
+    "zh-min-nan", "az", "co", "fa", "hsb", "ksh", "mn", "pdc", "simple", "ug", "zh-yue", "ba", "crh", "fi", "hu",
+    "ku", "mr", "pl", "sk", "uk", "zh", "bar", "cs", "fiu-vro", "hy", "ky", "ms", "pms", "sl", "ur", "bat-smg",
+    "csb", "fo", "ia", "la", "mt", "pnb", "so", "uz", "be-x-old", "cv", "fr", "id", "lb", "mwl", "ps", "sq", "vec",
+    "be", "cy", "frr", "ig", "li", "my", "pt", "sr", "vep"
+]
 VALID_DATASET = ['conll2003', 'wnut2017', 'ontonotes5', 'mit_movie_trivia', 'mit_restaurant', 'fin', 'bionlp2004',
-                 'bc5cdr'] + ['panx_dataset_{}'.format(i) for i in PANX]  # 'wiki_ja', 'wiki_news_ja'
+                 'bc5cdr'] + ['panx_dataset_{}'.format(i) for i in panx_language_list]  # 'wiki_ja', 'wiki_news_ja'
 CACHE_DIR = '{}/.cache/tner'.format(os.path.expanduser('~'))
 
 # Shared label set across different dataset
@@ -83,7 +84,7 @@ SHARED_NER_LABEL = {
     "disease": ["Disease"]
 }
 
-__all__ = ("get_dataset_ner", "VALID_DATASET", "SHARED_NER_LABEL")
+__all__ = ("get_dataset", "VALID_DATASET", "SHARED_NER_LABEL", "CACHE_DIR", "panx_language_list")
 
 
 def open_compressed_file(url, cache_dir):
@@ -105,12 +106,12 @@ def wget(url, cache_dir):
     return '{}/{}'.format(cache_dir, filename)
 
 
-def get_dataset_ner(data_names: (List, str) = None,
-                    custom_data_path: str = None,
-                    custom_data_language: str = 'en',
-                    label_to_id: dict = None,
-                    fix_label_dict: bool = False,
-                    lower_case: bool = False):
+def get_dataset(data_names: (List, str) = None,
+                custom_data_path: str = None,
+                custom_data_language: str = 'en',
+                label_to_id: dict = None,
+                fix_label_dict: bool = False,
+                lower_case: bool = False):
     """ Fetch NER dataset
 
      Parameter
@@ -150,7 +151,7 @@ def get_dataset_ner(data_names: (List, str) = None,
     param = dict(fix_label_dict=fix_label_dict, lower_case=lower_case, custom_language=custom_data_language)
     for d in data_list:
         param['label_to_id'] = label_to_id
-        data_split_all, label_to_id, language, ues = get_dataset_ner_single(d, **param)
+        data_split_all, label_to_id, language, ues = get_dataset_single(d, **param)
         data.append(data_split_all)
         languages.append(language)
         unseen_entity_set = ues if len(unseen_entity_set) == 0 else unseen_entity_set.intersection(ues)
@@ -169,13 +170,13 @@ def get_dataset_ner(data_names: (List, str) = None,
     return unified_data, label_to_id, language, unseen_entity_set
 
 
-def get_dataset_ner_single(data_name: str = 'wnut2017',
-                           label_to_id: dict = None,
-                           fix_label_dict: bool = False,
-                           lower_case: bool = False,
-                           custom_language: str = 'en',
-                           allow_new_entity: bool = True,
-                           cache_dir: str = None):
+def get_dataset_single(data_name: str = 'wnut2017',
+                       label_to_id: dict = None,
+                       fix_label_dict: bool = False,
+                       lower_case: bool = False,
+                       custom_language: str = 'en',
+                       allow_new_entity: bool = True,
+                       cache_dir: str = None):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
@@ -458,8 +459,13 @@ def decode_file(file_name: str,
     return label_to_id, unseen_entity_label, {"data": inputs, "label": labels}
 
 
-def decode_all_files(files: Dict, data_path: str, label_to_id: Dict, fix_label_dict: bool, entity_first: bool = False,
-                     to_bio: bool = False, allow_new_entity: bool = False):
+def decode_all_files(files: Dict,
+                     data_path: str,
+                     label_to_id: Dict,
+                     fix_label_dict: bool,
+                     entity_first: bool = False,
+                     to_bio: bool = False,
+                     allow_new_entity: bool = False):
     data_split = dict()
     unseen_entity = None
     for name, filepath in files.items():

@@ -16,7 +16,9 @@ class Test(unittest.TestCase):
             if 'panx' in i and i not in ['panx_dataset_en', 'panx_dataset_ja']:
                 continue
             logging.info('######## {} ########'.format(i))
-            unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner([i])
+            unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset([i])
+            print(unified_data, label_to_id)
+            input()
             tags = list(filter(lambda x: len(x) > 0, list(set([k[2:] for k in label_to_id.keys()]))))
             logging.info('- data: {}'.format(tags, len(tags)))
             logging.info('- tag: {} ({})'.format(tags, len(tags)))

@@ -12,7 +12,7 @@ from torch import nn
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
 
-__all__ = ('Transforms', 'Dataset')
+__all__ = ('TokenizerFixed', 'Dataset', 'PAD_TOKEN_LABEL_ID')
 
 
 def additional_special_tokens(tokenizer):
@@ -30,12 +30,18 @@ def additional_special_tokens(tokenizer):
     return sp_token_start, sp_token_sep, sp_token_end
 
 
-class Transforms:
+class TokenizerFixed:
     """ NER specific transform pipeline"""
 
-    def __init__(self, transformer_tokenizer: str, cache_dir: str = None):
+    def __init__(self,
+                 transformer_tokenizer: str,
+                 cache_dir: str = None):
         """ NER specific transform pipeline """
-        self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=cache_dir)
+        try:
+            self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=cache_dir)
+        except ValueError:
+            self.tokenizer = transformers.AutoTokenizer.from_pretrained(
+                transformer_tokenizer, cache_dir=cache_dir, local_files_only=True)
         self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
         self.prefix = self.__sp_token_prefix()
         # find special tokens to be added
@@ -107,14 +113,17 @@ class Transforms:
                         language: str = 'en',
                         max_length: int = None):
         max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
-        # TODO: no padding for prediction
         shared_param = {'language': language, 'pad_to_max_length': True, 'max_length': max_length}
         if labels:
             return [self.encode_plus(*i, **shared_param) for i in zip(tokens, labels)]
         else:
             return [self.encode_plus(i, **shared_param) for i in tokens]
 
-    def encode_plus(self, tokens, labels: List = None, language: str = 'en', max_length: int = None,
+    def encode_plus(self,
+                    tokens,
+                    labels: List = None,
+                    language: str = 'en',
+                    max_length: int = None,
                     pad_to_max_length: bool = False):
         if labels is None:
             return self.tokenizer.encode_plus(
