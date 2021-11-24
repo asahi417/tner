@@ -117,7 +117,7 @@ class Trainer:
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.optimizer = self.setup_optimizer()
             self.current_epoch = 0
-        input(self.model.label2id)
+
         # GPU mixture precision
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.config.fp16)
 
@@ -169,7 +169,6 @@ class Trainer:
               epoch_partial: int = None):
 
         logging.info('dataset preprocessing')
-        input(self.dataset_split['train']['label'])
         loader = self.model.get_data_loader(
             inputs=self.dataset_split['train']['data'],
             labels=self.dataset_split['train']['label'],

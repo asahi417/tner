@@ -131,11 +131,7 @@ class TransformersNER:
     def encode_to_loss(self, encode: Dict):
         assert 'labels' in encode
         encode = {k: v.to(self.device) for k, v in encode.items()}
-        print(encode['input_ids'])
-        print(encode['labels'])
-
         output = self.model(**encode)
-        print(output)
         if self.crf:
             loss = -self.crf_layer(output['logit'], output['labels'], encode['attention_mask'])
         else:
