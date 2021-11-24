@@ -137,6 +137,7 @@ class TransformersNER:
             print(output['logits'].shape)
             print(encode['labels'].shape)
             print(encode['attention_mask'].shape)
+            print(encode['labels'])
             loss = -self.crf_layer(output['logits'], encode['labels'], encode['attention_mask'])
         else:
             loss = output['loss']
