@@ -47,8 +47,8 @@ setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'tner-train = tner_cl.train:main',
-            'tner-train-search = tner_cl.train:main'
+            'tner-train = tner_cl.train:main_train',
+            'tner-train-search = tner_cl.train:main_train_search'
         ],
     }
 )
