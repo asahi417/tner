@@ -133,8 +133,9 @@ class TransformersNER:
         assert 'labels' in encode
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
+        print(output.keys())
         if self.crf:
-            loss = -self.crf_layer(output['logit'], output['labels'], encode['attention_mask'])
+            loss = -self.crf_layer(output['logits'], output['labels'], encode['attention_mask'])
         else:
             loss = output['loss']
         return loss.mean() if self.parallel else loss
