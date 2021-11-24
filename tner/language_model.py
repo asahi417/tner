@@ -168,9 +168,9 @@ class TransformersNER:
             logging.info('loading preprocessed feature from {}'.format(cache_path))
             out = pickle_load(cache_path)
         else:
-            print(labels)
-            input()
             out = self.tokenizer.encode_plus_all(tokens=inputs, labels=labels, max_length=self.max_length)
+            print(out)
+            input()
             # remove overflow text
             logging.info('encode all the data: {}'.format(len(out)))
 
