@@ -7,7 +7,6 @@ from itertools import groupby
 import transformers
 import torch
 
-from torch.utils.tensorboard import SummaryWriter
 from allennlp.modules import ConditionalRandomField
 from allennlp.modules.conditional_random_field import allowed_transitions
 

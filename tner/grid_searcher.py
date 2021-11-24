@@ -97,6 +97,7 @@ class GridSearcher:
                  batch_eval: int = 32,
                  crf: (List, bool) = True,
                  lr: (List, float) = 1e-4,
+                 weight_decay: (List, float) = 0,
                  random_seed: (List, int) = 0):
 
         # evaluation configs
@@ -129,11 +130,12 @@ class GridSearcher:
         self.dynamic_config = {
             'lr': to_list(lr),
             'crf': to_list(crf),
-            'random_seed': to_list(random_seed)
+            'random_seed': to_list(random_seed),
+            'weight_decay': to_list(weight_decay),
         }
 
         self.all_dynamic_configs = list(product(
-            self.dynamic_config['lr'], self.dynamic_config['crf'], self.dynamic_config['random_seed']
+            self.dynamic_config['lr'], self.dynamic_config['crf'], self.dynamic_config['random_seed'], self.dynamic_config['weight_decays']
         ))
         self.data_cache_dir = '{}/data_encoded/{}.{}.{}.{}'.format(
             CACHE_DIR,
@@ -206,7 +208,8 @@ class GridSearcher:
             tmp_dynamic_config = {
                 'lr': dynamic_config[0],
                 'crf': dynamic_config[1],
-                'random_seed': dynamic_config[2]
+                'random_seed': dynamic_config[2],
+                'weight_decay': dynamic_config[3],
             }
             config.update(tmp_dynamic_config)
             ex_dynamic_config = [(k_, [v[k] for k in sorted(tmp_dynamic_config.keys())]) for k_, v in ckpt_exist.items()]

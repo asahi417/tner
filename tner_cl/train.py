@@ -16,9 +16,8 @@ def arguments(parser):
     parser.add_argument('-b', '--batch', help='batch size', default=128, type=int)
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--num-workers', default=0, type=int)
-    parser.add_argument('--weight-decay', help='weight decay', default=1e-7, type=float)
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
-    parser.add_argument('--max-length', default=512, type=int, help='max sequence length for input sequence')
+    parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     return parser
 
 
@@ -27,6 +26,7 @@ def arguments_training(parser):
     parser.add_argument('--random-seed', help='random seed', default=1234, type=int)
     parser.add_argument('-l', '--lr', help='learning rate', default=1e-4, type=float)
     parser.add_argument('--crf', action='store_true')
+    parser.add_argument('--weight-decay', help='weight decay', default=None, type=float)
     # monitoring parameter
     parser.add_argument('--epoch-save', default=1, type=int)
     parser.add_argument('--interval', default=50, type=int)
@@ -38,6 +38,7 @@ def arguments_parameter_search(parser):
     parser.add_argument('--n-max-config', default=5, type=int)
     parser.add_argument('--epoch-partial', help='epoch', default=2, type=int)
     parser.add_argument('--max-length-eval', default=256, type=int)
+    parser.add_argument('--weight-decay', help='weight decay', default='0,1e-7,1e-6', type=float)
     parser.add_argument('-l', '--lr', help='learning rate', default='5e-5,1e-4,5e-4', type=str)
     parser.add_argument('--random-seed', help='random seed', default='0,1,2', type=str)
     parser.add_argument('--crf', default='0,1', type=str)
@@ -94,6 +95,7 @@ def main_train_search():
         lr=[float(i) for i in opt.lr.split(',')],
         crf=[bool(i) for i in opt.crf.split(',')],
         random_seed=[int(i) for i in opt.random_seed.split(',')],
+        weight_decay=[float(i) for i in opt.weight_decay.split(',')],
         batch_eval=opt.batch_eval,
         max_length_eval=opt.max_length_eval
     )
