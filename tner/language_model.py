@@ -58,7 +58,6 @@ def load_hf(model_name, cache_dir, label2id, local_files_only=False):
     else:
         model = transformers.AutoModelForTokenClassification.from_pretrained(
             model_name,
-            id2label={v: k for k, v in label2id.items()},
             label2id=label2id,
             config=config,
             cache_dir=cache_dir,
