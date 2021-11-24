@@ -52,7 +52,7 @@ def pickle_load(path: str):
 def load_hf(model_name, cache_dir, label2id, local_files_only=False):
     """ load huggingface checkpoints """
     logging.info('initialize language model with `{}`'.format(model_name))
-    if label2id is None:
+    if label2id is not None:
         config = transformers.AutoConfig.from_pretrained(
             model_name,
             num_labels=len(label2id),
@@ -110,6 +110,9 @@ class TransformersNER:
         self.model.to(self.device)
         self.crf_layer.to(self.device)
         logging.info('{} GPUs are in use'.format(torch.cuda.device_count()))
+
+        self.label2id = self.model.config.label2id
+        self.id2label = self.model.config.id2label
 
     def train(self):
         self.model.train()

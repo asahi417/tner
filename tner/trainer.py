@@ -66,7 +66,6 @@ class Trainer:
                  random_seed: int = 42,
                  gradient_accumulation_steps: int = 4,
                  weight_decay: float = 1e-7,
-                 data_cache_path: str = None,
                  disable_log: bool = False):
 
         logging.info('initialize model trainer')
@@ -97,10 +96,6 @@ class Trainer:
             file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
             logger.addHandler(file_handler)
 
-        # load dataset
-        self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
-            self.config.dataset, lower_case=lower_case)
-
         # load model
         ckpts = glob('{}/epoch_*'.format(self.config.checkpoint_dir))
         if len(ckpts):
@@ -111,18 +106,30 @@ class Trainer:
             self.optimizer = self.setup_optimizer(epoch)
             self.current_epoch = epoch
             assert self.current_epoch <= self.config.epoch, 'model training is done'
+            self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
+                self.config.dataset, lower_case=lower_case, fix_label_dict=self.model.label2id)
         else:
+            # load dataset
+            self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
+                self.config.dataset, lower_case=lower_case)
             logging.info('initialize checkpoint with {}'.format(self.config.model))
-            self.model = TransformersNER(model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
+            self.model = TransformersNER(
+                model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.optimizer = self.setup_optimizer()
             self.current_epoch = 0
-
+        input(self.model.label2id)
         # GPU mixture precision
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.config.fp16)
 
         # cached data folder
         os.makedirs(CACHE_DIR, exist_ok=True)
-        self.data_cache_path = data_cache_path
+        self.data_cache_path = '{}/data_encoded/{}.{}.{}.{}.train.pkl'.format(
+            CACHE_DIR,
+            '_'.format(sorted(self.config.dataset)),
+            self.config.model,
+            self.config.max_length,
+            'lower.' if self.config.lower_case else '.'
+        )
 
     def setup_optimizer(self, epoch: int = None):
         # optimizer
@@ -162,6 +169,7 @@ class Trainer:
               epoch_partial: int = None):
 
         logging.info('dataset preprocessing')
+        input(self.dataset_split['train']['label'])
         loader = self.model.get_data_loader(
             inputs=self.dataset_split['train']['data'],
             labels=self.dataset_split['train']['label'],
