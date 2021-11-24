@@ -98,7 +98,7 @@ class Trainer:
 
         # load model
         ckpts = glob('{}/epoch_*'.format(self.config.checkpoint_dir))
-        if len(ckpts):
+        if len(ckpts) > 0:
             epoch = sorted([int(i.split('epoch_')[-1]) for i in ckpts], reverse=True)[0]
             path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
             logging.info('load checkpoint from {}'.format(path))
@@ -112,14 +112,9 @@ class Trainer:
             # load dataset
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
                 self.config.dataset, lower_case=lower_case)
-            print(self.dataset_split['train']['label'])
-            print(label_to_id)
-
             logging.info('initialize checkpoint with {}'.format(self.config.model))
             self.model = TransformersNER(
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
-            print(self.model.label2id)
-            input()
             self.optimizer = self.setup_optimizer()
             self.current_epoch = 0
 
