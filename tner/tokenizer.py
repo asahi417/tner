@@ -58,7 +58,6 @@ class TokenizerFixed:
         encode = self.tokenizer.encode_plus(
             ' '.join(tokens), max_length=max_seq_length, padding='max_length', truncation=True)
         if labels:
-            print(labels)
             assert len(tokens) == len(labels)
             fixed_labels = list(chain(*[
                 [label] + [self.pad_ids['labels']] * (len(self.tokenizer.tokenize(word)) - 1)
@@ -66,8 +65,6 @@ class TokenizerFixed:
             fixed_labels = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + fixed_labels
             fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
             fixed_labels = fixed_labels + [self.pad_ids['labels']] * (max_seq_length - len(fixed_labels))
-            print(fixed_labels)
-            input()
             encode['labels'] = fixed_labels
         return encode
 
