@@ -52,16 +52,21 @@ def pickle_load(path: str):
 def load_hf(model_name, cache_dir, label2id, local_files_only=False):
     """ load huggingface checkpoints """
     logging.info('initialize language model with `{}`'.format(model_name))
-    config = transformers.AutoConfig.from_pretrained(model_name, cache_dir=cache_dir, local_files_only=local_files_only)
     if label2id is None:
-        model = transformers.AutoModelForTokenClassification.from_pretrained(model_name, config=config, cache_dir=cache_dir, local_files_only=local_files_only)
-    else:
-        model = transformers.AutoModelForTokenClassification.from_pretrained(
+        config = transformers.AutoConfig.from_pretrained(
             model_name,
+            num_labels=len(label2id),
+            id2label={v: k for k, v in label2id.items()},
             label2id=label2id,
-            config=config,
             cache_dir=cache_dir,
             local_files_only=local_files_only)
+    else:
+        config = transformers.AutoConfig.from_pretrained(
+            model_name,
+            cache_dir=cache_dir,
+            local_files_only=local_files_only)
+    model = transformers.AutoModelForTokenClassification.from_pretrained(model_name, config=config, cache_dir=cache_dir,
+                                                                         local_files_only=local_files_only)
     return model
 
 
