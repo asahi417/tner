@@ -113,7 +113,6 @@ class Trainer:
             assert self.current_epoch <= self.config.epoch, 'model training is done'
         else:
             logging.info('initialize checkpoint with {}'.format(self.config.model))
-            print(label_to_id)
             self.model = TransformersNER(model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.optimizer = self.setup_optimizer()
             self.current_epoch = 0
@@ -195,7 +194,6 @@ class Trainer:
         for n, encode in enumerate(data_loader):
 
             loss = self.model.encode_to_loss(encode)
-            print(loss)
             self.scaler.scale(loss).backward()
             total_loss.append(loss.cpu().item())
             if (n + 1) % self.config.gradient_accumulation_steps != 0:

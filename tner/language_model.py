@@ -65,8 +65,8 @@ def load_hf(model_name, cache_dir, label2id, local_files_only=False):
             model_name,
             cache_dir=cache_dir,
             local_files_only=local_files_only)
-    model = transformers.AutoModelForTokenClassification.from_pretrained(model_name, config=config, cache_dir=cache_dir,
-                                                                         local_files_only=local_files_only)
+    model = transformers.AutoModelForTokenClassification.from_pretrained(
+        model_name, config=config, cache_dir=cache_dir, local_files_only=local_files_only)
     return model
 
 
@@ -128,7 +128,9 @@ class TransformersNER:
     def encode_to_loss(self, encode: Dict):
         assert 'labels' in encode
         encode = {k: v.to(self.device) for k, v in encode.items()}
+        print(encode)
         output = self.model(**encode)
+        print(output)
         if self.crf:
             loss = -self.crf_layer(output['logit'], output['labels'], encode['attention_mask'])
         else:
