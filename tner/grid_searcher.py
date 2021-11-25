@@ -121,7 +121,7 @@ class GridSearcher:
         }
 
         self.all_dynamic_configs = list(product(
-            self.dynamic_config['lr'], self.dynamic_config['crf'], self.dynamic_config['random_seed'], self.dynamic_config['weight_decays']
+            self.dynamic_config['lr'], self.dynamic_config['crf'], self.dynamic_config['random_seed'], self.dynamic_config['weight_decay']
         ))
 
     def initialize_searcher(self):
