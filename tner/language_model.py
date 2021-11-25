@@ -138,10 +138,10 @@ class TransformersNER:
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
         if self.crf:
-            print(output['logits'].shape)
-            print(encode['labels'].shape)
-            print(encode['attention_mask'].shape)
-            print(encode['labels'])
+            # print(output['logits'].shape)
+            # print(encode['labels'].shape)
+            # print(encode['attention_mask'].shape)
+            # print(encode['labels'])
             loss = -self.crf_layer(output['logits'], encode['labels'], encode['attention_mask'])
         else:
             loss = output['loss']
