@@ -172,9 +172,10 @@ class GridSearcher:
     def run(self, num_workers: int = 0, interval: int = 25):
 
         self.initialize_searcher()
+        _data = '_'.join(sorted(self.static_config['dataset'])) if type(self.static_config['dataset']) is list else self.static_config['dataset']
         data_cache_prefix = '{}/data_encoded/{}.{}.{}{}'.format(
             CACHE_DIR,
-            '_'.join(sorted(self.static_config['dataset'])),
+            _data,
             self.static_config['model'],
             self.static_config['max_length'],
             '.lower' if self.static_config['lower_case'] else '',
