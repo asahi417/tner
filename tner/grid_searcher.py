@@ -40,7 +40,7 @@ def evaluate(model,
     os.makedirs(export_dir, exist_ok=True)
 
     if model is not None:
-        lm = TransformersNER(model)
+        lm = TransformersNER(model, max_length=max_length)
         lm.eval()
         dataset_split, label_to_id, language, unseen_entity_set = get_dataset(data, lower_case=lower_case)
 
@@ -50,11 +50,10 @@ def evaluate(model,
                 label = dataset_split[split]['label']
                 pred = lm.predict(
                     dataset_split[split]['data'],
-                    max_length=max_length,
                     batch_size=batch_size
                 )
 
-        hypothesis_file_dev = get_model_prediction_file('dev')
+        hypothesis_file_dev = get_model_prediction_file('valid')
         hypothesis_file_test = get_model_prediction_file('test')
     else:
         assert hypothesis_file_dev is not None or hypothesis_file_test is not None, 'model or file path is needed'

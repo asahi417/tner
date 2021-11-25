@@ -12,7 +12,7 @@ from torch import nn
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
 
-__all__ = ('TokenizerFixed', 'Dataset')
+__all__ = ('TokenizerFixed', 'Dataset', 'PAD_TOKEN_LABEL_ID')
 
 
 def additional_special_tokens(tokenizer):
@@ -58,19 +58,13 @@ class TokenizerFixed:
         sentence_go_around = ''.join(self.tokenizer.tokenize('get tokenizer specific prefix'))
         return sentence_go_around[:list(re.finditer('get', sentence_go_around))[0].span()[0]]
 
-    def fixed_encode_en(self, tokens, labels: List = None, max_seq_length: int = 128):
+    def fixed_encode_en(self, tokens, labels: List = None, max_seq_length: int = 128,
+                        mask_by_padding_token: bool = False):
         """ fixed encoding for language with halfspace in between words """
         encode = self.tokenizer.encode_plus(
             ' '.join(tokens), max_length=max_seq_length, padding='max_length', truncation=True)
         if labels:
             assert len(tokens) == len(labels)
-            # fixed_labels = list(chain(*[
-            #     [label] + [self.pad_ids['labels']] * (len(self.tokenizer.tokenize(word)) - 1)
-            #     for label, word in zip(labels, tokens)]))
-            # fixed_labels = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + fixed_labels
-            # fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
-            # fixed_labels = fixed_labels + [self.pad_ids['labels']] * (max_seq_length - len(fixed_labels))
-            # encode['labels'] = fixed_labels
             fixed_labels = []
             for label, word in zip(labels, tokens):
                 fixed_labels.append(label)
@@ -80,11 +74,19 @@ class TokenizerFixed:
                         fixed_labels += [self.label2id['O']] * (sub_length - 1)
                     else:
                         entity = '-'.join(self.id2label[label].split('-')[1:])
-                        fixed_labels += [self.label2id['I-{}'.format(entity)]] * (sub_length - 1)
+                        if mask_by_padding_token:
+                            fixed_labels += [PAD_TOKEN_LABEL_ID] * (sub_length - 1)
+                        else:
+                            fixed_labels += [self.label2id['I-{}'.format(entity)]] * (sub_length - 1)
 
-            fixed_labels = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + fixed_labels
-            fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
-            fixed_labels = fixed_labels + [self.pad_ids['labels']] * (max_seq_length - len(fixed_labels))
+            if mask_by_padding_token:
+                fixed_labels = [PAD_TOKEN_LABEL_ID] * len(self.sp_token_start['labels']) + fixed_labels
+                fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
+                fixed_labels = fixed_labels + [PAD_TOKEN_LABEL_ID] * (max_seq_length - len(fixed_labels))
+            else:
+                fixed_labels = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + fixed_labels
+                fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
+                fixed_labels = fixed_labels + [self.pad_ids['labels']] * (max_seq_length - len(fixed_labels))
             encode['labels'] = fixed_labels
         return encode
 
@@ -131,9 +133,11 @@ class TokenizerFixed:
                         tokens: List,
                         labels: List = None,
                         language: str = 'en',
-                        max_length: int = None):
+                        max_length: int = None,
+                        mask_by_padding_token: bool = False):
         max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
-        shared_param = {'language': language, 'pad_to_max_length': True, 'max_length': max_length}
+        shared_param = {'language': language, 'pad_to_max_length': True, 'max_length': max_length,
+                        'mask_by_padding_token': mask_by_padding_token}
         if labels:
             return [self.encode_plus(*i, **shared_param) for i in zip(tokens, labels)]
         else:
@@ -144,16 +148,12 @@ class TokenizerFixed:
                     labels: List = None,
                     language: str = 'en',
                     max_length: int = None,
-                    pad_to_max_length: bool = False):
-        if labels is None:
-            return self.tokenizer.encode_plus(
-                tokens, max_length=max_length,
-                padding='max_length' if pad_to_max_length else None,
-                truncation=True)
+                    mask_by_padding_token: bool = False):
         if language == 'ja':
-            return self.fixed_encode_ja(tokens, labels, max_length)
+            raise ValueError('Need to refactor')
+            # return self.fixed_encode_ja(tokens, labels, max_length)
         else:
-            return self.fixed_encode_en(tokens, labels, max_length)
+            return self.fixed_encode_en(tokens, labels, max_length, mask_by_padding_token)
 
     @property
     def all_special_ids(self):

@@ -138,10 +138,6 @@ class TransformersNER:
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
         if self.crf:
-            # print(output['logits'].shape)
-            # print(encode['labels'].shape)
-            # print(encode['attention_mask'].shape)
-            # print(encode['labels'])
             loss = -self.crf_layer(output['logits'], encode['labels'], encode['attention_mask'])
         else:
             loss = output['loss']
@@ -166,13 +162,15 @@ class TransformersNER:
                         num_workers: int = 0,
                         shuffle: bool = False,
                         drop_last: bool = False,
+                        mask_by_padding_token: bool = False,
                         cache_path: str = None):
         """ Transform features (produced by BERTClassifier.preprocess method) to data loader. """
         if cache_path is not None and os.path.exists(cache_path):
             logging.info('loading preprocessed feature from {}'.format(cache_path))
             out = pickle_load(cache_path)
         else:
-            out = self.tokenizer.encode_plus_all(tokens=inputs, labels=labels, max_length=self.max_length)
+            out = self.tokenizer.encode_plus_all(
+                tokens=inputs, labels=labels, max_length=self.max_length, mask_by_padding_token=mask_by_padding_token)
             # remove overflow text
             logging.info('encode all the data: {}'.format(len(out)))
 
@@ -186,18 +184,35 @@ class TransformersNER:
         return torch.utils.data.DataLoader(
             Dataset(out), batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, drop_last=drop_last)
 
+    def span_f1(self,
+                inputs: List,
+                labels: List,
+                batch_size: int = None,
+                num_workers: int = 0):
+        self.predict(inputs, batch_size, num_workers, mask_by_padding_token=True)
+        # loader = self.get_data_loader(
+        #     inputs, batch_size=batch_size, num_workers=num_workers, mask_by_padding_token=True)
+        # pred_list = []
+        # for i in loader:
+        #     pred = self.encode_to_prediction(i)
+        #     pred = [self.model.config.id2label[_p] for _p in pred]
+        #     pred_list.append(pred)
+        # return pred_list
+
     def predict(self,
                 inputs: List,
                 batch_size: int = None,
                 num_workers: int = 0,
+                mask_by_padding_token: bool = True,
                 decode_bio: bool = False):
         self.eval()
-        loader = self.get_data_loader(inputs, batch_size=batch_size, num_workers=num_workers)
+        loader = self.get_data_loader(
+            inputs, batch_size=batch_size, num_workers=num_workers, mask_by_padding_token=mask_by_padding_token)
         pred_list = []
         for i in loader:
             pred = self.encode_to_prediction(i)
+            pred = [self.model.config.id2label[_p] for _p in pred]
             if decode_bio:
-                pred = [self.model.config.id2label[_p] for _p in pred]
                 pred = decode_ner_tags(pred)
             pred_list.append(pred)
         return pred_list
