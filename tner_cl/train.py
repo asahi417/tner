@@ -93,7 +93,7 @@ def main_train_search():
         max_length=opt.max_length,
         n_max_config=opt.n_max_config,
         lr=[float(i) for i in opt.lr.split(',')],
-        crf=[bool(i) for i in opt.crf.split(',')],
+        crf=[bool(int(i)) for i in opt.crf.split(',')],
         random_seed=[int(i) for i in opt.random_seed.split(',')],
         weight_decay=[float(i) for i in opt.weight_decay.split(',')],
         batch_eval=opt.batch_eval,
