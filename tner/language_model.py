@@ -55,7 +55,7 @@ class TransformersNER:
     def __init__(self,
                  model: str,
                  max_length: int = 512,
-                 crf: bool = True,
+                 crf: bool = False,
                  label2id: Dict = None,
                  cache_dir: str = None):
         self.model_name = model
