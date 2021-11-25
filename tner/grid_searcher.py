@@ -244,7 +244,7 @@ class GridSearcher:
         with open(path_to_metric_1st, 'w') as f:
             json.dump(metrics, f)
 
-        logging.info('1st RUN RESULTS ({}/{})'.format(self.split, self.metric))
+        logging.info('1st RUN RESULTS')
         for n, (k, v) in enumerate(metrics):
             logging.info('\t * rank: {} | metric: {} | model: {} |'.format(n, round(v, 3), k))
 
@@ -259,8 +259,7 @@ class GridSearcher:
         metrics = metrics[:min(len(metrics), self.n_max_config)]
         checkpoints = []
         for n, (checkpoint_dir_model, _metric) in enumerate(metrics):
-            logging.info('## 2nd RUN: Configuration {}/{}: {}/{} = {}'.format(
-                n, len(metrics), self.split, self.metric, _metric))
+            logging.info('## 2nd RUN: Configuration {}/{}: {}'.format(n, len(metrics), _metric))
             model_ckpt = os.path.dirname(checkpoint_dir_model)
             if not os.path.exists('{}/epoch_{}'.format(model_ckpt, self.epoch)):
                 trainer = Trainer(checkpoint_dir=model_ckpt, disable_log=True)
