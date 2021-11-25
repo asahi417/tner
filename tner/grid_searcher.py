@@ -40,6 +40,7 @@ def evaluate(model,
 
     os.makedirs(export_dir, exist_ok=True)
     lm = TransformersNER(model, max_length=max_length)
+    print(lm.crf_layer)
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data, lower_case=lower_case, label_to_id=lm.label2id, fix_label_dict=True)
     metrics_dict = {}
