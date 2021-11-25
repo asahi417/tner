@@ -74,7 +74,7 @@ class TokenizerFixed:
                 fixed_labels.append(label)
                 sub_length = len(self.tokenizer.tokenize(word))
                 if sub_length > 1:
-                    if self.label2id[label] == 'O':
+                    if self.id2label[label] == 'O':
                         fixed_labels += [self.label2id['O']] * (sub_length - 1)
                     else:
                         entity = '-'.join(self.id2label[label].split('-')[1:])
