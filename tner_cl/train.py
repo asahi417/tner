@@ -38,7 +38,7 @@ def arguments_parameter_search(parser):
     parser.add_argument('--n-max-config', default=5, type=int)
     parser.add_argument('--epoch-partial', help='epoch', default=5, type=int)
     parser.add_argument('--max-length-eval', default=256, type=int)
-    parser.add_argument('--weight-decay', help='weight decay', default='0,1e-7', type=float)
+    parser.add_argument('--weight-decay', help='weight decay', default='0,1e-7', type=str)
     parser.add_argument('-l', '--lr', help='learning rate', default='5e-5,1e-4,5e-4', type=str)
     parser.add_argument('--random-seed', help='random seed', default='0,1,2', type=str)
     parser.add_argument('--crf', default='0,1', type=str)
