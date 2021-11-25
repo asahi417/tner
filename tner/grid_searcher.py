@@ -171,7 +171,7 @@ class GridSearcher:
         self.initialize_searcher()
         data_cache_prefix = '{}/data_encoded/{}.{}.{}.{}'.format(
             CACHE_DIR,
-            '_'.format(sorted(self.config.dataset)),
+            '_'.format(sorted(self.static_config.dataset)),
             self.static_config['model'],
             self.static_config['max_length'],
             'lower.' if self.static_config['lower_case'] else '.'
