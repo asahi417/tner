@@ -43,6 +43,8 @@ def evaluate(model,
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data, lower_case=lower_case, label_to_id=lm.label2id, fix_label_dict=True)
     metrics_dict = {}
+    if lm.crf:
+        data_cache_prefix = '{}.crf'.format(data_cache_prefix)
     for split in dataset_split.keys():
         if split == 'train':
             continue
@@ -170,12 +172,12 @@ class GridSearcher:
     def run(self, num_workers: int = 0, interval: int = 25):
 
         self.initialize_searcher()
-        data_cache_prefix = '{}/data_encoded/{}.{}.{}.{}'.format(
+        data_cache_prefix = '{}/data_encoded/{}.{}.{}{}'.format(
             CACHE_DIR,
-            '_'.format(sorted(self.static_config['dataset'])),
+            '_'.join(sorted(self.static_config['dataset'])),
             self.static_config['model'],
             self.static_config['max_length'],
-            'lower.' if self.static_config['lower_case'] else '.'
+            '.lower' if self.static_config['lower_case'] else '',
         )
 
         ###########

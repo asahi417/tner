@@ -106,8 +106,7 @@ def wget(url, cache_dir):
     return '{}/{}'.format(cache_dir, filename)
 
 
-def get_dataset(data_names: (List, str) = None,
-                custom_data_path: str = None,
+def get_dataset(data: (List, str),
                 custom_data_language: str = 'en',
                 label_to_id: dict = None,
                 fix_label_dict: bool = False,
@@ -139,11 +138,11 @@ def get_dataset(data_names: (List, str) = None,
     language: str
         Most frequent language in the dataset
     """
-    assert data_names or custom_data_path, 'either `data_names` or `custom_data_path` should be not None'
-    data_names = data_names if data_names else []
-    data_names = [data_names] if type(data_names) is str else data_names
-    custom_data_path = [custom_data_path] if custom_data_path else []
-    data_list = data_names + custom_data_path
+    data = data if data else []
+    data_list = [data] if type(data) is str else data
+    # custom_data_path = [custom_data_path] if custom_data_path else []
+    # data_list = data_names + custom_data_path
+    # data_list = data_names
     logging.info('target dataset: {}'.format(data_list))
     data = []
     languages = []
