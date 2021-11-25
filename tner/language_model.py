@@ -193,12 +193,12 @@ class TransformersNER:
         # compute metrics
         logging.info(classification_report(label_list, pred_list))
         metric = {
-            "micro/f1": f1_score(label_list, pred_list, average='micro') * 100,
-            "micro/recall": recall_score(label_list, pred_list, average='micro') * 100,
-            "micro/precision": precision_score(label_list, pred_list, average='micro') * 100,
-            "macro/f1": f1_score(label_list, pred_list, average='macro') * 100,
-            "macro/recall": recall_score(label_list, pred_list, average='macro') * 100,
-            "macro/precision": precision_score(label_list, pred_list, average='macro') * 100,
+            "micro/f1": f1_score(label_list, pred_list, average='micro'),
+            "micro/recall": recall_score(label_list, pred_list, average='micro'),
+            "micro/precision": precision_score(label_list, pred_list, average='micro'),
+            "macro/f1": f1_score(label_list, pred_list, average='macro'),
+            "macro/recall": recall_score(label_list, pred_list, average='macro'),
+            "macro/precision": precision_score(label_list, pred_list, average='macro'),
         }
         return metric
 
