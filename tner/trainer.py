@@ -123,12 +123,13 @@ class Trainer:
 
         # cached data folder
         os.makedirs(CACHE_DIR, exist_ok=True)
-        self.data_cache_path = '{}/data_encoded/{}.{}.{}{}.train.pkl'.format(
+        self.data_cache_path = '{}/data_encoded/{}.{}.{}{}{}.train.pkl'.format(
             CACHE_DIR,
             '_'.join(sorted(self.config.dataset)),
             self.config.model,
             self.config.max_length,
-            'lower' if self.config.lower_case else ''
+            '.lower' if self.config.lower_case else '',
+            '.crf' if self.config.crf else ''
         )
 
     def setup_optimizer(self, epoch: int = None):

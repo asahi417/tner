@@ -12,7 +12,7 @@ from torch import nn
 PAD_TOKEN_LABEL_ID = nn.CrossEntropyLoss().ignore_index
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning
 
-__all__ = ('TokenizerFixed', 'Dataset', 'PAD_TOKEN_LABEL_ID')
+__all__ = ('TokenizerFixed', 'Dataset')
 
 
 def additional_special_tokens(tokenizer):
@@ -36,7 +36,8 @@ class TokenizerFixed:
     def __init__(self,
                  transformer_tokenizer: str,
                  cache_dir: str = None,
-                 id2label: Dict = None):
+                 id2label: Dict = None,
+                 padding_id: int = None):
         """ NER specific transform pipeline """
         try:
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=cache_dir)
@@ -44,8 +45,9 @@ class TokenizerFixed:
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                 transformer_tokenizer, cache_dir=cache_dir, local_files_only=True)
         self.id2label = id2label
+        self.padding_id = padding_id if padding_id is not None else PAD_TOKEN_LABEL_ID
         self.label2id = {v: k for k, v in id2label.items()}
-        self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
+        self.pad_ids = {"labels": self.padding_id, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
         self.prefix = self.__sp_token_prefix()
         # find special tokens to be added
         self.sp_token_start, _, self.sp_token_end = additional_special_tokens(self.tokenizer)

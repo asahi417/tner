@@ -10,7 +10,7 @@ import torch
 from allennlp.modules import ConditionalRandomField
 from allennlp.modules.conditional_random_field import allowed_transitions
 
-from .tokenizer import TokenizerFixed, Dataset, PAD_TOKEN_LABEL_ID
+from .tokenizer import TokenizerFixed, Dataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning message
 
@@ -89,11 +89,9 @@ class TransformersNER:
             self.model = load_hf(self.model_name, cache_dir, label2id, local_files_only=True)
 
         # load crf layer
-        labels = self.model.config.id2label.copy()
-        labels[PAD_TOKEN_LABEL_ID] = 'P'
         self.crf_layer = ConditionalRandomField(
             num_tags=len(self.model.config.id2label) + 1,
-            constraints=allowed_transitions(constraint_type="BIO", labels=labels)
+            constraints=allowed_transitions(constraint_type="BIO", labels=self.model.config.id2label)
         )
         if 'crf_state_dict' in self.model.config.to_dict().keys():
             state = {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
@@ -114,7 +112,12 @@ class TransformersNER:
         self.label2id = self.model.config.label2id
         self.id2label = self.model.config.id2label
         # load pre processor
-        self.tokenizer = TokenizerFixed(self.model_name, cache_dir=cache_dir, id2label=self.id2label)
+        if self.crf:
+            self.tokenizer = TokenizerFixed(
+                self.model_name, cache_dir=cache_dir, id2label=self.id2label, padding_id=self.label2id['O']
+            )
+        else:
+            self.tokenizer = TokenizerFixed(self.model_name, cache_dir=cache_dir, id2label=self.id2label)
 
     def train(self):
         self.model.train()
