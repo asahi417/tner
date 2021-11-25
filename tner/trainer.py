@@ -106,6 +106,7 @@ class Trainer:
             self.optimizer = self.setup_optimizer(epoch)
             self.current_epoch = epoch
             assert self.current_epoch <= self.config.epoch, 'model training is done'
+            input(self.model.label2id)
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
                 self.config.dataset, lower_case=lower_case, fix_label_dict=self.model.label2id)
         else:
