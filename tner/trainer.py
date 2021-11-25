@@ -200,9 +200,10 @@ class Trainer:
         total_loss = []
         self.optimizer.zero_grad()
         for n, encode in enumerate(data_loader):
-
-            # print(self.model.encode_to_prediction(encode))
-            print(encode['labels'])
+            print([self.model.tokenizer.tokenizer.convert_ids_to_tokens(i) for i in encode['input_ids'].cpu().tolist()[1]])
+            print(encode['labels'].cpu().tolist()[1])
+            input()
+            # print(encode['labels'])
             loss = self.model.encode_to_loss(encode)
             self.scaler.scale(loss).backward()
             total_loss.append(loss.cpu().item())
