@@ -202,6 +202,7 @@ class Trainer:
         for n, encode in enumerate(data_loader):
 
             # print(self.model.encode_to_prediction(encode))
+            print(encode['labels'])
             loss = self.model.encode_to_loss(encode)
             self.scaler.scale(loss).backward()
             total_loss.append(loss.cpu().item())
