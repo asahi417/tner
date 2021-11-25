@@ -1,7 +1,7 @@
 """ NER specific tokenization pipeline """
 import os
 import re
-from itertools import chain, groupby
+from itertools import groupby
 from typing import List, Dict
 
 import transformers
