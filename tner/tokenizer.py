@@ -58,7 +58,10 @@ class TokenizerFixed:
         sentence_go_around = ''.join(self.tokenizer.tokenize('get tokenizer specific prefix'))
         return sentence_go_around[:list(re.finditer('get', sentence_go_around))[0].span()[0]]
 
-    def fixed_encode_en(self, tokens, labels: List = None, max_seq_length: int = 128,
+    def fixed_encode_en(self,
+                        tokens,
+                        labels: List = None,
+                        max_seq_length: int = 128,
                         mask_by_padding_token: bool = False):
         """ fixed encoding for language with halfspace in between words """
         encode = self.tokenizer.encode_plus(
@@ -136,8 +139,7 @@ class TokenizerFixed:
                         max_length: int = None,
                         mask_by_padding_token: bool = False):
         max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
-        shared_param = {'language': language, 'pad_to_max_length': True, 'max_length': max_length,
-                        'mask_by_padding_token': mask_by_padding_token}
+        shared_param = {'language': language, 'max_length': max_length, 'mask_by_padding_token': mask_by_padding_token}
         if labels:
             return [self.encode_plus(*i, **shared_param) for i in zip(tokens, labels)]
         else:

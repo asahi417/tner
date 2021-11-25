@@ -25,8 +25,8 @@ def evaluate(model,
              batch_size,
              max_length,
              data,
-             lower_case: bool = False,
-             data_cache_prefix: str = None):
+             data_cache_prefix,
+             lower_case: bool = False):
     """ Evaluate question-generation model """
     if lower_case:
         path_metric = '{}/metric.lower.json'.format(export_dir)
@@ -37,41 +37,21 @@ def evaluate(model,
         with open(path_metric, 'r') as f:
             metric = json.load(f)
         return metric
+
     os.makedirs(export_dir, exist_ok=True)
-
-    if model is not None:
-        lm = TransformersNER(model, max_length=max_length)
-        lm.eval()
-        dataset_split, label_to_id, language, unseen_entity_set = get_dataset(data, lower_case=lower_case)
-
-        def get_model_prediction_file(split):
-            path_prediction = '{}/pred.{}.txt'.format(export_dir, split)
-            if not os.path.exists(path_prediction):
-                label = dataset_split[split]['label']
-                pred = lm.predict(
-                    dataset_split[split]['data'],
-                    batch_size=batch_size
-                )
-
-        hypothesis_file_dev = get_model_prediction_file('valid')
-        hypothesis_file_test = get_model_prediction_file('test')
-    else:
-        assert hypothesis_file_dev is not None or hypothesis_file_test is not None, 'model or file path is needed'
-
-    def get_metric(split, hypothesis_file):
-        assert prediction_level in ['sentence', 'context'], prediction_level
-        _metric, metric_individual = compute_metrics(
-            out_file=hypothesis_file,
-            tgt_file=reference_files['{}/question-processed'.format(split)],
-            src_file=reference_files['{}/{}-processed'.format(split, prediction_level)],
-            prediction_aggregation=prediction_aggregation,
-            normalize=True,
-            bleu_only=bleu_only)
-        return _metric, metric_individual
-
-    metric_dev, metric_individual_dev = get_metric('dev', hypothesis_file_dev)
-    metric_test, metric_individual_test = get_metric('test', hypothesis_file_test)
-    metrics_dict = {'dev': metric_dev, 'test': metric_test}
+    lm = TransformersNER(model, max_length=max_length)
+    lm.eval()
+    dataset_split, label_to_id, language, unseen_entity_set = get_dataset(data, lower_case=lower_case)
+    metrics_dict = {}
+    for split in dataset_split.keys():
+        if split == 'train':
+            continue
+        metrics_dict[split] = lm.span_f1(
+            inputs=dataset_split[split]['data'],
+            labels=dataset_split[split]['label'],
+            batch_size=batch_size,
+            cache_path='{}.{}.pkl'.format(data_cache_prefix, split)
+        )
     with open(path_metric, 'w') as f:
         json.dump(metrics_dict, f)
     return metrics_dict
@@ -97,11 +77,18 @@ class GridSearcher:
                  crf: (List, bool) = True,
                  lr: (List, float) = 1e-4,
                  weight_decay: (List, float) = 0,
-                 random_seed: (List, int) = 0):
+                 random_seed: (List, int) = 0,
+                 metric: str = 'macro/f1'):
 
         # evaluation configs
-        self.eval_config = {'max_length_eval': max_length_eval}
+        assert metric in ['macro/f1', 'micro/f1']
+        self.eval_config = {
+            'max_length_eval': max_length_eval,
+            'metric': metric
+        }
 
+        dataset_split, _, _, _ = get_dataset(dataset, lower_case=lower_case)
+        assert 'valid' in dataset_split.keys(), 'Grid search need validation set.'
         # static configs
         self.static_config = {
             'dataset': dataset,
@@ -136,13 +123,6 @@ class GridSearcher:
         self.all_dynamic_configs = list(product(
             self.dynamic_config['lr'], self.dynamic_config['crf'], self.dynamic_config['random_seed'], self.dynamic_config['weight_decays']
         ))
-        self.data_cache_dir = '{}/data_encoded/{}.{}.{}.{}'.format(
-            CACHE_DIR,
-            '_'.format(sorted(self.config.dataset)),
-            self.static_config['model'],
-            self.static_config['max_length'],
-            'lower.' if self.static_config['lower_case'] else '.'
-        )
 
     def initialize_searcher(self):
         os.makedirs(self.checkpoint_dir, exist_ok=True)
@@ -186,16 +166,21 @@ class GridSearcher:
 
         logging.info('INITIALIZE GRID SEARCHER: {} configs to try'.format(len(self.all_dynamic_configs)))
 
-    def run(self):
+    def run(self, num_workers: int = 0, interval: int = 25):
 
         self.initialize_searcher()
+        data_cache_prefix = '{}/data_encoded/{}.{}.{}.{}'.format(
+            CACHE_DIR,
+            '_'.format(sorted(self.config.dataset)),
+            self.static_config['model'],
+            self.static_config['max_length'],
+            'lower.' if self.static_config['lower_case'] else '.'
+        )
 
         ###########
         # 1st RUN #
         ###########
-
         checkpoints = []
-
         ckpt_exist = {}
         for trainer_config in glob.glob('{}/model_*/trainer_config.json'.format(self.checkpoint_dir)):
             with open(trainer_config, 'r') as f:
@@ -227,16 +212,12 @@ class GridSearcher:
                 raise ValueError('duplicated checkpoints are found: \n {}'.format(duplicated_ckpt))
 
             if not os.path.exists('{}/epoch_{}'.format(checkpoint_dir, self.epoch_partial)):
-                trainer = Trainer(checkpoint_dir=checkpoint_dir,
-                                  disable_log=True,
-                                  data_cache_path='{}.pkl'.format(self.data_cache_dir),
-                                  **config)
-                trainer.train(epoch_partial=self.epoch_partial, epoch_save=1)
-
+                trainer = Trainer(checkpoint_dir=checkpoint_dir, disable_log=True, **config)
+                trainer.train(
+                    epoch_partial=self.epoch_partial, epoch_save=1, num_workers=num_workers, interval=interval)
             checkpoints.append(checkpoint_dir)
 
         path_to_metric_1st = '{}/metric.1st.json'.format(self.checkpoint_dir)
-
         metrics = {}
         for n, checkpoint_dir in enumerate(checkpoints):
             logging.info('## 1st RUN (EVAL): Configuration {}/{} ##'.format(n, len(checkpoints)))
@@ -246,16 +227,14 @@ class GridSearcher:
                     model=checkpoint_dir_model,
                     export_dir='{}/eval'.format(checkpoint_dir_model),
                     batch_size=self.batch_eval,
-                    n_beams=self.eval_config['n_beams_eval'],
                     max_length=self.eval_config['max_length_eval'],
-                    max_length_output=self.eval_config['max_length_output_eval'],
                     data=self.static_config['dataset'],
-                    bleu_only=True
+                    data_cache_prefix=data_cache_prefix
                 )
             except Exception:
                 logging.exception('ERROR IN EVALUATION')
                 continue
-            metrics[checkpoint_dir_model] = metric[self.split][self.metric]
+            metrics[checkpoint_dir_model] = metric['valid'][self.eval_config['metric']]
 
         metrics = sorted(metrics.items(), key=lambda x: x[1], reverse=True)
         with open(path_to_metric_1st, 'w') as f:
@@ -280,10 +259,8 @@ class GridSearcher:
                 n, len(metrics), self.split, self.metric, _metric))
             model_ckpt = os.path.dirname(checkpoint_dir_model)
             if not os.path.exists('{}/epoch_{}'.format(model_ckpt, self.epoch)):
-                trainer = Trainer(checkpoint_dir=model_ckpt,
-                                  disable_log=True,
-                                  data_cache_path='{}.pkl'.format(self.data_cache_dir))
-                trainer.train()
+                trainer = Trainer(checkpoint_dir=model_ckpt, disable_log=True)
+                trainer.train(epoch_save=1, num_workers=num_workers, interval=interval)
 
             checkpoints.append(model_ckpt)
 
@@ -296,20 +273,15 @@ class GridSearcher:
                         model=checkpoint_dir_model,
                         export_dir='{}/eval'.format(checkpoint_dir_model),
                         batch_size=self.batch_eval,
-                        n_beams=self.eval_config['n_beams_eval'],
                         max_length=self.eval_config['max_length_eval'],
-                        max_length_output=self.eval_config['max_length_output_eval'],
                         data=self.static_config['dataset'],
-                        language=self.static_config['language'],
-                        prediction_aggregation=self.eval_config['prediction_aggregation'],
-                        prediction_level=self.eval_config['prediction_level'],
-                        bleu_only=True
+                        data_cache_prefix=data_cache_prefix
                     )
                 except Exception:
                     logging.exception('ERROR IN EVALUATION')
                     continue
 
-                metrics[checkpoint_dir_model] = metric[self.split][self.metric]
+                metrics[checkpoint_dir_model] = metric['valid'][self.eval_config['metric']]
 
         metrics = sorted(metrics.items(), key=lambda x: x[1], reverse=True)
         logging.info('2nd RUN RESULTS: \n{}'.format(str(metrics)))

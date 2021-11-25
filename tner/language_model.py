@@ -1,6 +1,7 @@
 import os
 import logging
 import pickle
+import re
 from typing import List, Dict
 from itertools import groupby
 
@@ -9,34 +10,13 @@ import torch
 
 from allennlp.modules import ConditionalRandomField
 from allennlp.modules.conditional_random_field import allowed_transitions
+from seqeval.metrics import f1_score, precision_score, recall_score, classification_report
 
-from .tokenizer import TokenizerFixed, Dataset
+from .tokenizer import TokenizerFixed, Dataset, PAD_TOKEN_LABEL_ID
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning message
 
 __all__ = 'TransformersNER'
-
-
-def decode_ner_tags(tag_sequence, non_entity: str = 'O'):
-    """ take tag sequence, return list of entity
-    input:  ["B-LOC", "O", "O", "B-ORG", "I-ORG", "O"]
-    return: [['LOC', [0, 1]], ['ORG', [3, 5]]]
-    """
-    unique_type = list(set(i.split('-')[-1] for i in tag_sequence if i != non_entity))
-    result = []
-    for i in unique_type:
-        mask = [t.split('-')[-1] == i for t in tag_sequence]
-
-        # find blocks of True in a boolean list
-        group = list(map(lambda x: list(x[1]), groupby(mask)))
-        length = list(map(lambda x: len(x), group))
-        group_length = [[sum(length[:n]), sum(length[:n]) + len(g)] for n, g in enumerate(group) if all(g)]
-
-        # get entity
-        for g in group_length:
-            result.append([i, g])
-    result = sorted(result, key=lambda x: x[1][0])
-    return result
 
 
 def pickle_save(obj, path: str):
@@ -147,13 +127,13 @@ class TransformersNER:
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
         if self.crf:
-            best_path = self.crf_layer.viterbi_tags(output['logit'], encode['attention_mask'])
+            best_path = self.crf_layer.viterbi_tags(output['logits'])
             pred_results = []
-            for tag_seq, _ in range(best_path):
+            for tag_seq, prob in best_path:
                 pred_results.append(tag_seq)
             return pred_results
         else:
-            return torch.max(output['logit'], dim=-1)[1].cpu().tolist()
+            return torch.max(output['logits'], dim=-1)[1].cpu().tolist()
 
     def get_data_loader(self,
                         inputs,
@@ -171,6 +151,7 @@ class TransformersNER:
         else:
             out = self.tokenizer.encode_plus_all(
                 tokens=inputs, labels=labels, max_length=self.max_length, mask_by_padding_token=mask_by_padding_token)
+
             # remove overflow text
             logging.info('encode all the data: {}'.format(len(out)))
 
@@ -188,33 +169,83 @@ class TransformersNER:
                 inputs: List,
                 labels: List,
                 batch_size: int = None,
-                num_workers: int = 0):
-        self.predict(inputs, batch_size, num_workers, mask_by_padding_token=True)
-        # loader = self.get_data_loader(
-        #     inputs, batch_size=batch_size, num_workers=num_workers, mask_by_padding_token=True)
-        # pred_list = []
-        # for i in loader:
-        #     pred = self.encode_to_prediction(i)
-        #     pred = [self.model.config.id2label[_p] for _p in pred]
-        #     pred_list.append(pred)
-        # return pred_list
+                num_workers: int = 0,
+                cache_path: str = None):
+        loader = self.get_data_loader(
+            inputs, labels, batch_size=batch_size, num_workers=num_workers, mask_by_padding_token=True, cache_path=cache_path)
+        label_list = []
+        pred_list = []
+        for i in loader:
+            labels = i['labels'].cpu().tolist()
+            pred = self.encode_to_prediction(i)
+            assert len(labels) == len(pred)
+            for _l, _p in zip(labels, pred):
+                assert len(_l) == len(_p)
+                tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
+                pred_list.append(list(list(zip(*tmp))[0]))
+                label_list.append(list(list(zip(*tmp))[1]))
+
+        label_list = [[self.model.config.id2label[__p] for __p in _p] for _p in label_list]
+        pred_list = [[self.model.config.id2label[__p] for __p in _p] for _p in pred_list]
+        # compute metrics
+        logging.info(classification_report(label_list, pred_list))
+        metric = {
+            "micro/f1": f1_score(label_list, pred_list, average='micro') * 100,
+            "micro/recall": recall_score(label_list, pred_list, average='micro') * 100,
+            "micro/precision": precision_score(label_list, pred_list, average='micro') * 100,
+            "macro/f1": f1_score(label_list, pred_list, average='macro') * 100,
+            "macro/recall": recall_score(label_list, pred_list, average='macro') * 100,
+            "macro/precision": precision_score(label_list, pred_list, average='macro') * 100,
+        }
+        return metric
 
     def predict(self,
                 inputs: List,
                 batch_size: int = None,
                 num_workers: int = 0,
-                mask_by_padding_token: bool = True,
-                decode_bio: bool = False):
+                decode_bio: bool = False,
+                cache_path: str = None):
         self.eval()
-        loader = self.get_data_loader(
-            inputs, batch_size=batch_size, num_workers=num_workers, mask_by_padding_token=mask_by_padding_token)
+        loader = self.get_data_loader(inputs, batch_size=batch_size, num_workers=num_workers, cache_path=cache_path)
         pred_list = []
+        inputs_list = []
         for i in loader:
+            input_ids = i['input_ids'].cpu().tolist()
             pred = self.encode_to_prediction(i)
-            pred = [self.model.config.id2label[_p] for _p in pred]
-            if decode_bio:
-                pred = decode_ner_tags(pred)
-            pred_list.append(pred)
+            for _input_ids, _pred in zip(input_ids, pred):
+                _tmp = [(_i, self.model.config.id2label[_p])
+                        for _i, _p in zip(_input_ids, _pred) if _i != self.tokenizer.pad_ids['input_ids']]
+                pred_list.append([_p for _i, _p in _tmp])
+                inputs_list.append([_i for _i, _p in _tmp])
+        if decode_bio:
+            return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
         return pred_list
+
+    def decode_ner_tags(self, tag_sequence, input_sequence):
+        assert len(tag_sequence) == len(input_sequence)
+        unique_type = list(set(i.split('-')[-1] for i in tag_sequence if i != 'O'))
+        result = []
+        for i in unique_type:
+            mask = [t.split('-')[-1] == i for t in tag_sequence]
+
+            # find blocks of True in a boolean list
+            group = list(map(lambda x: list(x[1]), groupby(mask)))
+            length = list(map(lambda x: len(x), group))
+            group_length = [[sum(length[:n]), sum(length[:n]) + len(g) - 1] for n, g in enumerate(group) if all(g)]
+
+            # get entity
+            for g in group_length:
+                surface = self.tokenizer.tokenizer.decode(input_sequence[g[0]:g[1]])
+                surface = self.cleanup(surface)
+                result.append({'type': i, 'entity': surface})
+        result = sorted(result, key=lambda x: x['type'])
+        return result
+
+    @staticmethod
+    def cleanup(_string):
+        _string = re.sub(r'\A\s*', '', _string)
+        _string = re.sub(r'[\s(\[{]*\Z', '', _string)
+        return _string
+
 
 

@@ -11,7 +11,7 @@ def arguments(parser):
     parser.add_argument('-c', '--checkpoint-dir', help='directory to save checkpoint', required=True, type=str)
     parser.add_argument('-d', '--dataset', help='dataset: {}'.format(VALID_DATASET), default='wnut2017', type=str)
     parser.add_argument('-m', '--model', help='pretrained language model', default='xlm-roberta-base', type=str)
-    parser.add_argument('-e', '--epoch', help='epoch', default=8, type=int)
+    parser.add_argument('-e', '--epoch', help='epoch', default=15, type=int)
     parser.add_argument('-g', '--gradient-accumulation-steps', help='', default=4, type=int)
     parser.add_argument('-b', '--batch', help='batch size', default=128, type=int)
     parser.add_argument('--fp16', help='fp16', action='store_true')
@@ -36,9 +36,9 @@ def arguments_training(parser):
 def arguments_parameter_search(parser):
     parser.add_argument('--batch-eval', default=32, type=int)
     parser.add_argument('--n-max-config', default=5, type=int)
-    parser.add_argument('--epoch-partial', help='epoch', default=2, type=int)
+    parser.add_argument('--epoch-partial', help='epoch', default=5, type=int)
     parser.add_argument('--max-length-eval', default=256, type=int)
-    parser.add_argument('--weight-decay', help='weight decay', default='0,1e-7,1e-6', type=float)
+    parser.add_argument('--weight-decay', help='weight decay', default='0,1e-7', type=float)
     parser.add_argument('-l', '--lr', help='learning rate', default='5e-5,1e-4,5e-4', type=str)
     parser.add_argument('--random-seed', help='random seed', default='0,1,2', type=str)
     parser.add_argument('--crf', default='0,1', type=str)
@@ -99,5 +99,5 @@ def main_train_search():
         batch_eval=opt.batch_eval,
         max_length_eval=opt.max_length_eval
     )
-    trainer.run()
+    trainer.run(interval=opt.interval, num_workers=opt.num_workers)
 
