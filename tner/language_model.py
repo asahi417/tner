@@ -98,9 +98,6 @@ class TransformersNER:
             self.crf_layer.load_state_dict(state)
             self.crf = True
 
-        # load pre processor
-        self.tokenizer = TokenizerFixed(self.model_name, cache_dir=cache_dir)
-
         # GPU setup
         self.device = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
         self.parallel = False
@@ -114,6 +111,8 @@ class TransformersNER:
 
         self.label2id = self.model.config.label2id
         self.id2label = self.model.config.id2label
+        # load pre processor
+        self.tokenizer = TokenizerFixed(self.model_name, cache_dir=cache_dir, id2label=self.id2label)
 
     def train(self):
         self.model.train()

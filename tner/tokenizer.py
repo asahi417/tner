@@ -2,7 +2,7 @@
 import os
 import re
 from itertools import chain, groupby
-from typing import List
+from typing import List, Dict
 
 import transformers
 import torch
@@ -35,13 +35,16 @@ class TokenizerFixed:
 
     def __init__(self,
                  transformer_tokenizer: str,
-                 cache_dir: str = None):
+                 cache_dir: str = None,
+                 id2label: Dict = None):
         """ NER specific transform pipeline """
         try:
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=cache_dir)
         except ValueError:
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                 transformer_tokenizer, cache_dir=cache_dir, local_files_only=True)
+        self.id2label = id2label
+        self.label2id = {v: k for k, v in id2label.items()}
         self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
         self.prefix = self.__sp_token_prefix()
         # find special tokens to be added
@@ -59,9 +62,24 @@ class TokenizerFixed:
             ' '.join(tokens), max_length=max_seq_length, padding='max_length', truncation=True)
         if labels:
             assert len(tokens) == len(labels)
-            fixed_labels = list(chain(*[
-                [label] + [self.pad_ids['labels']] * (len(self.tokenizer.tokenize(word)) - 1)
-                for label, word in zip(labels, tokens)]))
+            # fixed_labels = list(chain(*[
+            #     [label] + [self.pad_ids['labels']] * (len(self.tokenizer.tokenize(word)) - 1)
+            #     for label, word in zip(labels, tokens)]))
+            # fixed_labels = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + fixed_labels
+            # fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
+            # fixed_labels = fixed_labels + [self.pad_ids['labels']] * (max_seq_length - len(fixed_labels))
+            # encode['labels'] = fixed_labels
+            fixed_labels = []
+            for label, word in zip(labels, tokens):
+                fixed_labels.append(label)
+                sub_length = len(self.tokenizer.tokenize(word))
+                if sub_length > 1:
+                    if self.label2id[label] == 'O':
+                        fixed_labels += [self.label2id['O']] * (sub_length - 1)
+                    else:
+                        entity = '-'.join(self.id2label[label].split('-')[1:])
+                        fixed_labels += [self.label2id['I-{}'.format(entity)]] * (sub_length - 1)
+
             fixed_labels = [self.pad_ids['labels']] * len(self.sp_token_start['labels']) + fixed_labels
             fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
             fixed_labels = fixed_labels + [self.pad_ids['labels']] * (max_seq_length - len(fixed_labels))
