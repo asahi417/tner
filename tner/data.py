@@ -140,9 +140,6 @@ def get_dataset(data: (List, str),
     """
     data = data if data else []
     data_list = [data] if type(data) is str else data
-    # custom_data_path = [custom_data_path] if custom_data_path else []
-    # data_list = data_names + custom_data_path
-    # data_list = data_names
     logging.info('target dataset: {}'.format(data_list))
     data = []
     languages = []

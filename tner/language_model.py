@@ -60,7 +60,6 @@ class TransformersNER:
                  cache_dir: str = None):
         self.model_name = model
         self.max_length = max_length
-        self.crf = crf
 
         # load model
         try:
@@ -69,24 +68,27 @@ class TransformersNER:
             self.model = load_hf(self.model_name, cache_dir, label2id, local_files_only=True)
 
         # load crf layer
-        self.crf_layer = ConditionalRandomField(
-            num_tags=len(self.model.config.id2label),
-            constraints=allowed_transitions(constraint_type="BIO", labels=self.model.config.id2label)
-        )
-        if 'crf_state_dict' in self.model.config.to_dict().keys():
-            state = {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
-            self.crf_layer.load_state_dict(state)
-            self.crf = True
-
+        if 'crf_state_dict' in self.model.config.to_dict().keys() or crf:
+            self.crf_layer = ConditionalRandomField(
+                num_tags=len(self.model.config.id2label),
+                constraints=allowed_transitions(constraint_type="BIO", labels=self.model.config.id2label)
+            )
+            if 'crf_state_dict' in self.model.config.to_dict().keys():
+                state = {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
+                self.crf_layer.load_state_dict(state)
+        else:
+            self.crf_layer = None
         # GPU setup
         self.device = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
         self.parallel = False
         if torch.cuda.device_count() > 1:
             self.parallel = True
             self.model = torch.nn.DataParallel(self.model)
-            self.crf_layer = torch.nn.DataParallel(self.crf_layer)
+            if self.crf_layer is not None:
+                self.crf_layer = torch.nn.DataParallel(self.crf_layer)
         self.model.to(self.device)
-        self.crf_layer.to(self.device)
+        if self.crf_layer is not None:
+            self.crf_layer.to(self.device)
         logging.info('{} GPUs are in use'.format(torch.cuda.device_count()))
 
         self.label2id = self.model.config.label2id
@@ -106,7 +108,8 @@ class TransformersNER:
         self.model.eval()
 
     def save(self, save_dir):
-        self.model.config.update({'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
+        if self.crf_layer is not None:
+            self.model.config.update({'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
         if self.parallel:
             self.model.module.save_pretrained(save_dir)
         else:
@@ -117,7 +120,7 @@ class TransformersNER:
         assert 'labels' in encode
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
-        if self.crf:
+        if self.crf_layer is not None:
             loss = - self.crf_layer(output['logits'], encode['labels'], encode['attention_mask'])
         else:
             loss = output['loss']
@@ -126,7 +129,7 @@ class TransformersNER:
     def encode_to_prediction(self, encode: Dict):
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
-        if self.crf:
+        if self.crf_layer is not None:
             best_path = self.crf_layer.viterbi_tags(output['logits'])
             pred_results = []
             for tag_seq, prob in best_path:
