@@ -94,7 +94,7 @@ class TransformersNER:
         self.label2id = self.model.config.label2id
         self.id2label = self.model.config.id2label
         # load pre processor
-        if self.crf:
+        if self.crf_layer is not None:
             self.tokenizer = TokenizerFixed(
                 self.model_name, cache_dir=cache_dir, id2label=self.id2label, padding_id=self.label2id['O']
             )
