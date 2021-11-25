@@ -16,6 +16,7 @@ def arguments(parser):
     parser.add_argument('-b', '--batch', help='batch size', default=128, type=int)
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--num-workers', default=0, type=int)
+    parser.add_argument('--interval', default=50, type=int)
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     return parser
@@ -29,7 +30,6 @@ def arguments_training(parser):
     parser.add_argument('--weight-decay', help='weight decay', default=None, type=float)
     # monitoring parameter
     parser.add_argument('--epoch-save', default=1, type=int)
-    parser.add_argument('--interval', default=50, type=int)
     return parser
 
 
