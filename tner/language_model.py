@@ -90,7 +90,7 @@ class TransformersNER:
 
         # load crf layer
         self.crf_layer = ConditionalRandomField(
-            num_tags=len(self.model.config.id2label) + 1,
+            num_tags=len(self.model.config.id2label),
             constraints=allowed_transitions(constraint_type="BIO", labels=self.model.config.id2label)
         )
         if 'crf_state_dict' in self.model.config.to_dict().keys():
