@@ -67,7 +67,7 @@ class Trainer:
                  random_seed: int = 42,
                  gradient_accumulation_steps: int = 4,
                  weight_decay: float = 1e-7,
-                 lr_warmup_epoch: int = None,
+                 lr_warmup_step: int = None,
                  max_grad_norm: float = None,
                  disable_log: bool = False):
 
@@ -89,7 +89,7 @@ class Trainer:
             random_seed=random_seed,
             gradient_accumulation_steps=gradient_accumulation_steps,
             crf=crf,
-            lr_warmup_epoch=lr_warmup_epoch,
+            lr_warmup_step=lr_warmup_step,
             max_grad_norm=max_grad_norm
         )
         random.seed(self.config.random_seed)
@@ -109,11 +109,14 @@ class Trainer:
             path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
             logging.info('load checkpoint from {}'.format(path))
             self.model = TransformersNER(model=path, crf=self.config.crf, max_length=self.config.max_length)
-            self.optimizer, self.scheduler = self.setup_optimizer(epoch)
             self.current_epoch = epoch
             assert self.current_epoch <= self.config.epoch, 'model training is done'
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
                 self.config.dataset, lower_case=lower_case, label_to_id=self.model.label2id, fix_label_dict=True)
+            step_per_epoch = int(
+                len(self.dataset_split['train']['data'])/self.config.batch/self.config.gradient_accumulation_steps
+            )
+            self.optimizer, self.scheduler = self.setup_optimizer(epoch, step_per_epoch)
         else:
             # load dataset
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
@@ -121,8 +124,8 @@ class Trainer:
             logging.info('initialize checkpoint with {}'.format(self.config.model))
             self.model = TransformersNER(
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
-            self.optimizer, self.scheduler = self.setup_optimizer()
             self.current_epoch = 0
+            self.optimizer, self.scheduler = self.setup_optimizer()
 
         # GPU mixture precision
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.config.fp16)
@@ -138,7 +141,7 @@ class Trainer:
             '.crf' if self.config.crf else ''
         )
 
-    def setup_optimizer(self, epoch: int = None):
+    def setup_optimizer(self, epoch: int = None, step_per_epoch: int = None):
         # optimizer
         if self.config.weight_decay is not None and self.config.weight_decay != 0:
             no_decay = ["bias", "LayerNorm.weight"]
@@ -150,9 +153,11 @@ class Trainer:
             optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=self.config.lr)
         else:
             optimizer = torch.optim.AdamW(self.model.model.parameters(), lr=self.config.lr)
-        if self.config.lr_warmup_epoch is not None:
+        if self.config.lr_warmup_step is not None:
+            assert step_per_epoch is not None
+            total_step = step_per_epoch * self.config.epoch
             scheduler = transformers.get_linear_schedule_with_warmup(
-                optimizer, num_warmup_steps=self.config.lr_warmup_epoch, num_training_steps=self.config.epoch)
+                optimizer, num_warmup_steps=self.config.lr_warmup_step, num_training_steps=total_step)
         else:
             scheduler = None
 
@@ -237,11 +242,12 @@ class Trainer:
             # optimizer update
             self.scaler.step(self.optimizer)
             self.scaler.update()
+            if self.scheduler is not None:
+                self.scheduler.step()
 
             self.optimizer.zero_grad()
             if global_step % interval == 0:
                 logging.info('\t * (global step {}: loss: {}, lr: {}'.format(global_step, inst_loss, self.optimizer.param_groups[0]['lr']))
-        if self.scheduler is not None:
-            self.scheduler.step()
+
         self.optimizer.zero_grad()
         return sum(total_loss)/len(total_loss), global_step

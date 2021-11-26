@@ -80,7 +80,7 @@ class GridSearcher:
                  lr: List or float = 1e-4,
                  weight_decay: List or float = None,
                  random_seed: List or int = 0,
-                 lr_warmup_epoch: List or int = None,
+                 lr_warmup_step: List or int = None,
                  max_grad_norm: List or float = None,
                  metric: str = 'macro/f1'):
 
@@ -123,7 +123,7 @@ class GridSearcher:
             'crf': to_list(crf),
             'random_seed': to_list(random_seed),
             'weight_decay': to_list(weight_decay),
-            'lr_warmup_epoch': to_list(lr_warmup_epoch),
+            'lr_warmup_step': to_list(lr_warmup_step),
             'max_grad_norm': to_list(max_grad_norm)
         }
 
@@ -132,7 +132,7 @@ class GridSearcher:
             self.dynamic_config['crf'],
             self.dynamic_config['random_seed'],
             self.dynamic_config['weight_decay'],
-            self.dynamic_config['lr_warmup_epoch'],
+            self.dynamic_config['lr_warmup_step'],
             self.dynamic_config['max_grad_norm']
         ))
 
@@ -207,7 +207,7 @@ class GridSearcher:
                 'crf': dynamic_config[1],
                 'random_seed': dynamic_config[2],
                 'weight_decay': dynamic_config[3],
-                'lr_warmup_epoch': dynamic_config[4],
+                'lr_warmup_step': dynamic_config[4],
                 'max_grad_norm': dynamic_config[5]
             }
             config.update(tmp_dynamic_config)

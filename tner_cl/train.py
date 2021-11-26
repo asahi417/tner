@@ -29,7 +29,7 @@ def arguments_training(parser):
     parser.add_argument('--crf', action='store_true')
     parser.add_argument('--weight-decay', help='weight decay', default=None, type=float)
     parser.add_argument('--max-grad-norm', default=None, type=float)
-    parser.add_argument('--lr-warmup-epoch', default=None, type=int)
+    parser.add_argument('--lr-warmup-step', default=None, type=int)
     # monitoring parameter
     parser.add_argument('--epoch-save', default=1, type=int)
     return parser
@@ -45,7 +45,7 @@ def arguments_parameter_search(parser):
     parser.add_argument('--random-seed', help='random seed', default='0', type=str)
     parser.add_argument('--crf', default='0,1', type=str)
     parser.add_argument('--max-grad-norm', default='-1,1', type=str)
-    parser.add_argument('--lr-warmup-epoch', default='-1,1', type=str)
+    parser.add_argument('--lr-warmup-step', default='-1,500', type=str)
     return parser
 
 
@@ -71,7 +71,7 @@ def main_train():
         fp16=opt.fp16,
         gradient_accumulation_steps=opt.gradient_accumulation_steps,
         max_grad_norm=opt.max_grad_norm,
-        lr_warmup_epoch=opt.lr_warmup_epoch
+        lr_warmup_step=opt.lr_warmup_step
     )
     trainer.train(
         epoch_save=opt.epoch_save,
@@ -102,7 +102,7 @@ def main_train_search():
         crf=[bool(int(i)) for i in opt.crf.split(',')],
         random_seed=[int(i) for i in opt.random_seed.split(',')],
         weight_decay=[float(i) for i in opt.weight_decay.split(',')],
-        lr_warmup_epoch=[int(i) if int(i) != -1 else None for i in opt.lr_warmup_epoch.split(',')],
+        lr_warmup_step=[int(i) if int(i) != -1 else None for i in opt.lr_warmup_step.split(',')],
         max_grad_norm=[float(i) if float(i) != -1 else None for i in opt.max_grad_norm.split(',')],
         batch_eval=opt.batch_eval,
         max_length_eval=opt.max_length_eval
