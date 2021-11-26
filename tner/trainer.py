@@ -116,16 +116,19 @@ class Trainer:
             step_per_epoch = int(
                 len(self.dataset_split['train']['data'])/self.config.batch/self.config.gradient_accumulation_steps
             )
-            self.optimizer, self.scheduler = self.setup_optimizer(epoch, step_per_epoch)
+            self.optimizer, self.scheduler = self.setup_optimizer(epoch, step_per_epoch=step_per_epoch)
         else:
             # load dataset
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
                 self.config.dataset, lower_case=lower_case)
+            step_per_epoch = int(
+                len(self.dataset_split['train']['data']) / self.config.batch / self.config.gradient_accumulation_steps
+            )
             logging.info('initialize checkpoint with {}'.format(self.config.model))
             self.model = TransformersNER(
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.current_epoch = 0
-            self.optimizer, self.scheduler = self.setup_optimizer()
+            self.optimizer, self.scheduler = self.setup_optimizer(step_per_epoch=step_per_epoch)
 
         # GPU mixture precision
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.config.fp16)
