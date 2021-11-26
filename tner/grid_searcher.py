@@ -116,6 +116,9 @@ class GridSearcher:
             if type(_val) != list:
                 return [_val]
             assert len(_val) == len(set(_val)), _val
+            if None in _val:
+                _val.pop(_val.index(None))
+                return [None] + sorted(_val, reverse=True)
             return sorted(_val, reverse=True)
 
         self.dynamic_config = {
