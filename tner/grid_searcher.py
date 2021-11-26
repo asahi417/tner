@@ -76,10 +76,12 @@ class GridSearcher:
                  max_length_eval: int = 256,
                  batch: int = 128,
                  batch_eval: int = 32,
-                 crf: (List, bool) = True,
-                 lr: (List, float) = 1e-4,
-                 weight_decay: (List, float) = 0,
-                 random_seed: (List, int) = 0,
+                 crf: List or bool = True,
+                 lr: List or float = 1e-4,
+                 weight_decay: List or float = None,
+                 random_seed: List or int = 0,
+                 lr_warmup_epoch: List or int = None,
+                 max_grad_norm: List or float = None,
                  metric: str = 'macro/f1'):
 
         # evaluation configs
@@ -121,10 +123,17 @@ class GridSearcher:
             'crf': to_list(crf),
             'random_seed': to_list(random_seed),
             'weight_decay': to_list(weight_decay),
+            'lr_warmup_epoch': to_list(lr_warmup_epoch),
+            'max_grad_norm': to_list(max_grad_norm)
         }
 
         self.all_dynamic_configs = list(product(
-            self.dynamic_config['lr'], self.dynamic_config['crf'], self.dynamic_config['random_seed'], self.dynamic_config['weight_decay']
+            self.dynamic_config['lr'],
+            self.dynamic_config['crf'],
+            self.dynamic_config['random_seed'],
+            self.dynamic_config['weight_decay'],
+            self.dynamic_config['lr_warmup_epoch'],
+            self.dynamic_config['max_grad_norm']
         ))
 
     def initialize_searcher(self):
@@ -198,6 +207,8 @@ class GridSearcher:
                 'crf': dynamic_config[1],
                 'random_seed': dynamic_config[2],
                 'weight_decay': dynamic_config[3],
+                'lr_warmup_epoch': dynamic_config[4],
+                'max_grad_norm': dynamic_config[5]
             }
             config.update(tmp_dynamic_config)
             ex_dynamic_config = [(k_, [v[k] for k in sorted(tmp_dynamic_config.keys())]) for k_, v in ckpt_exist.items()]

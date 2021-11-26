@@ -8,6 +8,7 @@ from glob import glob
 from typing import List
 
 import torch
+import transformers
 
 from .language_model import TransformersNER
 from .data import get_dataset, CACHE_DIR
@@ -66,6 +67,8 @@ class Trainer:
                  random_seed: int = 42,
                  gradient_accumulation_steps: int = 4,
                  weight_decay: float = 1e-7,
+                 lr_warmup_epoch: int = None,
+                 max_grad_norm: float = None,
                  disable_log: bool = False):
 
         logging.info('initialize model trainer')
@@ -85,7 +88,10 @@ class Trainer:
             lower_case=lower_case,
             random_seed=random_seed,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            crf=crf)
+            crf=crf,
+            lr_warmup_epoch=lr_warmup_epoch,
+            max_grad_norm=max_grad_norm
+        )
         random.seed(self.config.random_seed)
         torch.manual_seed(self.config.random_seed)
         if not disable_log:
@@ -103,7 +109,7 @@ class Trainer:
             path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
             logging.info('load checkpoint from {}'.format(path))
             self.model = TransformersNER(model=path, crf=self.config.crf, max_length=self.config.max_length)
-            self.optimizer = self.setup_optimizer(epoch)
+            self.optimizer, self.scheduler = self.setup_optimizer(epoch)
             self.current_epoch = epoch
             assert self.current_epoch <= self.config.epoch, 'model training is done'
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
@@ -115,7 +121,7 @@ class Trainer:
             logging.info('initialize checkpoint with {}'.format(self.config.model))
             self.model = TransformersNER(
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
-            self.optimizer = self.setup_optimizer()
+            self.optimizer, self.scheduler = self.setup_optimizer()
             self.current_epoch = 0
 
         # GPU mixture precision
@@ -144,6 +150,11 @@ class Trainer:
             optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=self.config.lr)
         else:
             optimizer = torch.optim.AdamW(self.model.model.parameters(), lr=self.config.lr)
+        if self.config.lr_warmup_epoch is not None:
+            scheduler = transformers.get_linear_schedule_with_warmup(
+                optimizer, num_warmup_steps=self.config.lr_warmup_epoch, num_training_steps=self.config.epoch)
+        else:
+            scheduler = None
 
         # resume fine-tuning
         if epoch is not None:
@@ -151,7 +162,9 @@ class Trainer:
             logging.info('load optimizer from {}'.format(path))
             optimizer_stat = torch.load(path, map_location=torch.device('cpu'))
             optimizer.load_state_dict(optimizer_stat['optimizer_state_dict'])
-        return optimizer
+            if scheduler is not None:
+                scheduler.load_state_dict(optimizer_stat['scheduler_state_dict'])
+        return optimizer, scheduler
 
     def save(self, current_epoch):
         # save model
@@ -161,7 +174,13 @@ class Trainer:
         # save optimizer
         save_dir_opt = '{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch + 1)
         os.makedirs(os.path.dirname(save_dir_opt), exist_ok=True)
-        torch.save({'optimizer_state_dict': self.optimizer.state_dict()}, save_dir_opt)
+        if self.scheduler is not None:
+            torch.save({
+                'optimizer_state_dict': self.optimizer.state_dict(),
+                'scheduler_state_dict': self.scheduler.state_dict(),
+            }, save_dir_opt)
+        else:
+            torch.save({'optimizer_state_dict': self.optimizer.state_dict()}, save_dir_opt)
 
     def train(self,
               num_workers: int = 0,
@@ -201,7 +220,12 @@ class Trainer:
         self.optimizer.zero_grad()
         for n, encode in enumerate(data_loader):
             loss = self.model.encode_to_loss(encode)
+
             self.scaler.scale(loss).backward()
+            if self.config.max_grad_norm is not None:
+                self.scaler.unscale_(self.optimizer)
+                torch.nn.utils.clip_grad_norm_(self.model.model.parameters(), self.config.max_grad_norm)
+
             total_loss.append(loss.cpu().item())
             if (n + 1) % self.config.gradient_accumulation_steps != 0:
                 continue
@@ -213,9 +237,11 @@ class Trainer:
             # optimizer update
             self.scaler.step(self.optimizer)
             self.scaler.update()
+
             self.optimizer.zero_grad()
             if global_step % interval == 0:
                 logging.info('\t * (global step {}: loss: {}, lr: {}'.format(global_step, inst_loss, self.optimizer.param_groups[0]['lr']))
-
+        if self.scheduler is not None:
+            self.scheduler.step()
         self.optimizer.zero_grad()
         return sum(total_loss)/len(total_loss), global_step
