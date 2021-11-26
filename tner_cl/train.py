@@ -38,14 +38,14 @@ def arguments_training(parser):
 def arguments_parameter_search(parser):
     parser.add_argument('--batch-eval', default=8, type=int)
     parser.add_argument('--n-max-config', default=5, type=int)
-    parser.add_argument('--epoch-partial', help='epoch', default=5, type=int)
+    parser.add_argument('--epoch-partial', help='epoch', default=2, type=int)
     parser.add_argument('--max-length-eval', default=256, type=int)
     parser.add_argument('--weight-decay', help='weight decay', default='1e-7', type=str)
     parser.add_argument('-l', '--lr', help='learning rate', default='5e-7,1e-6', type=str)
     parser.add_argument('--random-seed', help='random seed', default='0', type=str)
     parser.add_argument('--crf', default='0,1', type=str)
     parser.add_argument('--max-grad-norm', default='-1,1', type=str)
-    parser.add_argument('--lr-warmup-step', default='-1,500', type=str)
+    parser.add_argument('--lr-warmup-step', default='-1,100', type=str)
     return parser
 
 
