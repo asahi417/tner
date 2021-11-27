@@ -159,7 +159,7 @@ class Trainer:
         if self.config.lr_warmup_step_ratio is not None:
             assert step_per_epoch is not None
             total_step = step_per_epoch * self.config.epoch
-            num_warmup_steps = int(total_step * self.config.lr_warmup_step_ratio_ratio)
+            num_warmup_steps = int(total_step * self.config.lr_warmup_step_ratio)
             logging.info('optimizer with scheduler:\n\t num_warmup_steps: {}\n\t num_training_steps:{}'.format(
                 num_warmup_steps, total_step
             ))
