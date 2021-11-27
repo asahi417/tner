@@ -114,7 +114,7 @@ class TransformersNER:
         if self.parallel:
             if self.crf_layer is not None:
                 self.model.module.config.update(
-                    {'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
+                    {'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.module.state_dict().items()}})
             self.model.module.save_pretrained(save_dir)
         else:
             if self.crf_layer is not None:

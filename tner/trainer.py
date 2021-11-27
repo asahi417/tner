@@ -104,20 +104,28 @@ class Trainer:
 
         # load model
         ckpts = glob('{}/epoch_*'.format(self.config.checkpoint_dir))
+        ckpts = [i for i in ckpts if os.path.exists('{}/optimizers/optimizer.{}.pt'.format(
+            self.config.checkpoint_dir, i.split('epoch_')[-1]
+        ))]
+        flag = False
         if len(ckpts) > 0:
-            epoch = sorted([int(i.split('epoch_')[-1]) for i in ckpts], reverse=True)[0]
-            path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
-            logging.info('load checkpoint from {}'.format(path))
-            self.model = TransformersNER(model=path, crf=self.config.crf, max_length=self.config.max_length)
-            self.current_epoch = epoch
-            assert self.current_epoch <= self.config.epoch, 'model training is done'
-            self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
-                self.config.dataset, lower_case=lower_case, label_to_id=self.model.label2id, fix_label_dict=True)
-            step_per_epoch = int(
-                len(self.dataset_split['train']['data'])/self.config.batch_size/self.config.gradient_accumulation_steps
-            )
-            self.optimizer, self.scheduler = self.setup_optimizer(epoch, step_per_epoch=step_per_epoch)
-        else:
+            try:
+                epoch = sorted([int(i.split('epoch_')[-1]) for i in ckpts], reverse=True)[0]
+                path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
+                logging.info('load checkpoint from {}'.format(path))
+                self.model = TransformersNER(model=path, crf=self.config.crf, max_length=self.config.max_length)
+                self.current_epoch = epoch
+                assert self.current_epoch <= self.config.epoch, 'model training is done'
+                self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
+                    self.config.dataset, lower_case=lower_case, label_to_id=self.model.label2id, fix_label_dict=True)
+                step_per_epoch = int(
+                    len(self.dataset_split['train']['data'])/self.config.batch_size/self.config.gradient_accumulation_steps
+                )
+                self.optimizer, self.scheduler = self.setup_optimizer(epoch, step_per_epoch=step_per_epoch)
+                flag = True
+            except Exception:
+                logging.exception('error at loading checkpoint {}'.format(ckpts))
+        if not flag:
             # load dataset
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
                 self.config.dataset, lower_case=lower_case)
@@ -129,7 +137,10 @@ class Trainer:
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.current_epoch = 0
             self.optimizer, self.scheduler = self.setup_optimizer(step_per_epoch=step_per_epoch)
-
+        self.optimizer_state_dict = self.optimizer.state_dict()
+        self.scheduler_state_dict = None
+        if self.scheduler is not None:
+            self.scheduler_state_dict = self.scheduler.state_dict()
         # GPU mixture precision
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.config.fp16)
 
@@ -189,13 +200,18 @@ class Trainer:
         os.makedirs(os.path.dirname(save_dir_opt), exist_ok=True)
         # Fix the memory error
         logging.info('optimizer saving at {}'.format(save_dir_opt))
+        self.optimizer_state_dict = self.optimizer.state_dict()
         if self.scheduler is not None:
+            self.scheduler_state_dict = self.scheduler.state_dict()
             torch.save({
-                'optimizer_state_dict': self.optimizer.state_dict(),
-                'scheduler_state_dict': self.scheduler.state_dict(),
+                'optimizer_state_dict': self.optimizer_state_dict,
+                'scheduler_state_dict': self.scheduler_state_dict,
             }, save_dir_opt)
         else:
-            torch.save({'optimizer_state_dict': self.optimizer.state_dict()}, save_dir_opt)
+            torch.save({'optimizer_state_dict': self.optimizer_state_dict}, save_dir_opt)
+        logging.info('remove old optimizer files')
+        if os.path.exists('{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch)):
+            os.remove('{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch))
 
     def train(self,
               num_workers: int = 0,
