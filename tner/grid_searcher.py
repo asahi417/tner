@@ -82,7 +82,7 @@ class GridSearcher:
                  random_seed: List or int = 0,
                  lr_warmup_step_ratio: List or int = None,
                  max_grad_norm: List or float = None,
-                 metric: str = 'macro/f1'):
+                 metric: str = 'micro/f1'):
 
         # evaluation configs
         assert metric in ['macro/f1', 'micro/f1']
