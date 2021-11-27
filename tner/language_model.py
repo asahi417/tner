@@ -198,7 +198,7 @@ class TransformersNER:
         label_list = [[self.id2label[__p] for __p in _p] for _p in label_list]
         pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
         # compute metrics
-        logging.info(classification_report(label_list, pred_list))
+        logging.info('\n{}'.format(classification_report(label_list, pred_list)))
         metric = {
             "micro/f1": f1_score(label_list, pred_list, average='micro'),
             "micro/recall": recall_score(label_list, pred_list, average='micro'),
