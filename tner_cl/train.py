@@ -102,7 +102,7 @@ def main_train_search():
         crf=[bool(int(i)) for i in opt.crf.split(',')],
         random_seed=[int(i) for i in opt.random_seed.split(',')],
         weight_decay=[float(i) for i in opt.weight_decay.split(',')],
-        lr_warmup_step_ratio=[int(i) if int(i) != -1 else None for i in opt.lr_warmup_step_ratio.split(',')],
+        lr_warmup_step_ratio=[float(i) if float(i) != -1 else None for i in opt.lr_warmup_step_ratio.split(',')],
         max_grad_norm=[float(i) if float(i) != -1 else None for i in opt.max_grad_norm.split(',')],
         batch_size_eval=opt.batch_size_eval,
         max_length_eval=opt.max_length_eval
