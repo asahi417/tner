@@ -78,6 +78,10 @@ class TransformersNER:
                 self.crf_layer.load_state_dict(state)
         else:
             self.crf_layer = None
+
+        self.label2id = self.model.config.label2id
+        self.id2label = self.model.config.id2label
+
         # GPU setup
         self.device = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
         self.parallel = False
@@ -91,8 +95,6 @@ class TransformersNER:
             self.crf_layer.to(self.device)
         logging.info('{} GPUs are in use'.format(torch.cuda.device_count()))
 
-        self.label2id = self.model.config.label2id
-        self.id2label = self.model.config.id2label
         # load pre processor
         if self.crf_layer is not None:
             self.tokenizer = TokenizerFixed(
@@ -108,11 +110,16 @@ class TransformersNER:
         self.model.eval()
 
     def save(self, save_dir):
-        if self.crf_layer is not None:
-            self.model.config.update({'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
+
         if self.parallel:
+            if self.crf_layer is not None:
+                self.model.module.config.update(
+                    {'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
             self.model.module.save_pretrained(save_dir)
         else:
+            if self.crf_layer is not None:
+                self.model.config.update(
+                    {'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
             self.model.save_pretrained(save_dir)
         self.tokenizer.tokenizer.save_pretrained(save_dir)
 
@@ -188,8 +195,8 @@ class TransformersNER:
                 pred_list.append(list(list(zip(*tmp))[0]))
                 label_list.append(list(list(zip(*tmp))[1]))
 
-        label_list = [[self.model.config.id2label[__p] for __p in _p] for _p in label_list]
-        pred_list = [[self.model.config.id2label[__p] for __p in _p] for _p in pred_list]
+        label_list = [[self.id2label[__p] for __p in _p] for _p in label_list]
+        pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
         # compute metrics
         logging.info(classification_report(label_list, pred_list))
         metric = {
@@ -216,7 +223,7 @@ class TransformersNER:
             input_ids = i['input_ids'].cpu().tolist()
             pred = self.encode_to_prediction(i)
             for _input_ids, _pred in zip(input_ids, pred):
-                _tmp = [(_i, self.model.config.id2label[_p])
+                _tmp = [(_i, self.id2label[_p])
                         for _i, _p in zip(_input_ids, _pred) if _i != self.tokenizer.pad_ids['input_ids']]
                 pred_list.append([_p for _i, _p in _tmp])
                 inputs_list.append([_i for _i, _p in _tmp])

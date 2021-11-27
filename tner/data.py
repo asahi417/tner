@@ -100,9 +100,14 @@ def open_compressed_file(url, cache_dir):
 
 def wget(url, cache_dir):
     filename = os.path.basename(url)
-    with open('{}/{}'.format(cache_dir, filename), "wb") as f:
-        r = requests.get(url)
-        f.write(r.content)
+    try:
+        with open('{}/{}'.format(cache_dir, filename), "wb") as f:
+
+            r = requests.get(url)
+            f.write(r.content)
+    except requests.exceptions.ConnectionError:
+        os.remove('{}/{}'.format(cache_dir, filename))
+        raise requests.exceptions.ConnectionError()
     return '{}/{}'.format(cache_dir, filename)
 
 
