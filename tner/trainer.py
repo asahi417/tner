@@ -4,6 +4,8 @@ import json
 import logging
 import shutil
 import random
+import gc
+
 from glob import glob
 from typing import List
 
@@ -137,10 +139,6 @@ class Trainer:
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.current_epoch = 0
             self.optimizer, self.scheduler = self.setup_optimizer(step_per_epoch=step_per_epoch)
-        self.optimizer_state_dict = self.optimizer.state_dict()
-        self.scheduler_state_dict = None
-        if self.scheduler is not None:
-            self.scheduler_state_dict = self.scheduler.state_dict()
         # GPU mixture precision
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.config.fp16)
 
@@ -195,20 +193,19 @@ class Trainer:
         os.makedirs(save_dir, exist_ok=True)
         logging.info('model saving at {}'.format(save_dir))
         self.model.save(save_dir)
+        gc.collect()
         # save optimizer
         save_dir_opt = '{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch + 1)
         os.makedirs(os.path.dirname(save_dir_opt), exist_ok=True)
         # Fix the memory error
         logging.info('optimizer saving at {}'.format(save_dir_opt))
-        self.optimizer_state_dict = self.optimizer.state_dict()
         if self.scheduler is not None:
-            self.scheduler_state_dict = self.scheduler.state_dict()
             torch.save({
-                'optimizer_state_dict': self.optimizer_state_dict,
-                'scheduler_state_dict': self.scheduler_state_dict,
+                'optimizer_state_dict': self.optimizer.state_dict(),
+                'scheduler_state_dict': self.scheduler.state_dict(),
             }, save_dir_opt)
         else:
-            torch.save({'optimizer_state_dict': self.optimizer_state_dict}, save_dir_opt)
+            torch.save({'optimizer_state_dict': self.optimizer.state_dict()}, save_dir_opt)
         logging.info('remove old optimizer files')
         if os.path.exists('{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch)):
             os.remove('{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch))
