@@ -74,13 +74,13 @@ class GridSearcher:
                  n_max_config: int = 5,
                  max_length: int = 128,
                  max_length_eval: int = 256,
-                 batch: int = 128,
-                 batch_eval: int = 32,
+                 batch_size: int = 128,
+                 batch_size_eval: int = 32,
                  crf: List or bool = True,
                  lr: List or float = 1e-4,
                  weight_decay: List or float = None,
                  random_seed: List or int = 0,
-                 lr_warmup_step: List or int = None,
+                 lr_warmup_step_ratio: List or int = None,
                  max_grad_norm: List or float = None,
                  metric: str = 'macro/f1'):
 
@@ -99,7 +99,7 @@ class GridSearcher:
             'model': model,
             'fp16': fp16,
             'gradient_accumulation_steps': gradient_accumulation_steps,
-            'batch': batch,
+            'batch_size': batch_size,
             'epoch': epoch,
             'max_length': max_length,
             'lower_case': lower_case
@@ -108,7 +108,7 @@ class GridSearcher:
         # dynamic config
         self.epoch = epoch
         self.epoch_partial = epoch_partial
-        self.batch_eval = batch_eval
+        self.batch_size_eval = batch_size_eval
         self.checkpoint_dir = checkpoint_dir
         self.n_max_config = n_max_config
 
@@ -126,7 +126,7 @@ class GridSearcher:
             'crf': to_list(crf),
             'random_seed': to_list(random_seed),
             'weight_decay': to_list(weight_decay),
-            'lr_warmup_step': to_list(lr_warmup_step),
+            'lr_warmup_step_ratio': to_list(lr_warmup_step_ratio),
             'max_grad_norm': to_list(max_grad_norm)
         }
 
@@ -135,7 +135,7 @@ class GridSearcher:
             self.dynamic_config['crf'],
             self.dynamic_config['random_seed'],
             self.dynamic_config['weight_decay'],
-            self.dynamic_config['lr_warmup_step'],
+            self.dynamic_config['lr_warmup_step_ratio'],
             self.dynamic_config['max_grad_norm']
         ))
 
@@ -210,7 +210,7 @@ class GridSearcher:
                 'crf': dynamic_config[1],
                 'random_seed': dynamic_config[2],
                 'weight_decay': dynamic_config[3],
-                'lr_warmup_step': dynamic_config[4],
+                'lr_warmup_step_ratio': dynamic_config[4],
                 'max_grad_norm': dynamic_config[5]
             }
             config.update(tmp_dynamic_config)
@@ -244,7 +244,7 @@ class GridSearcher:
                 metric = evaluate(
                     model=checkpoint_dir_model,
                     export_dir='{}/eval'.format(checkpoint_dir_model),
-                    batch_size=self.batch_eval,
+                    batch_size=self.batch_size_eval,
                     max_length=self.eval_config['max_length_eval'],
                     data=self.static_config['dataset'],
                     data_cache_prefix=data_cache_prefix
@@ -289,7 +289,7 @@ class GridSearcher:
                     metric = evaluate(
                         model=checkpoint_dir_model,
                         export_dir='{}/eval'.format(checkpoint_dir_model),
-                        batch_size=self.batch_eval,
+                        batch_size=self.batch_size_eval,
                         max_length=self.eval_config['max_length_eval'],
                         data=self.static_config['dataset'],
                         data_cache_prefix=data_cache_prefix

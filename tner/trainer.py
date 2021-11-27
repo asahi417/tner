@@ -60,14 +60,14 @@ class Trainer:
                  crf: bool = False,
                  max_length: int = 128,
                  epoch: int = 10,
-                 batch: int = 128,
+                 batch_size: int = 128,
                  lr: float = 1e-4,
                  fp16: bool = False,
                  lower_case: bool = False,
                  random_seed: int = 42,
                  gradient_accumulation_steps: int = 4,
                  weight_decay: float = 1e-7,
-                 lr_warmup_step: int = None,
+                 lr_warmup_step_ratio: int = None,
                  max_grad_norm: float = None,
                  disable_log: bool = False):
 
@@ -81,7 +81,7 @@ class Trainer:
             model=model,
             max_length=max_length,
             epoch=epoch,
-            batch=batch,
+            batch_size=batch_size,
             lr=lr,
             weight_decay=weight_decay,
             fp16=fp16,
@@ -89,7 +89,7 @@ class Trainer:
             random_seed=random_seed,
             gradient_accumulation_steps=gradient_accumulation_steps,
             crf=crf,
-            lr_warmup_step=lr_warmup_step,
+            lr_warmup_step_ratio=lr_warmup_step_ratio,
             max_grad_norm=max_grad_norm
         )
         random.seed(self.config.random_seed)
@@ -114,7 +114,7 @@ class Trainer:
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
                 self.config.dataset, lower_case=lower_case, label_to_id=self.model.label2id, fix_label_dict=True)
             step_per_epoch = int(
-                len(self.dataset_split['train']['data'])/self.config.batch/self.config.gradient_accumulation_steps
+                len(self.dataset_split['train']['data'])/self.config.batch_size/self.config.gradient_accumulation_steps
             )
             self.optimizer, self.scheduler = self.setup_optimizer(epoch, step_per_epoch=step_per_epoch)
         else:
@@ -122,7 +122,7 @@ class Trainer:
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
                 self.config.dataset, lower_case=lower_case)
             step_per_epoch = int(
-                len(self.dataset_split['train']['data']) / self.config.batch / self.config.gradient_accumulation_steps
+                len(self.dataset_split['train']['data']) / self.config.batch_size / self.config.gradient_accumulation_steps
             )
             logging.info('initialize checkpoint with {}'.format(self.config.model))
             self.model = TransformersNER(
@@ -156,11 +156,15 @@ class Trainer:
             optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=self.config.lr)
         else:
             optimizer = torch.optim.AdamW(self.model.model.parameters(), lr=self.config.lr)
-        if self.config.lr_warmup_step is not None:
+        if self.config.lr_warmup_step_ratio is not None:
             assert step_per_epoch is not None
             total_step = step_per_epoch * self.config.epoch
+            num_warmup_steps = int(total_step * self.config.lr_warmup_step_ratio_ratio)
+            logging.info('optimizer with scheduler:\n\t num_warmup_steps: {}\n\t num_training_steps:{}'.format(
+                num_warmup_steps, total_step
+            ))
             scheduler = transformers.get_linear_schedule_with_warmup(
-                optimizer, num_warmup_steps=self.config.lr_warmup_step, num_training_steps=total_step)
+                optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=total_step)
         else:
             scheduler = None
 
@@ -200,7 +204,7 @@ class Trainer:
         loader = self.model.get_data_loader(
             inputs=self.dataset_split['train']['data'],
             labels=self.dataset_split['train']['label'],
-            batch_size=self.config.batch,
+            batch_size=self.config.batch_size,
             shuffle=True,
             drop_last=True,
             num_workers=num_workers,
