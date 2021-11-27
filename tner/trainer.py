@@ -179,8 +179,10 @@ class Trainer:
 
         # resume fine-tuning
         if epoch is not None:
+            self.release_cache()
             path = '{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, epoch)
             logging.info('load optimizer from {}'.format(path))
+            # optimizer_stat = torch.load(path, map_location=torch.device('cpu'))
             optimizer_stat = torch.load(path, map_location=torch.device('cpu'))
             optimizer.load_state_dict(optimizer_stat['optimizer_state_dict'])
             if scheduler is not None:
@@ -188,6 +190,7 @@ class Trainer:
         return optimizer, scheduler
 
     def save(self, current_epoch):
+        self.release_cache()
         # save model
         save_dir = '{}/epoch_{}'.format(self.config.checkpoint_dir, current_epoch + 1)
         os.makedirs(save_dir, exist_ok=True)
@@ -274,3 +277,7 @@ class Trainer:
 
         self.optimizer.zero_grad()
         return sum(total_loss)/len(total_loss), global_step
+
+    def release_cache(self):
+        if self.model.device == "cuda":
+            torch.cuda.empty_cache()
