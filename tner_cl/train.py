@@ -16,7 +16,7 @@ def arguments(parser):
     parser.add_argument('-b', '--batch-size', help='batch size', default=128, type=int)
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--num-workers', default=0, type=int)
-    parser.add_argument('--interval', default=50, type=int)
+    parser.add_argument('--interval', default=10, type=int)
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     return parser
