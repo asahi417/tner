@@ -183,12 +183,12 @@ class Trainer:
             logging.info('load optimizer from {}'.format(path))
             self.release_cache()
             gc.collect()
-            optimizer_stat = torch.load(path, map_location=torch.device('cpu'))
-            optimizer.load_state_dict(optimizer_stat['optimizer_state_dict'])
+            optimizer.load_state_dict(torch.load(path, map_location=torch.device('cpu'))['optimizer_state_dict'])
             if scheduler is not None:
+                logging.info('load scheduler from {}'.format(path))
                 self.release_cache()
                 gc.collect()
-                scheduler.load_state_dict(optimizer_stat['scheduler_state_dict'])
+                scheduler.load_state_dict(torch.load(path, map_location=torch.device('cpu'))['scheduler_state_dict'])
         return optimizer, scheduler
 
     def save(self, current_epoch):
