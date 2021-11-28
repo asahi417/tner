@@ -183,12 +183,16 @@ class Trainer:
             logging.info('load optimizer from {}'.format(path))
             self.release_cache()
             gc.collect()
-            optimizer.load_state_dict(torch.load(path, map_location=torch.device('gpu'))['optimizer_state_dict'])
+            stats = torch.load(path, map_location=torch.device('cuda'))
+            optimizer.load_state_dict(stats['optimizer_state_dict'])
             if scheduler is not None:
                 logging.info('load scheduler from {}'.format(path))
                 self.release_cache()
                 gc.collect()
-                scheduler.load_state_dict(torch.load(path, map_location=torch.device('cpu'))['scheduler_state_dict'])
+                scheduler.load_state_dict(stats['scheduler_state_dict'])
+        del stats
+        self.release_cache()
+        gc.collect()
         return optimizer, scheduler
 
     def save(self, current_epoch):
