@@ -183,7 +183,7 @@ class Trainer:
             logging.info('load optimizer from {}'.format(path))
             self.release_cache()
             gc.collect()
-            optimizer.load_state_dict(torch.load(path, map_location=torch.device('cpu'))['optimizer_state_dict'])
+            optimizer.load_state_dict(torch.load(path, map_location=torch.device('gpu'))['optimizer_state_dict'])
             if scheduler is not None:
                 logging.info('load scheduler from {}'.format(path))
                 self.release_cache()
