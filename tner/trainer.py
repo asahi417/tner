@@ -179,24 +179,26 @@ class Trainer:
 
         # resume fine-tuning
         if epoch is not None:
-            self.release_cache()
             path = '{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, epoch)
             logging.info('load optimizer from {}'.format(path))
-            # optimizer_stat = torch.load(path, map_location=torch.device('cpu'))
+            self.release_cache()
+            gc.collect()
             optimizer_stat = torch.load(path, map_location=torch.device('cpu'))
             optimizer.load_state_dict(optimizer_stat['optimizer_state_dict'])
             if scheduler is not None:
+                self.release_cache()
+                gc.collect()
                 scheduler.load_state_dict(optimizer_stat['scheduler_state_dict'])
         return optimizer, scheduler
 
     def save(self, current_epoch):
         self.release_cache()
+        gc.collect()
         # save model
         save_dir = '{}/epoch_{}'.format(self.config.checkpoint_dir, current_epoch + 1)
         os.makedirs(save_dir, exist_ok=True)
         logging.info('model saving at {}'.format(save_dir))
         self.model.save(save_dir)
-        gc.collect()
         # save optimizer
         save_dir_opt = '{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch + 1)
         os.makedirs(os.path.dirname(save_dir_opt), exist_ok=True)
