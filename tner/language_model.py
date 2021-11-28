@@ -137,7 +137,10 @@ class TransformersNER:
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
         if self.crf_layer is not None:
-            best_path = self.crf_layer.viterbi_tags(output['logits'])
+            if self.parallel:
+                best_path = self.crf_layer.module.viterbi_tags(output['logits'])
+            else:
+                best_path = self.crf_layer.viterbi_tags(output['logits'])
             pred_results = []
             for tag_seq, prob in best_path:
                 pred_results.append(tag_seq)
