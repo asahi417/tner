@@ -47,7 +47,7 @@ def arguments_parameter_search(parser):
     parser.add_argument('--crf', default='0,1', type=str)
     parser.add_argument('--max-grad-norm', default='-1,1', type=str)
     parser.add_argument('--lr-warmup-step-ratio', default='-1,0.3', type=str)
-    parser.add_argument('-g', '--gradient-accumulation-steps', help='', default='1,4', type=int)
+    parser.add_argument('-g', '--gradient-accumulation-steps', help='', default='1,4', type=str)
     return parser
 
 
