@@ -410,16 +410,17 @@ def decode_file(file_name: str,
                     labels.append(entity)
                     sentence, entity = [], []
             else:
-                ls = line.split()
+                ls = line.split(' ')
                 # MultiCoNER separate token and tag by 'in _ _ O' so need to ignore '_'
                 ls = [i for i in ls if i != '_']
                 if len(ls) < 2:
                     continue
                 # Examples could have no label for mode = "test"
                 if entity_first:
-                    tag, word = ls[0], ls[-1]
+                    tag, word = ls[0], ls[1:-1]
                 else:
-                    word, tag = ls[0], ls[-1]
+                    word, tag = ls[0:-1], ls[-1]
+                word = ' '.join(word)
                 if tag == 'junk':
                     continue
                 if word in STOPWORDS:
