@@ -1,0 +1,1 @@
+{"dataset": ["./cache/custom_dataset"], "model": "albert-base-v1", "max_length": 128, "epoch": 1, "batch_size": 1, "lr": 0.0001, "weight_decay": 1e-07, "fp16": false, "lower_case": false, "random_seed": 42, "gradient_accumulation_steps": 4, "crf": true, "lr_warmup_step_ratio": null, "max_grad_norm": 1, "additional_special_tokens": ["{@", "@}"]}

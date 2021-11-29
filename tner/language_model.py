@@ -57,8 +57,7 @@ class TransformersNER:
                  max_length: int = 512,
                  crf: bool = False,
                  label2id: Dict = None,
-                 cache_dir: str = None,
-                 additional_special_tokens: List = None):
+                 cache_dir: str = None):
         self.model_name = model
         self.max_length = max_length
 
@@ -103,13 +102,6 @@ class TransformersNER:
             )
         else:
             self.tokenizer = TokenizerFixed(self.model_name, cache_dir=cache_dir, id2label=self.id2label)
-
-        # add special tokens
-        if additional_special_tokens is not None:
-            logging.info('add new sp tokens to tokenizer:\n \t {}'.format(additional_special_tokens))
-            _tokens = [t for t in additional_special_tokens if t not in self.tokenizer.tokenizer.all_special_tokens]
-            if len(_tokens) > 0:
-                self.tokenizer.tokenizer.add_special_tokens({'additional_special_tokens': _tokens})
 
     def train(self):
         self.model.train()

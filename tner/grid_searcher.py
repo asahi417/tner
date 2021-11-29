@@ -66,7 +66,6 @@ class GridSearcher:
                  checkpoint_dir: str,
                  dataset: (str, List),
                  model: str = 'xlm-roberta-large',
-                 additional_special_tokens: List = None,
                  fp16: bool = False,
                  lower_case: bool = False,
                  epoch: int = 10,
@@ -102,8 +101,7 @@ class GridSearcher:
             'batch_size': batch_size,
             'epoch': epoch,
             'max_length': max_length,
-            'lower_case': lower_case,
-            'additional_special_tokens': additional_special_tokens
+            'lower_case': lower_case
         }
 
         # dynamic config
