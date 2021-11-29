@@ -12,13 +12,13 @@ def arguments(parser):
     parser.add_argument('-d', '--dataset', help='dataset: {}'.format(VALID_DATASET), default='wnut2017', type=str)
     parser.add_argument('-m', '--model', help='pretrained language model', default='roberta-base', type=str)
     parser.add_argument('-e', '--epoch', help='epoch', default=15, type=int)
-    parser.add_argument('-g', '--gradient-accumulation-steps', help='', default=4, type=int)
     parser.add_argument('-b', '--batch-size', help='batch size', default=128, type=int)
     parser.add_argument('--fp16', help='fp16', action='store_true')
     parser.add_argument('--num-workers', default=0, type=int)
     parser.add_argument('--interval', default=10, type=int)
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
+    parser.add_argument('--additional-special-tokens', help='', default=None, type=str)
     return parser
 
 
@@ -30,6 +30,7 @@ def arguments_training(parser):
     parser.add_argument('--weight-decay', help='weight decay', default=None, type=float)
     parser.add_argument('--max-grad-norm', default=None, type=float)
     parser.add_argument('--lr-warmup-step-ratio', default=None, type=float)
+    parser.add_argument('-g', '--gradient-accumulation-steps', help='', default=1, type=int)
     # monitoring parameter
     parser.add_argument('--epoch-save', default=1, type=int)
     return parser
@@ -46,6 +47,7 @@ def arguments_parameter_search(parser):
     parser.add_argument('--crf', default='0,1', type=str)
     parser.add_argument('--max-grad-norm', default='-1,1', type=str)
     parser.add_argument('--lr-warmup-step-ratio', default='-1,0.3', type=str)
+    parser.add_argument('-g', '--gradient-accumulation-steps', help='', default='1,4', type=int)
     return parser
 
 
@@ -71,7 +73,8 @@ def main_train():
         fp16=opt.fp16,
         gradient_accumulation_steps=opt.gradient_accumulation_steps,
         max_grad_norm=opt.max_grad_norm,
-        lr_warmup_step_ratio=opt.lr_warmup_step_ratio
+        lr_warmup_step_ratio=opt.lr_warmup_step_ratio,
+        additional_special_tokens=None if opt.additional_special_tokens is None else opt.additional_special_tokens.split(',')
     )
     trainer.train(
         epoch_save=opt.epoch_save,
@@ -105,7 +108,9 @@ def main_train_search():
         lr_warmup_step_ratio=[float(i) if float(i) != -1 else None for i in opt.lr_warmup_step_ratio.split(',')],
         max_grad_norm=[float(i) if float(i) != -1 else None for i in opt.max_grad_norm.split(',')],
         batch_size_eval=opt.batch_size_eval,
-        max_length_eval=opt.max_length_eval
+        max_length_eval=opt.max_length_eval,
+        additional_special_tokens=None if opt.additional_special_tokens is None else opt.additional_special_tokens.split(
+            ',')
     )
     trainer.run(interval=opt.interval, num_workers=opt.num_workers)
 

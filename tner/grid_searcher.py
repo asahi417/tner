@@ -66,9 +66,9 @@ class GridSearcher:
                  checkpoint_dir: str,
                  dataset: (str, List),
                  model: str = 'xlm-roberta-large',
+                 additional_special_tokens: List = None,
                  fp16: bool = False,
                  lower_case: bool = False,
-                 gradient_accumulation_steps: int = 4,
                  epoch: int = 10,
                  epoch_partial: int = 5,
                  n_max_config: int = 5,
@@ -76,6 +76,7 @@ class GridSearcher:
                  max_length_eval: int = 256,
                  batch_size: int = 128,
                  batch_size_eval: int = 32,
+                 gradient_accumulation_steps: List or int = 1,
                  crf: List or bool = True,
                  lr: List or float = 1e-4,
                  weight_decay: List or float = None,
@@ -98,11 +99,11 @@ class GridSearcher:
             'dataset': dataset,
             'model': model,
             'fp16': fp16,
-            'gradient_accumulation_steps': gradient_accumulation_steps,
             'batch_size': batch_size,
             'epoch': epoch,
             'max_length': max_length,
-            'lower_case': lower_case
+            'lower_case': lower_case,
+            'additional_special_tokens': additional_special_tokens
         }
 
         # dynamic config
@@ -127,7 +128,8 @@ class GridSearcher:
             'random_seed': to_list(random_seed),
             'weight_decay': to_list(weight_decay),
             'lr_warmup_step_ratio': to_list(lr_warmup_step_ratio),
-            'max_grad_norm': to_list(max_grad_norm)
+            'max_grad_norm': to_list(max_grad_norm),
+            'gradient_accumulation_steps': to_list(gradient_accumulation_steps)
         }
 
         self.all_dynamic_configs = list(product(
@@ -136,7 +138,8 @@ class GridSearcher:
             self.dynamic_config['random_seed'],
             self.dynamic_config['weight_decay'],
             self.dynamic_config['lr_warmup_step_ratio'],
-            self.dynamic_config['max_grad_norm']
+            self.dynamic_config['max_grad_norm'],
+            self.dynamic_config['gradient_accumulation_steps']
         ))
 
     def initialize_searcher(self):
@@ -211,7 +214,8 @@ class GridSearcher:
                 'random_seed': dynamic_config[2],
                 'weight_decay': dynamic_config[3],
                 'lr_warmup_step_ratio': dynamic_config[4],
-                'max_grad_norm': dynamic_config[5]
+                'max_grad_norm': dynamic_config[5],
+                'gradient_accumulation_steps': dynamic_config[6]
             }
             config.update(tmp_dynamic_config)
             ex_dynamic_config = [(k_, [v[k] for k in sorted(tmp_dynamic_config.keys())]) for k_, v in ckpt_exist.items()]

@@ -71,7 +71,8 @@ class Trainer:
                  weight_decay: float = 1e-7,
                  lr_warmup_step_ratio: int = None,
                  max_grad_norm: float = None,
-                 disable_log: bool = False):
+                 disable_log: bool = False,
+                 additional_special_tokens: List = None):
 
         logging.info('initialize model trainer')
 
@@ -92,7 +93,8 @@ class Trainer:
             gradient_accumulation_steps=gradient_accumulation_steps,
             crf=crf,
             lr_warmup_step_ratio=lr_warmup_step_ratio,
-            max_grad_norm=max_grad_norm
+            max_grad_norm=max_grad_norm,
+            additional_special_tokens=additional_special_tokens
         )
         random.seed(self.config.random_seed)
         torch.manual_seed(self.config.random_seed)
@@ -115,7 +117,9 @@ class Trainer:
                 epoch = sorted([int(i.split('epoch_')[-1]) for i in ckpts], reverse=True)[0]
                 path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
                 logging.info('load checkpoint from {}'.format(path))
-                self.model = TransformersNER(model=path, crf=self.config.crf, max_length=self.config.max_length)
+                self.model = TransformersNER(
+                    model=path, crf=self.config.crf, max_length=self.config.max_length,
+                    additional_special_tokens=self.config['additional_special_tokens'])
                 self.current_epoch = epoch
                 assert self.current_epoch <= self.config.epoch, 'model training is done'
                 self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
@@ -136,7 +140,8 @@ class Trainer:
             )
             logging.info('initialize checkpoint with {}'.format(self.config.model))
             self.model = TransformersNER(
-                model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
+                model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length,
+                additional_special_tokens=self.config['additional_special_tokens'])
             self.current_epoch = 0
             self.optimizer, self.scheduler = self.setup_optimizer(step_per_epoch=step_per_epoch)
         # GPU mixture precision
