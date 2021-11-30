@@ -164,6 +164,8 @@ class Trainer:
                 '.lower' if self.config.lower_case else '',
                 '.crf' if self.config.crf else ''
             )
+        else:
+            self.data_cache_path = None
 
     def setup_optimizer(self, epoch: int = None, step_per_epoch: int = None):
         # optimizer
