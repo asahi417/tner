@@ -15,6 +15,8 @@ import transformers
 from .language_model import TransformersNER
 from .data import get_dataset, CACHE_DIR
 
+OPTIMIZER_ON_CPU = int(os.getenv('OPTIMIZER_ON_CPU', 0))
+
 
 class Config:
     """ Model checkpoint managing class. """
@@ -184,7 +186,9 @@ class Trainer:
             logging.info('load optimizer from {}'.format(path))
             self.release_cache()
             gc.collect()
-            stats = torch.load(path, map_location=torch.device(self.model.device))
+            device = 'cpu' if OPTIMIZER_ON_CPU == 1 else self.model.device
+            logging.info('optimizer is loading on {}'.format(device))
+            stats = torch.load(path, map_location=torch.device(device))
             optimizer.load_state_dict(stats['optimizer_state_dict'])
             if scheduler is not None:
                 logging.info('load scheduler from {}'.format(path))
