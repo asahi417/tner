@@ -7,7 +7,7 @@ import random
 import gc
 
 from glob import glob
-from typing import List
+from typing import List, Dict
 
 import torch
 import transformers
@@ -60,6 +60,7 @@ class Trainer:
     def __init__(self,
                  checkpoint_dir: str,
                  dataset: (str, List) = None,
+                 custom_dataset: Dict = None,
                  model: str = 'xlm-roberta-large',
                  crf: bool = False,
                  max_length: int = 128,
@@ -78,10 +79,12 @@ class Trainer:
         logging.info('initialize model trainer')
 
         # config
-        dataset = [dataset] if type(dataset) is str else dataset
+        if dataset is not None:
+            dataset = [dataset] if type(dataset) is str else dataset
         self.config = Config(
             checkpoint_dir=checkpoint_dir,
             dataset=dataset,
+            custom_dataset=custom_dataset,
             model=model,
             max_length=max_length,
             epoch=epoch,
@@ -122,7 +125,11 @@ class Trainer:
                 self.current_epoch = epoch
                 assert self.current_epoch <= self.config.epoch, 'model training is done'
                 self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
-                    self.config.dataset, lower_case=lower_case, label_to_id=self.model.label2id, fix_label_dict=True)
+                    data=self.config.dataset,
+                    custom_data=self.config.custom_dataset,
+                    lower_case=lower_case,
+                    label_to_id=self.model.label2id,
+                    fix_label_dict=True)
                 step_per_epoch = int(
                     len(self.dataset_split['train']['data'])/self.config.batch_size/self.config.gradient_accumulation_steps
                 )
@@ -131,9 +138,10 @@ class Trainer:
             except Exception:
                 logging.exception('error at loading checkpoint {}'.format(ckpts))
         if not flag:
-            # load dataset
             self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
-                self.config.dataset, lower_case=lower_case)
+                data=self.config.dataset,
+                custom_data=self.config.custom_dataset,
+                lower_case=lower_case)
             step_per_epoch = int(
                 len(self.dataset_split['train']['data']) / self.config.batch_size / self.config.gradient_accumulation_steps
             )
@@ -146,15 +154,16 @@ class Trainer:
         self.scaler = torch.cuda.amp.GradScaler(enabled=self.config.fp16)
 
         # cached data folder
-        os.makedirs(CACHE_DIR, exist_ok=True)
-        self.data_cache_path = '{}/data_encoded/{}.{}.{}{}{}.train.pkl'.format(
-            CACHE_DIR,
-            '_'.join(sorted(self.config.dataset)),
-            self.config.model,
-            self.config.max_length,
-            '.lower' if self.config.lower_case else '',
-            '.crf' if self.config.crf else ''
-        )
+        if self.config.dataset is not None:
+            os.makedirs(CACHE_DIR, exist_ok=True)
+            self.data_cache_path = '{}/data_encoded/{}.{}.{}{}{}.train.pkl'.format(
+                CACHE_DIR,
+                '_'.join(sorted(self.config.dataset)),
+                self.config.model,
+                self.config.max_length,
+                '.lower' if self.config.lower_case else '',
+                '.crf' if self.config.crf else ''
+            )
 
     def setup_optimizer(self, epoch: int = None, step_per_epoch: int = None):
         # optimizer

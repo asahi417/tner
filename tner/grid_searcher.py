@@ -4,7 +4,7 @@ import os
 import logging
 import string
 import random
-from typing import List
+from typing import List, Dict
 from itertools import product
 
 from .trainer import Trainer
@@ -23,7 +23,8 @@ def get_random_string(length: int = 6, exclude: List = None):
 def evaluate(model,
              batch_size,
              max_length,
-             data,
+             data=None,
+             custom_dataset=None,
              export_dir=None,
              data_cache_prefix: str = None,
              lower_case: bool = False):
@@ -42,7 +43,11 @@ def evaluate(model,
     path_metric = None
     lm = TransformersNER(model, max_length=max_length)
     lm.eval()
-    dataset_split, _, _, _ = get_dataset(data, lower_case=lower_case, label_to_id=lm.label2id, fix_label_dict=True)
+    dataset_split, _, _, _ = get_dataset(data=data,
+                                         custom_data=custom_dataset,
+                                         lower_case=lower_case,
+                                         label_to_id=lm.label2id,
+                                         fix_label_dict=True)
     metrics_dict = {}
     if data_cache_prefix is not None and lm.crf_layer is not None:
         data_cache_prefix = '{}.crf'.format(data_cache_prefix)
@@ -70,7 +75,8 @@ class GridSearcher:
 
     def __init__(self,
                  checkpoint_dir: str,
-                 dataset: (str, List),
+                 dataset: (str, List) = None,
+                 custom_dataset: Dict = None,
                  model: str = 'xlm-roberta-large',
                  fp16: bool = False,
                  lower_case: bool = False,
@@ -97,11 +103,12 @@ class GridSearcher:
             'metric': metric
         }
 
-        dataset_split, _, _, _ = get_dataset(dataset, lower_case=lower_case)
+        dataset_split, _, _, _ = get_dataset(dataset, lower_case=lower_case, custom_data=custom_dataset)
         assert 'valid' in dataset_split.keys(), 'Grid search need validation set.'
         # static configs
         self.static_config = {
             'dataset': dataset,
+            'custom_dataset': custom_dataset,
             'model': model,
             'fp16': fp16,
             'batch_size': batch_size,
@@ -191,14 +198,17 @@ class GridSearcher:
     def run(self, num_workers: int = 0, interval: int = 25):
 
         self.initialize_searcher()
-        _data = '_'.join(sorted(self.static_config['dataset'])) if type(self.static_config['dataset']) is list else self.static_config['dataset']
-        data_cache_prefix = '{}/data_encoded/{}.{}.{}{}'.format(
-            CACHE_DIR,
-            _data,
-            self.static_config['model'],
-            self.static_config['max_length'],
-            '.lower' if self.static_config['lower_case'] else '',
-        )
+        if self.static_config['dataset'] is not None:
+            _data = '_'.join(sorted(self.static_config['dataset'])) if type(self.static_config['dataset']) is list else self.static_config['dataset']
+            data_cache_prefix = '{}/data_encoded/{}.{}.{}{}'.format(
+                CACHE_DIR,
+                _data,
+                self.static_config['model'],
+                self.static_config['max_length'],
+                '.lower' if self.static_config['lower_case'] else '',
+            )
+        else:
+            data_cache_prefix = None
 
         ###########
         # 1st RUN #
@@ -255,6 +265,7 @@ class GridSearcher:
                     batch_size=self.batch_size_eval,
                     max_length=self.eval_config['max_length_eval'],
                     data=self.static_config['dataset'],
+                    custom_dataset=self.static_config['custom_dataset'],
                     data_cache_prefix=data_cache_prefix
                 )
             except Exception:
@@ -300,6 +311,7 @@ class GridSearcher:
                         batch_size=self.batch_size_eval,
                         max_length=self.eval_config['max_length_eval'],
                         data=self.static_config['dataset'],
+                        custom_dataset=self.static_config['custom_dataset'],
                         data_cache_prefix=data_cache_prefix
                     )
                 except Exception:

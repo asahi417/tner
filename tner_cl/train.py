@@ -9,7 +9,10 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 
 def arguments(parser):
     parser.add_argument('-c', '--checkpoint-dir', help='directory to save checkpoint', required=True, type=str)
-    parser.add_argument('-d', '--dataset', help='dataset: {}'.format(VALID_DATASET), default='wnut2017', type=str)
+    parser.add_argument('-d', '--dataset', help='dataset: {}'.format(VALID_DATASET), default=None, type=str)
+    parser.add_argument('--custom-dataset-train', help='custom data set', default=None, type=str)
+    parser.add_argument('--custom-dataset-valid', help='custom data set', default=None, type=str)
+    parser.add_argument('--custom-dataset-test', help='custom data set', default=None, type=str)
     parser.add_argument('-m', '--model', help='pretrained language model', default='roberta-base', type=str)
     parser.add_argument('-e', '--epoch', help='epoch', default=15, type=int)
     parser.add_argument('-b', '--batch-size', help='batch size', default=128, type=int)
@@ -51,16 +54,30 @@ def arguments_parameter_search(parser):
     return parser
 
 
+def format_data(opt):
+    assert opt.dataset is not None or opt.custom_dataset_train is not None
+    if opt.dataset is not None:
+        return opt.dataset.split(','), None
+    custom_data = {'train': opt.custom_dataset_train}
+    if opt.custom_dataset_valid is not None:
+        custom_data['valid'] = opt.custom_dataset_valid
+    if opt.custom_dataset_test is not None:
+        custom_data['test'] = opt.custom_dataset_test
+    return None, custom_data
+
+
 def main_train():
     parser = argparse.ArgumentParser(description='Fine-tuning on NER.')
     parser = arguments(parser)
     parser = arguments_training(parser)
     opt = parser.parse_args()
+    dataset, custom_dataset = format_data(opt)
 
     # train model
     trainer = Trainer(
+        dataset=dataset,
+        custom_dataset=custom_dataset,
         checkpoint_dir=opt.checkpoint_dir,
-        dataset=opt.dataset,
         random_seed=opt.random_seed,
         model=opt.model,
         lower_case=opt.lower_case,
@@ -87,10 +104,12 @@ def main_train_search():
     parser = arguments_parameter_search(parser)
     opt = parser.parse_args()
 
+    dataset, custom_dataset = format_data(opt)
     # train model
     trainer = GridSearcher(
+        dataset=dataset,
+        custom_dataset=custom_dataset,
         checkpoint_dir=opt.checkpoint_dir,
-        dataset=opt.dataset,
         model=opt.model,
         lower_case=opt.lower_case,
         fp16=opt.fp16,

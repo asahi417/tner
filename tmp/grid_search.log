@@ -1,0 +1,28 @@
+2021-11-30 23:04:31,706 INFO     INITIALIZE GRID SEARCHER: 48 configs to try
+2021-11-30 23:04:31,706 INFO     ## 1st RUN: Configuration 0/48 ##
+2021-11-30 23:04:31,707 INFO     initialize model trainer
+2021-11-30 23:04:31,707 INFO     initialize checkpoint at tmp/model_etblzp
+2021-11-30 23:04:31,707 INFO     hyperparameters
+2021-11-30 23:04:31,707 INFO     	 * dataset: None
+2021-11-30 23:04:31,707 INFO     	 * custom_dataset: {'train': './cache/twitter_ner/2020.bio.train.txt', 'valid': './cache/twitter_ner/2020.bio.dev.txt'}
+2021-11-30 23:04:31,707 INFO     	 * model: roberta-base
+2021-11-30 23:04:31,707 INFO     	 * max_length: 128
+2021-11-30 23:04:31,707 INFO     	 * epoch: 15
+2021-11-30 23:04:31,707 INFO     	 * batch_size: 128
+2021-11-30 23:04:31,707 INFO     	 * lr: 0.0001
+2021-11-30 23:04:31,707 INFO     	 * weight_decay: 1e-07
+2021-11-30 23:04:31,708 INFO     	 * fp16: False
+2021-11-30 23:04:31,708 INFO     	 * lower_case: False
+2021-11-30 23:04:31,708 INFO     	 * random_seed: 0
+2021-11-30 23:04:31,708 INFO     	 * gradient_accumulation_steps: 4
+2021-11-30 23:04:31,708 INFO     	 * crf: True
+2021-11-30 23:04:31,708 INFO     	 * lr_warmup_step_ratio: None
+2021-11-30 23:04:31,708 INFO     	 * max_grad_norm: None
+2021-11-30 23:04:31,709 INFO     loading custom data: {'train': './cache/twitter_ner/2020.bio.train.txt', 'valid': './cache/twitter_ner/2020.bio.dev.txt'}
+2021-11-30 23:04:31,709 INFO     formatting custom dataset from ./cache/twitter_ner/2020.bio.train.txt
+2021-11-30 23:04:31,709 INFO     formatting custom dataset from ./cache/twitter_ner/2020.bio.dev.txt
+2021-11-30 23:04:32,101 INFO     dataset None/./cache/twitter_ner/2020.bio.train.txt: 4616 entries
+2021-11-30 23:04:32,150 INFO     dataset None/./cache/twitter_ner/2020.bio.dev.txt: 576 entries
+2021-11-30 23:04:32,150 INFO     initialize checkpoint with roberta-base
+2021-11-30 23:04:32,150 INFO     initialize language model with `roberta-base`
+2021-11-30 23:04:34,233 INFO     0 GPUs are in use
