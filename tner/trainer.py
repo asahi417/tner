@@ -260,6 +260,7 @@ class Trainer:
             loss = self.model.encode_to_loss(encode)
 
             self.scaler.scale(loss).backward()
+
             if self.config.max_grad_norm is not None:
                 self.scaler.unscale_(self.optimizer)
                 torch.nn.utils.clip_grad_norm_(self.model.model.parameters(), self.config.max_grad_norm)
