@@ -2,6 +2,7 @@ import os
 import logging
 import pickle
 import re
+import gc
 from typing import List, Dict
 from itertools import groupby
 
@@ -45,6 +46,7 @@ def load_hf(model_name, cache_dir, label2id, local_files_only=False):
             model_name,
             cache_dir=cache_dir,
             local_files_only=local_files_only)
+    gc.collect()
     model = transformers.AutoModelForTokenClassification.from_pretrained(
         model_name, config=config, cache_dir=cache_dir, local_files_only=local_files_only)
     return model
