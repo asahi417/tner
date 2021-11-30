@@ -187,7 +187,8 @@ class TransformersNER:
                 num_workers: int = 0,
                 cache_path: str = None):
         loader = self.get_data_loader(
-            inputs, labels, batch_size=batch_size, num_workers=num_workers, mask_by_padding_token=True, cache_path=cache_path)
+            inputs, labels, batch_size=batch_size, num_workers=num_workers,
+            mask_by_padding_token=True, cache_path=cache_path)
         label_list = []
         pred_list = []
         for i in loader:
@@ -199,6 +200,9 @@ class TransformersNER:
                 tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
                 pred_list.append(list(list(zip(*tmp))[0]))
                 label_list.append(list(list(zip(*tmp))[1]))
+            print(label_list)
+            print(pred_list)
+            input()
 
         label_list = [[self.id2label[__p] for __p in _p] for _p in label_list]
         pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]

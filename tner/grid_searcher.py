@@ -21,41 +21,47 @@ def get_random_string(length: int = 6, exclude: List = None):
 
 
 def evaluate(model,
-             export_dir,
              batch_size,
              max_length,
              data,
-             data_cache_prefix,
+             export_dir=None,
+             data_cache_prefix: str = None,
              lower_case: bool = False):
     """ Evaluate question-generation model """
-    if lower_case:
-        path_metric = '{}/metric.lower.json'.format(export_dir)
-    else:
-        path_metric = '{}/metric.json'.format(export_dir)
+    if export_dir is not None:
+        if lower_case:
+            path_metric = '{}/metric.lower.json'.format(export_dir)
+        else:
+            path_metric = '{}/metric.json'.format(export_dir)
+        if os.path.exists(path_metric):
+            with open(path_metric, 'r') as f:
+                metric = json.load(f)
+            return metric
+        os.makedirs(export_dir, exist_ok=True)
 
-    if os.path.exists(path_metric):
-        with open(path_metric, 'r') as f:
-            metric = json.load(f)
-        return metric
-
-    os.makedirs(export_dir, exist_ok=True)
+    path_metric = None
     lm = TransformersNER(model, max_length=max_length)
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data, lower_case=lower_case, label_to_id=lm.label2id, fix_label_dict=True)
     metrics_dict = {}
-    if lm.crf_layer is not None:
+    if data_cache_prefix is not None and lm.crf_layer is not None:
         data_cache_prefix = '{}.crf'.format(data_cache_prefix)
     for split in dataset_split.keys():
         if split == 'train':
             continue
+        if data_cache_prefix is not None:
+            cache_path = '{}.{}.pkl'.format(data_cache_prefix, split)
+        else:
+            cache_path = None
         metrics_dict[split] = lm.span_f1(
             inputs=dataset_split[split]['data'],
             labels=dataset_split[split]['label'],
             batch_size=batch_size,
-            cache_path='{}.{}.pkl'.format(data_cache_prefix, split)
+            cache_path=cache_path
         )
-    with open(path_metric, 'w') as f:
-        json.dump(metrics_dict, f)
+    if path_metric is not None:
+        with open(path_metric, 'w') as f:
+            json.dump(metrics_dict, f)
     return metrics_dict
 
 

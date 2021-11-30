@@ -52,7 +52,8 @@ setup(
     entry_points={
         'console_scripts': [
             'tner-train = tner_cl.train:main_train',
-            'tner-train-search = tner_cl.train:main_train_search'
+            'tner-train-search = tner_cl.train:main_train_search',
+            'tner-eval = tner_cl.evaluate:main'
         ],
     }
 )
