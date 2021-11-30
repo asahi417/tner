@@ -115,7 +115,6 @@ class Trainer:
                 epoch = sorted([int(i.split('epoch_')[-1]) for i in ckpts], reverse=True)[0]
                 path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
                 logging.info('load checkpoint from {}'.format(path))
-                self.release_cache()
                 self.model = TransformersNER(
                     model=path, crf=self.config.crf, max_length=self.config.max_length)
                 self.current_epoch = epoch
@@ -137,7 +136,6 @@ class Trainer:
                 len(self.dataset_split['train']['data']) / self.config.batch_size / self.config.gradient_accumulation_steps
             )
             logging.info('initialize checkpoint with {}'.format(self.config.model))
-            self.release_cache()
             self.model = TransformersNER(
                 model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.current_epoch = 0
