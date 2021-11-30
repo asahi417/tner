@@ -148,7 +148,7 @@ class TransformersNER:
                 pred_results.append(tag_seq)
             return pred_results
         else:
-            return torch.max(output['logits'], dim=-1)[1].cpu().tolist()
+            return torch.max(output['logits'], dim=-1)[1].cpu().detach().int().tolist()
 
     def get_data_loader(self,
                         inputs,
@@ -186,13 +186,14 @@ class TransformersNER:
                 batch_size: int = None,
                 num_workers: int = 0,
                 cache_path: str = None):
+        self.model.eval()
         loader = self.get_data_loader(
             inputs, labels, batch_size=batch_size, num_workers=num_workers,
             mask_by_padding_token=True, cache_path=cache_path)
         label_list = []
         pred_list = []
         for i in loader:
-            labels = i['labels'].cpu().tolist()
+            labels = i.pop('labels').cpu().tolist()
             pred = self.encode_to_prediction(i)
             assert len(labels) == len(pred)
             for _l, _p in zip(labels, pred):
@@ -200,11 +201,11 @@ class TransformersNER:
                 tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
                 pred_list.append(list(list(zip(*tmp))[0]))
                 label_list.append(list(list(zip(*tmp))[1]))
-            print(label_list)
-            print(pred_list)
-            input()
+            # print(label_list)
+            # print(pred_list)
+            # input()
 
-        label_list = [[self.id2label[__p] for __p in _p] for _p in label_list]
+        label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
         pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
         # compute metrics
         logging.info('\n{}'.format(classification_report(label_list, pred_list)))

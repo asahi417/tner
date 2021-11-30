@@ -81,7 +81,6 @@ class TokenizerFixed:
                             fixed_labels += [PAD_TOKEN_LABEL_ID] * (sub_length - 1)
                         else:
                             fixed_labels += [self.label2id['I-{}'.format(entity)]] * (sub_length - 1)
-            # input(fixed_labels)
             if mask_by_padding_token:
                 fixed_labels = [PAD_TOKEN_LABEL_ID] * len(self.sp_token_start['labels']) + fixed_labels
                 fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['labels']))]
