@@ -73,8 +73,7 @@ def main_train():
         fp16=opt.fp16,
         gradient_accumulation_steps=opt.gradient_accumulation_steps,
         max_grad_norm=opt.max_grad_norm,
-        lr_warmup_step_ratio=opt.lr_warmup_step_ratio,
-        additional_special_tokens=None if opt.additional_special_tokens is None else opt.additional_special_tokens.split(',')
+        lr_warmup_step_ratio=opt.lr_warmup_step_ratio
     )
     trainer.train(
         epoch_save=opt.epoch_save,
@@ -108,9 +107,7 @@ def main_train_search():
         lr_warmup_step_ratio=[float(i) if float(i) != -1 else None for i in opt.lr_warmup_step_ratio.split(',')],
         max_grad_norm=[float(i) if float(i) != -1 else None for i in opt.max_grad_norm.split(',')],
         batch_size_eval=opt.batch_size_eval,
-        max_length_eval=opt.max_length_eval,
-        additional_special_tokens=None if opt.additional_special_tokens is None else opt.additional_special_tokens.split(
-            ',')
+        max_length_eval=opt.max_length_eval
     )
     trainer.run(interval=opt.interval, num_workers=opt.num_workers)
 
