@@ -94,6 +94,7 @@ class TokenizerFixed:
                         else:
                             entity = '-'.join(self.id2label[label].split('-')[1:])
                             fixed_labels += [self.label2id['I-{}'.format(entity)]] * (sub_length - 1)
+                print(word, label, fixed_labels[-1])
             tmp_padding = PAD_TOKEN_LABEL_ID if mask_by_padding_token else self.pad_ids['labels']
             fixed_labels = [tmp_padding] * len(self.sp_token_start['input_ids']) + fixed_labels
             fixed_labels = fixed_labels[:min(len(fixed_labels), max_seq_length - len(self.sp_token_end['input_ids']))]
