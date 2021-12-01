@@ -148,7 +148,7 @@ class TokenizerFixed:
                     tokens,
                     labels: List = None,
                     language: str = 'en',
-                    max_length: int = None,
+                    max_length: int = 128,
                     mask_by_padding_token: bool = False):
         if language == 'ja':
             raise ValueError('Need to refactor')
