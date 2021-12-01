@@ -208,9 +208,10 @@ class TransformersNER:
             pred = self.encode_to_prediction(i)
             input_id = i.pop('input_ids').cpu().tolist()
             assert len(label) == len(pred) == len(input_id)
-            for _l, _p in zip(label, pred):
+            for _l, _p, _i in zip(label, pred, input_id):
                 assert len(_l) == len(_p)
                 print(_l)
+                print(self.tokenizer.tokenizer.convert_ids_to_tokens(_i))
                 tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
                 tmp_pred = list(list(zip(*tmp))[0])
                 tmp_label = list(list(zip(*tmp))[1])
