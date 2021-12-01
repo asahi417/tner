@@ -11,7 +11,7 @@ def get_options():
     parser.add_argument('-m', '--model', help='model', required=True, type=str)
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     parser.add_argument('-b', '--batch-size', default=16, type=int, help='batch size')
-    parser.add_argument('-d', '--data', help='dataset to evaluate', default=None, type=str)
+    parser.add_argument('-d', '--dataset', help='dataset to evaluate', default=None, type=str)
     parser.add_argument('--custom-dataset-train', help='custom data set', default=None, type=str)
     parser.add_argument('--custom-dataset-valid', help='custom data set', default=None, type=str)
     parser.add_argument('--custom-dataset-test', help='custom data set', default=None, type=str)
