@@ -8,16 +8,15 @@ from tner import TransformersNER
 
 def get_options():
     parser = argparse.ArgumentParser(description='command line tool to test finetuned NER model',)
-    parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
-    parser.add_argument('--debug', help='show debug log', action='store_true')
+    parser.add_argument('-m', '--model', help='model', required=True, type=str)
+    parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     return parser.parse_args()
 
 
 def main():
     opt = get_options()
-    level = logging.DEBUG if opt.debug else logging.INFO
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=level, datefmt='%Y-%m-%d %H:%M:%S')
-    classifier = TransformersNER(opt.checkpoint)
+    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+    classifier = TransformersNER(opt.model, max_length=opt.max_length)
     test_sentences = [
         'I live in United States.',
         'I have an Apple computer.',

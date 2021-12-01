@@ -1,1 +1,0 @@
-{"lr": [0.0001, 1e-05, 1e-06], "crf": [true, false], "random_seed": [0], "weight_decay": [1e-07], "lr_warmup_step_ratio": [null, 0.3], "max_grad_norm": [null, 1.0], "gradient_accumulation_steps": [4, 1]}

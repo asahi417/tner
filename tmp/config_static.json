@@ -1,1 +1,0 @@
-{"dataset": null, "custom_dataset": {"train": "./cache/twitter_ner/2020.bio.train.txt", "valid": "./cache/twitter_ner/2020.bio.dev.txt"}, "model": "roberta-base", "fp16": false, "batch_size": 128, "epoch": 15, "max_length": 128, "lower_case": false}

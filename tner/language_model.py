@@ -56,7 +56,7 @@ class TransformersNER:
 
     def __init__(self,
                  model: str,
-                 max_length: int = 512,
+                 max_length: int = 128,
                  crf: bool = False,
                  label2id: Dict = None,
                  cache_dir: str = None):
@@ -152,6 +152,7 @@ class TransformersNER:
 
     def get_data_loader(self,
                         inputs,
+                        is_tokenized: bool = True,
                         labels: List = None,
                         batch_size: int = None,
                         num_workers: int = 0,
@@ -165,7 +166,11 @@ class TransformersNER:
             out = pickle_load(cache_path)
         else:
             out = self.tokenizer.encode_plus_all(
-                tokens=inputs, labels=labels, max_length=self.max_length, mask_by_padding_token=mask_by_padding_token)
+                tokens=inputs,
+                is_tokenized=is_tokenized,
+                labels=labels,
+                max_length=self.max_length,
+                mask_by_padding_token=mask_by_padding_token)
 
             # remove overflow text
             logging.info('encode all the data: {}'.format(len(out)))
@@ -188,8 +193,13 @@ class TransformersNER:
                 cache_path: str = None):
         self.model.eval()
         loader = self.get_data_loader(
-            inputs, labels, batch_size=batch_size, num_workers=num_workers,
-            mask_by_padding_token=True, cache_path=cache_path)
+            inputs,
+            labels=labels,
+            is_tokenized=True,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            mask_by_padding_token=True,
+            cache_path=cache_path)
         label_list = []
         pred_list = []
         for i in loader:
@@ -201,9 +211,6 @@ class TransformersNER:
                 tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
                 pred_list.append(list(list(zip(*tmp))[0]))
                 label_list.append(list(list(zip(*tmp))[1]))
-            # print(label_list)
-            # print(pred_list)
-            # input()
 
         label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
         pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
@@ -221,32 +228,40 @@ class TransformersNER:
 
     def predict(self,
                 inputs: List,
+                is_tokenized: bool = True,
                 batch_size: int = None,
                 num_workers: int = 0,
-                decode_bio: bool = False,
-                cache_path: str = None):
+                decode_bio: bool = False):
         self.eval()
-        loader = self.get_data_loader(inputs, batch_size=batch_size, num_workers=num_workers, cache_path=cache_path)
+        loader = self.get_data_loader(
+            inputs,
+            is_tokenized=is_tokenized,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            mask_by_padding_token=True)
         pred_list = []
         inputs_list = []
         for i in loader:
             input_ids = i['input_ids'].cpu().tolist()
             pred = self.encode_to_prediction(i)
-            for _input_ids, _pred in zip(input_ids, pred):
-                _tmp = [(_i, self.id2label[_p])
-                        for _i, _p in zip(_input_ids, _pred) if _i != self.tokenizer.pad_ids['input_ids']]
+            assert len(input_ids) == len(pred)
+            for _i, _p in zip(input_ids, pred):
+                assert len(_i) == len(_p)
+                _tmp = [(__i, self.id2label[__p])
+                        for __i, __p in zip(_i, _p) if __i != self.tokenizer.pad_ids['input_ids']]
                 pred_list.append([_p for _i, _p in _tmp])
                 inputs_list.append([_i for _i, _p in _tmp])
         if decode_bio:
             return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
-        return pred_list
+        inputs_subtoken = [self.tokenizer.tokenizer.convert_ids_to_tokens(i) for i in inputs_list]
+        return pred_list, inputs_subtoken
 
     def decode_ner_tags(self, tag_sequence, input_sequence):
         assert len(tag_sequence) == len(input_sequence)
-        unique_type = list(set(i.split('-')[-1] for i in tag_sequence if i != 'O'))
+        unique_type = list(set('-'.join(i.split('-')[1:]) for i in tag_sequence if i != 'O'))
         result = []
         for i in unique_type:
-            mask = [t.split('-')[-1] == i for t in tag_sequence]
+            mask = ['-'.join(t.split('-')[1:]) == i for t in tag_sequence]
 
             # find blocks of True in a boolean list
             group = list(map(lambda x: list(x[1]), groupby(mask)))

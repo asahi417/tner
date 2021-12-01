@@ -1,7 +1,6 @@
 """ Fine-tune transformers on NER dataset """
 import argparse
 import logging
-import os
 import json
 
 from tner.grid_searcher import evaluate
