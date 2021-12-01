@@ -86,13 +86,13 @@ class TokenizerFixed:
                 else:
                     sub_length = len(self.tokenizer.tokenize(word))
                 if sub_length > 1:
-                    if self.id2label[label] == 'O':
-                        fixed_labels += [self.label2id['O']] * (sub_length - 1)
+                    if mask_by_padding_token:
+                        fixed_labels += [PAD_TOKEN_LABEL_ID] * (sub_length - 1)
                     else:
-                        entity = '-'.join(self.id2label[label].split('-')[1:])
-                        if mask_by_padding_token:
-                            fixed_labels += [PAD_TOKEN_LABEL_ID] * (sub_length - 1)
+                        if self.id2label[label] == 'O':
+                            fixed_labels += [self.label2id['O']] * (sub_length - 1)
                         else:
+                            entity = '-'.join(self.id2label[label].split('-')[1:])
                             fixed_labels += [self.label2id['I-{}'.format(entity)]] * (sub_length - 1)
             tmp_padding = PAD_TOKEN_LABEL_ID if mask_by_padding_token else self.pad_ids['labels']
             fixed_labels = [tmp_padding] * len(self.sp_token_start['input_ids']) + fixed_labels
