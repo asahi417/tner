@@ -40,7 +40,6 @@ def evaluate(model,
             return metric
         os.makedirs(export_dir, exist_ok=True)
 
-    path_metric = None
     lm = TransformersNER(model, max_length=max_length)
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data=data,
