@@ -9,7 +9,6 @@ import shutil
 from typing import Dict, List
 from itertools import chain
 from tqdm import tqdm
-from glob import glob
 from .japanese_tokenizer import SudachiWrapper
 
 STOPWORDS = ['None', '#']
@@ -483,7 +482,10 @@ def decode_all_files(files: Dict,
         else:
             unseen_entity = unseen_entity.intersection(unseen_entity_set)
         data_split[name] = data_dict
-        logging.info('dataset {0}/{1}: {2} entries'.format(data_path, filepath, len(data_dict['data'])))
+        if data_path is not None:
+            logging.info('dataset {0}/{1}: {2} entries'.format(data_path, filepath, len(data_dict['data'])))
+        else:
+            logging.info('dataset {0}: {1} entries'.format(filepath, len(data_dict['data'])))
     return data_split, unseen_entity, label_to_id
 
 
