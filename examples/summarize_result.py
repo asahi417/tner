@@ -16,5 +16,10 @@ for i in glob('./tner_output/search/*'):
         print('\t - config: {}'.format(config))
         with open('{}/eval/metric.json'.format(best_model)) as f:
             tmp = json.load(f)
-            print('\t - best micro f1 (test): {}'.format(tmp['test']['micro/f1']))
+            print('\t - best micro f1 (test)  : {}'.format(tmp['test']['micro/f1']))
+        full_metric = []
+        for m in glob('{}/*/eval/metric.json'.format(os.path.dirname(best_model))):
+            with open(m) as f:
+                full_metric.append(json.load(f)['test']['micro/f1'])
+        print('\t - oracle micro f1 (test): {}'.format(max(full_metric)))     
         print()
