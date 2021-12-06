@@ -41,7 +41,7 @@ class TokenizerFixed:
         """ NER specific transform pipeline """
         try:
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(transformer_tokenizer, cache_dir=cache_dir)
-        except ValueError:
+        except Exception:
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                 transformer_tokenizer, cache_dir=cache_dir, local_files_only=True)
         self.id2label = id2label

@@ -66,7 +66,7 @@ class TransformersNER:
         # load model
         try:
             self.model = load_hf(self.model_name, cache_dir, label2id)
-        except ValueError:
+        except Exception:
             self.model = load_hf(self.model_name, cache_dir, label2id, local_files_only=True)
 
         # load crf layer
