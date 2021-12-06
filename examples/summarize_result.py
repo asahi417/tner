@@ -4,10 +4,10 @@ from glob import glob
 
 for i in glob('./tner_output/search/*'):
     basename = os.path.basename(i)
-    print('* Model: {}'.format(basename))
+    print('*** MODEL: {} ***'.format(basename))
     for h in glob('{}/*/metric.2nd.json'.format(i)):
         dataset = os.path.basename(os.path.dirname(h))
-        print('\t - data: {}'.format(dataset))
+        print(' - DATA: {}'.format(dataset))
         with open(h) as f:
             tmp = json.load(f)
         _, best_metric = tmp[0]
@@ -18,13 +18,16 @@ for i in glob('./tner_output/search/*'):
         print('\t - model ckpt: {}'.format(best_model))
         with open('{}/trainer_config.json'.format(os.path.dirname(best_model))) as f:
             config = json.load(f)
-        print('\t - config: {}'.format(config))
+        print('\t - config')
+        for k, v in config:
+            print('\t\t{}: {}'.format(k, v))
         with open('{}/eval/metric.json'.format(best_model)) as f:
             tmp = json.load(f)
-            print('\t - best micro f1 (test)  : {}'.format(tmp['test']['micro/f1']))
-        full_metric = []
-        for m in glob('{}/*/eval/metric.json'.format(os.path.dirname(best_model))):
-            with open(m) as f:
-                full_metric.append(json.load(f)['test']['micro/f1'])
-        print('\t - oracle micro f1 (test): {}'.format(max(full_metric)))
+            for k, v in tmp.items():
+                print('\t - best micro f1 ({}) : {}'.format(k, tmp['micro/f1']))
+        # full_metric = []
+        # for m in glob('{}/*/eval/metric.json'.format(os.path.dirname(best_model))):
+        #     with open(m) as f:
+        #         full_metric.append(json.load(f)['test']['micro/f1'])
+        # print('\t - oracle micro f1 (test): {}'.format(max(full_metric)))
         print()
