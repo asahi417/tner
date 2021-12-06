@@ -24,7 +24,7 @@ for i in glob('./tner_output/search/*'):
         with open('{}/eval/metric.json'.format(best_model)) as f:
             tmp = json.load(f)
             for k, v in tmp.items():
-                print('\t - best micro f1 ({}) : {}'.format(k, tmp['micro/f1']))
+                print('\t - best micro f1 ({}) : {}'.format(k, v['micro/f1']))
         # full_metric = []
         # for m in glob('{}/*/eval/metric.json'.format(os.path.dirname(best_model))):
         #     with open(m) as f:
