@@ -352,8 +352,8 @@ def get_dataset_single(data_name: str = None,
         logging.info('loading custom data: {}'.format(custom_data))
         if 'language' in custom_data:
             language = custom_data.pop('language')
-        assert 'train' in custom_data, 'Training set not found, make sure you include `train` in the custom data.'
-        assert 'valid' in custom_data, 'Validation set not found, make sure you include `valid` in the custom data.'
+        # assert 'train' in custom_data, 'Training set not found, make sure you include `train` in the custom data.'
+        # assert 'valid' in custom_data, 'Validation set not found, make sure you include `valid` in the custom data.'
         for k, v in custom_data.items():
             logging.info('formatting custom dataset from {}'.format(v))
             if not os.path.exists(v):
