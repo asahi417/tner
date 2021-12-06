@@ -15,6 +15,7 @@ for i in glob('./tner_output/search/*'):
         if len(best_models) > 1:
             print('\t WARNING: {} best models: {}'.format(len(best_models), best_models))
         best_model = best_models[0]
+        print('\t - model ckpt: {}'.format(best_model))
         with open('{}/trainer_config.json'.format(os.path.dirname(best_model))) as f:
             config = json.load(f)
         print('\t - config: {}'.format(config))

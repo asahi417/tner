@@ -27,8 +27,10 @@ def evaluate(model,
              custom_dataset=None,
              export_dir=None,
              data_cache_prefix: str = None,
+             force_update: bool = False,
              lower_case: bool = False):
     """ Evaluate question-generation model """
+    metrics_dict = None
     path_metric = None
     if export_dir is not None:
         if lower_case:
@@ -37,8 +39,10 @@ def evaluate(model,
             path_metric = '{}/metric.json'.format(export_dir)
         if os.path.exists(path_metric):
             with open(path_metric, 'r') as f:
-                metric = json.load(f)
-            return metric
+                metrics_dict = json.load(f)
+            if not force_update:
+                return metrics_dict
+
         os.makedirs(export_dir, exist_ok=True)
 
     lm = TransformersNER(model, max_length=max_length)

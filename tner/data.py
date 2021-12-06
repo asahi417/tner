@@ -1,4 +1,6 @@
-""" Fetch/format NER dataset """
+""" Fetch/format NER dataset
+TODO: allow using multiple custom path and preset data + custom path
+"""
 import os
 import zipfile
 import logging
