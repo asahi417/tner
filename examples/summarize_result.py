@@ -19,7 +19,7 @@ for i in glob('./tner_output/search/*'):
         with open('{}/trainer_config.json'.format(os.path.dirname(best_model))) as f:
             config = json.load(f)
         print('\t - config')
-        for k, v in config:
+        for k, v in config.items():
             print('\t\t{}: {}'.format(k, v))
         with open('{}/eval/metric.json'.format(best_model)) as f:
             tmp = json.load(f)
