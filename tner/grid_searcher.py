@@ -52,7 +52,6 @@ def evaluate(model,
                                          lower_case=lower_case,
                                          label_to_id=lm.label2id,
                                          fix_label_dict=True)
-    metrics_dict = {}
     if data_cache_prefix is not None and lm.crf_layer is not None:
         data_cache_prefix = '{}.crf'.format(data_cache_prefix)
     for split in dataset_split.keys():
