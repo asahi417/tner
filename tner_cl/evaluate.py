@@ -40,7 +40,8 @@ def main():
         max_length=opt.max_length,
         data=dataset,
         custom_dataset=custom_dataset,
-        lower_case=opt.lower_case
+        lower_case=opt.lower_case,
+        force_update=True
     )
 
     print(json.dumps(metric, indent=4))
