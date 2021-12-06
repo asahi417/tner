@@ -242,6 +242,8 @@ class Trainer:
               epoch_partial: int = None):
 
         logging.info('dataset preprocessing')
+        if self.current_epoch == self.config.epoch:
+            raise ValueError('training is completed')
         loader = self.model.get_data_loader(
             inputs=self.dataset_split['train']['data'],
             labels=self.dataset_split['train']['label'],

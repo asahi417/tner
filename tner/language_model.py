@@ -240,10 +240,10 @@ class TransformersNER:
 
     def predict(self,
                 inputs: List,
-                is_tokenized: bool = True,
+                is_tokenized: bool = False,
                 batch_size: int = None,
                 num_workers: int = 0,
-                decode_bio: bool = False):
+                decode_bio: bool = True):
         self.eval()
         loader = self.get_data_loader(
             inputs,
@@ -278,7 +278,7 @@ class TransformersNER:
             # find blocks of True in a boolean list
             group = list(map(lambda x: list(x[1]), groupby(mask)))
             length = list(map(lambda x: len(x), group))
-            group_length = [[sum(length[:n]), sum(length[:n]) + len(g) - 1] for n, g in enumerate(group) if all(g)]
+            group_length = [[sum(length[:n]), sum(length[:n]) + len(g)] for n, g in enumerate(group) if all(g)]
 
             # get entity
             for g in group_length:

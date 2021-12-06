@@ -22,7 +22,7 @@ def main():
         'I have an Apple computer.',
         'I like to eat an apple.'
     ]
-    test_result = classifier.predict(test_sentences)
+    test_result = classifier.predict(test_sentences, is_tokenized=False)
     pprint('-- DEMO --')
     pprint(test_result)
     pprint('----------')
