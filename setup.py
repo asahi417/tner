@@ -54,7 +54,8 @@ setup(
             'tner-train = tner_cl.train:main_train',
             'tner-train-search = tner_cl.train:main_train_search',
             'tner-eval = tner_cl.evaluate:main',
-            'tner-predict = tner_cl.predict:main'
+            'tner-predict = tner_cl.predict:main',
+            'tner-self-label = tner_cl.self_label:main'
         ],
     }
 )

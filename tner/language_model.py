@@ -249,8 +249,7 @@ class TransformersNER:
             inputs,
             is_tokenized=is_tokenized,
             batch_size=batch_size,
-            num_workers=num_workers,
-            mask_by_padding_token=True)
+            num_workers=num_workers)
         pred_list = []
         inputs_list = []
         for i in loader:
