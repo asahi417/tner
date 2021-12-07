@@ -240,7 +240,6 @@ class TransformersNER:
                 batch_size: int = None,
                 num_workers: int = 0,
                 decode_bio: bool = True):
-        """ TODO: (i) Fix BIO decoder, (ii) add pre-tokenizer to allow string input instead of tokens. """
         self.eval()
         dummy_labels = [[0] * len(i) for i in inputs]
         loader = self.get_data_loader(
@@ -265,45 +264,47 @@ class TransformersNER:
                     size = min(len(label), len(inputs[pointer]))
                     label = label[:size]
                     _inputs = inputs[pointer][:size]
-                    print()
-                    print(list(zip(_inputs, label)))
-                    print()
+                    logging.warning('sequence mismatch found: \n{}'.format(list(zip(_inputs, label))))
                 else:
                     _inputs = inputs[pointer]
                 pred_list.append(label)
                 inputs_list.append(_inputs)
                 pointer += 1
         if decode_bio:
-            raise ValueError('Not fixed')
-            # return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
+            return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
         return pred_list
 
-    def decode_ner_tags(self, tag_sequence, input_sequence):
-        # TODO: FIX
-        assert len(tag_sequence) == len(input_sequence)
-        unique_type = list(set('-'.join(i.split('-')[1:]) for i in tag_sequence if i != 'O'))
-        result = []
-        for i in unique_type:
-            mask = ['-'.join(t.split('-')[1:]) == i for t in tag_sequence]
-
-            # find blocks of True in a boolean list
-            group = list(map(lambda x: list(x[1]), groupby(mask)))
-            length = list(map(lambda x: len(x), group))
-            group_length = [[sum(length[:n]), sum(length[:n]) + len(g)] for n, g in enumerate(group) if all(g)]
-
-            # get entity
-            for g in group_length:
-                surface = self.tokenizer.tokenizer.decode(input_sequence[g[0]:g[1]])
-                surface = self.cleanup(surface)
-                result.append({'type': i, 'entity': surface})
-        result = sorted(result, key=lambda x: x['type'])
-        return result
-
     @staticmethod
-    def cleanup(_string):
-        _string = re.sub(r'\A\s*', '', _string)
-        _string = re.sub(r'[\s(\[{]*\Z', '', _string)
-        return _string
+    def decode_ner_tags(tag_sequence, input_sequence):
+        assert len(tag_sequence) == len(input_sequence)
 
+        def update_collection(_tmp_entity, _tmp_entity_type, _out):
+            if len(_tmp_entity) != 0 and _tmp_entity_type is not None:
+                _out.append({'type': _tmp_entity_type, 'entity': _tmp_entity})
+                _tmp_entity = []
+                _tmp_entity_type = None
+            return _tmp_entity, _tmp_entity_type, _out
 
+        out = []
+        tmp_entity = []
+        tmp_entity_type = None
+        for _l, _i in zip(tag_sequence, input_sequence):
+            if _l.startswith('B-'):
+                _, _, out = update_collection(tmp_entity, tmp_entity_type, out)
+                tmp_entity_type = '-'.join(_l.split('-')[1:])
+                tmp_entity = [_i]
+            elif _l.startswith('I-'):
+                tmp_tmp_entity_type = '-'.join(_l.split('-')[1:])
+                if len(tmp_entity) == 0 and tmp_entity_type is None:
+                    tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
+                elif tmp_tmp_entity_type != tmp_entity_type:
+                    tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
+                else:
+                    tmp_entity.append(_i)
+            elif _l == 'O':
+                tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
+            else:
+                raise ValueError('unknown tag: {}'.format(_l))
+        _, _, out = update_collection(tmp_entity, tmp_entity_type, out)
+        return out
 
