@@ -38,7 +38,7 @@ def format_data(opt):
 
 def main():
     opt = get_options()
-    data = format_data(opt)[:10]
+    data = format_data(opt)
     classifier = TransformersNER(opt.model, max_length=opt.max_length)
     pred_list = classifier.predict(
         data,
