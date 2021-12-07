@@ -97,8 +97,9 @@ class GridSearcher:
                  random_seed: List or int = 0,
                  lr_warmup_step_ratio: List or int = None,
                  max_grad_norm: List or float = None,
-                 metric: str = 'micro/f1'):
-
+                 metric: str = 'micro/f1',
+                 inherit_tner_checkpoint: bool = False):
+        self.inherit_tner_checkpoint = inherit_tner_checkpoint
         # evaluation configs
         assert metric in ['macro/f1', 'micro/f1']
         self.eval_config = {
@@ -251,7 +252,10 @@ class GridSearcher:
                 raise ValueError('duplicated checkpoints are found: \n {}'.format(duplicated_ckpt))
 
             if not os.path.exists('{}/epoch_{}'.format(checkpoint_dir, self.epoch_partial)):
-                trainer = Trainer(checkpoint_dir=checkpoint_dir, disable_log=True, **config)
+                trainer = Trainer(checkpoint_dir=checkpoint_dir,
+                                  disable_log=True,
+                                  inherit_tner_checkpoint=self.inherit_tner_checkpoint,
+                                  **config)
                 trainer.train(
                     epoch_partial=self.epoch_partial, epoch_save=1, num_workers=num_workers, interval=interval)
             checkpoints.append(checkpoint_dir)
@@ -298,7 +302,9 @@ class GridSearcher:
             logging.info('## 2nd RUN: Configuration {}/{}: {}'.format(n, len(metrics), _metric))
             model_ckpt = os.path.dirname(checkpoint_dir_model)
             if not os.path.exists('{}/epoch_{}'.format(model_ckpt, self.epoch)):
-                trainer = Trainer(checkpoint_dir=model_ckpt, disable_log=True)
+                trainer = Trainer(checkpoint_dir=model_ckpt,
+                                  disable_log=True,
+                                  inherit_tner_checkpoint=self.inherit_tner_checkpoint)
                 trainer.train(epoch_save=1, num_workers=num_workers, interval=interval)
 
             checkpoints.append(model_ckpt)

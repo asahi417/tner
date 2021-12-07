@@ -22,6 +22,7 @@ def arguments(parser):
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     parser.add_argument('--additional-special-tokens', help='', default=None, type=str)
+    parser.add_argument('--inherit-tner-checkpoint', action='store_true')
     return parser
 
 
@@ -90,7 +91,8 @@ def main_train():
         fp16=opt.fp16,
         gradient_accumulation_steps=opt.gradient_accumulation_steps,
         max_grad_norm=opt.max_grad_norm,
-        lr_warmup_step_ratio=opt.lr_warmup_step_ratio
+        lr_warmup_step_ratio=opt.lr_warmup_step_ratio,
+        inherit_tner_checkpoint=opt.inherit_tner_checkpoint
     )
     trainer.train(
         epoch_save=opt.epoch_save,
@@ -126,7 +128,8 @@ def main_train_search():
         lr_warmup_step_ratio=[float(i) if float(i) != -1 else None for i in opt.lr_warmup_step_ratio.split(',')],
         max_grad_norm=[float(i) if float(i) != -1 else None for i in opt.max_grad_norm.split(',')],
         batch_size_eval=opt.batch_size_eval,
-        max_length_eval=opt.max_length_eval
+        max_length_eval=opt.max_length_eval,
+        inherit_tner_checkpoint=opt.inherit_tner_checkpoint
     )
     trainer.run(interval=opt.interval, num_workers=opt.num_workers)
 

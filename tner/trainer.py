@@ -74,7 +74,8 @@ class Trainer:
                  weight_decay: float = 1e-7,
                  lr_warmup_step_ratio: int = None,
                  max_grad_norm: float = None,
-                 disable_log: bool = False):
+                 disable_log: bool = False,
+                 inherit_tner_checkpoint: bool = False):
 
         logging.info('initialize model trainer')
 
@@ -138,16 +139,30 @@ class Trainer:
             except Exception:
                 logging.exception('error at loading checkpoint {}'.format(ckpts))
         if not flag:
-            self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
-                data=self.config.dataset,
-                custom_data=self.config.custom_dataset,
-                lower_case=lower_case)
+            if inherit_tner_checkpoint:
+                logging.info('inherit checkpoint from {}'.format(self.config.model))
+                self.model = TransformersNER(model=self.config.model, max_length=self.config.max_length)
+                self.dataset_split, _, self.language, self.unseen_entity_set = get_dataset(
+                    data=self.config.dataset,
+                    custom_data=self.config.custom_dataset,
+                    lower_case=lower_case,
+                    label_to_id=self.model.label2id,
+                    fix_label_dict=True)
+            else:
+                self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
+                    data=self.config.dataset,
+                    custom_data=self.config.custom_dataset,
+                    lower_case=lower_case)
+                logging.info('initialize checkpoint with {}'.format(self.config.model))
+                self.model = TransformersNER(
+                    model=self.config.model,
+                    crf=self.config.crf,
+                    label2id=label_to_id,
+                    max_length=self.config.max_length)
             step_per_epoch = int(
-                len(self.dataset_split['train']['data']) / self.config.batch_size / self.config.gradient_accumulation_steps
+                len(self.dataset_split['train'][
+                        'data']) / self.config.batch_size / self.config.gradient_accumulation_steps
             )
-            logging.info('initialize checkpoint with {}'.format(self.config.model))
-            self.model = TransformersNER(
-                model=self.config.model, crf=self.config.crf, label2id=label_to_id, max_length=self.config.max_length)
             self.current_epoch = 0
             self.optimizer, self.scheduler = self.setup_optimizer(step_per_epoch=step_per_epoch)
         # GPU mixture precision
