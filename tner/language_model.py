@@ -258,18 +258,21 @@ class TransformersNER:
             pred = self.encode_to_prediction(i)
             assert len(input_ids) == len(pred) == len(labels)
             for _i, _p, _l in zip(input_ids, pred, labels):
-                pointer += 1
                 assert len(_i) == len(_p) == len(_l)
-
                 label = [self.id2label[__p] for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
-                # print(inputs[pointer])
-                # print(label)
-                # input()
 
                 if len(label) != len(inputs[pointer]):
-                    print(label)
-                    print(inputs[pointer])
+                    size = min(len(label), len(inputs[pointer]))
+                    label = label[:size]
+                    _inputs = inputs[pointer][:size]
+                    print()
+                    print(list(zip(_inputs, label)))
+                    print()
+                else:
+                    _inputs = inputs[pointer]
                 pred_list.append(label)
+                inputs_list.append(_inputs)
+                pointer += 1
         if decode_bio:
             raise ValueError('Not fixed')
             # return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
