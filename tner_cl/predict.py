@@ -18,11 +18,10 @@ def main():
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
     classifier = TransformersNER(opt.model, max_length=opt.max_length)
     test_sentences = [
-        'I live in United States.',
-        'I have an Apple computer.',
-        'I like to eat an apple.'
+        ['I', 'live', 'in', 'United', 'States', '.'],
+        ['I', 'have', 'an', 'Apple', 'computer', '.']
     ]
-    test_result = classifier.predict(test_sentences, is_tokenized=False)
+    test_result = classifier.predict(test_sentences)
     pprint('-- DEMO --')
     pprint(test_result)
     pprint('----------')
@@ -33,7 +32,7 @@ def main():
         elif _inp == '':
             continue
         else:
-            pprint(classifier.predict([_inp]))
+            pprint(classifier.predict([_inp.split(' ')]))
 
 
 if __name__ == '__main__':

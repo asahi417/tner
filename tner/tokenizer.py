@@ -67,16 +67,12 @@ class TokenizerFixed:
     def encode_plus_en(self,
                        tokens,
                        labels: List = None,
-                       is_tokenized: bool = True,
                        max_seq_length: int = 128,
                        mask_by_padding_token: bool = False):
         """ encoder for languages which split words by half-space """
-        if not is_tokenized:
-            tokens = tokens.split(' ')
         encode = self.tokenizer.encode_plus(
             ' '.join(tokens), max_length=max_seq_length, padding='max_length', truncation=True)
         if labels:
-            assert is_tokenized
             assert len(tokens) == len(labels)
             fixed_labels = []
             for n, (label, word) in enumerate(zip(labels, tokens)):
@@ -143,13 +139,11 @@ class TokenizerFixed:
     def encode_plus_all(self,
                         tokens: List,
                         labels: List = None,
-                        is_tokenized: bool = True,
                         language: str = 'en',
                         max_length: int = None,
                         mask_by_padding_token: bool = False):
         max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
-        shared_param = {'language': language, 'max_length': max_length, 'mask_by_padding_token': mask_by_padding_token,
-                        'is_tokenized': is_tokenized}
+        shared_param = {'language': language, 'max_length': max_length, 'mask_by_padding_token': mask_by_padding_token}
         if labels:
             return [self.encode_plus(*i, **shared_param) for i in zip(tokens, labels)]
         else:
@@ -158,14 +152,13 @@ class TokenizerFixed:
     def encode_plus(self,
                     tokens,
                     labels: List = None,
-                    is_tokenized: bool = True,
                     language: str = 'en',
                     max_length: int = 128,
                     mask_by_padding_token: bool = False):
         if language == 'ja':
             raise ValueError('Need to refactor')
         else:
-            return self.encode_plus_en(tokens, labels, is_tokenized, max_length, mask_by_padding_token)
+            return self.encode_plus_en(tokens, labels, max_length, mask_by_padding_token)
 
     @property
     def all_special_ids(self):

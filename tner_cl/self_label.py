@@ -38,43 +38,16 @@ def format_data(opt):
 
 def main():
     opt = get_options()
-    data = format_data(opt)
+    data = format_data(opt)[:10]
     classifier = TransformersNER(opt.model, max_length=opt.max_length)
-    sp_tokens = classifier.tokenizer.tokenizer.special_tokens_map.values()
-    pred_list, inputs_subtoken = classifier.predict(
+    pred_list = classifier.predict(
         data,
-        is_tokenized=True,
         decode_bio=False,
         batch_size=opt.batch_size)
-    total_input, total_label = [], []
-    for p, i in zip(pred_list, inputs_subtoken):
-        p = [_p for _p, _i in zip(p, i) if _i not in sp_tokens]
-        i = [_i for _i in i if _i not in sp_tokens]
-        assert len(p) == len(i)
-        sequence_label = []
-        pointer = 0
-        token_n = 1
-        tmp_cache = ''
-        for n in range(1, len(i)):
-            tmp = classifier.tokenizer.tokenizer.convert_tokens_to_string(i[:n])
-            if tmp == '':
-                continue
-            if tmp.replace(tmp_cache, '').replace(' ', '') == '':
-                continue
-            tmp_cache = tmp
-            if len(tmp.split(' ')) != token_n:
-                sequence_label.append(p[pointer])
-                token_n += 1
-                pointer = n
-        sequence_label.append(p[pointer])
-        sequence_input = tmp_cache.split(' ')
-        assert len(sequence_input) == len(sequence_label), '{} != {}'.format(len(sequence_input), len(sequence_label))
-        total_input.append(sequence_input)
-        total_label.append(sequence_label)
 
     os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
     with open(opt.export_file, 'w') as f:
-        for _i, _l in zip(total_input, total_label):
+        for _i, _l in zip(data, pred_list):
             for __i, __l in zip(_i, _l):
                 f.write('{} {}'.format(__i, __l) + '\n')
             f.write('\n')

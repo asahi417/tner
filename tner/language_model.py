@@ -152,7 +152,6 @@ class TransformersNER:
 
     def get_data_loader(self,
                         inputs,
-                        is_tokenized: bool = True,
                         labels: List = None,
                         batch_size: int = None,
                         num_workers: int = 0,
@@ -167,7 +166,6 @@ class TransformersNER:
         else:
             out = self.tokenizer.encode_plus_all(
                 tokens=inputs,
-                is_tokenized=is_tokenized,
                 labels=labels,
                 max_length=self.max_length,
                 mask_by_padding_token=mask_by_padding_token)
@@ -195,7 +193,6 @@ class TransformersNER:
         loader = self.get_data_loader(
             inputs,
             labels=labels,
-            is_tokenized=True,
             batch_size=batch_size,
             num_workers=num_workers,
             mask_by_padding_token=True,
@@ -240,34 +237,48 @@ class TransformersNER:
 
     def predict(self,
                 inputs: List,
-                is_tokenized: bool = False,
                 batch_size: int = None,
                 num_workers: int = 0,
                 decode_bio: bool = True):
+        """ TODO: (i) Fix BIO decoder, (ii) add pre-tokenizer to allow string input instead of tokens. """
         self.eval()
+        dummy_labels = [[0] * len(i) for i in inputs]
         loader = self.get_data_loader(
             inputs,
-            is_tokenized=is_tokenized,
+            labels=dummy_labels,
+            mask_by_padding_token=True,
             batch_size=batch_size,
             num_workers=num_workers)
         pred_list = []
         inputs_list = []
+        pointer = 0
         for i in loader:
             input_ids = i['input_ids'].cpu().tolist()
+            labels = i['labels'].cpu().tolist()
             pred = self.encode_to_prediction(i)
-            assert len(input_ids) == len(pred)
-            for _i, _p in zip(input_ids, pred):
-                assert len(_i) == len(_p)
-                _tmp = [(__i, self.id2label[__p])
-                        for __i, __p in zip(_i, _p) if __i != self.tokenizer.pad_ids['input_ids']]
-                pred_list.append([_p for _i, _p in _tmp])
-                inputs_list.append([_i for _i, _p in _tmp])
+            assert len(input_ids) == len(pred) == len(labels)
+            for _i, _p, _l in zip(input_ids, pred, labels):
+                raw_input = inputs[pointer]
+                pointer += 1
+                assert len(_i) == len(_p) == len(_l)
+                # print(self.tokenizer.tokenizer.convert_ids_to_tokens(_i))
+                # print(_l)
+                # print(_p)
+                label = [self.id2label[__p] for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
+
+                # if len(label) != len(raw_input):
+                #     print(label)
+                #     print(raw_input)
+                #     exit()
+                pred_list.append(label)
+                # inputs_list.append(raw_input)
         if decode_bio:
             return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
-        inputs_subtoken = [self.tokenizer.tokenizer.convert_ids_to_tokens(i) for i in inputs_list]
-        return pred_list, inputs_subtoken
+        # inputs_subtoken = [self.tokenizer.tokenizer.convert_ids_to_tokens(i) for i in inputs_list]
+        return pred_list
 
     def decode_ner_tags(self, tag_sequence, input_sequence):
+        # TODO: FIX
         assert len(tag_sequence) == len(input_sequence)
         unique_type = list(set('-'.join(i.split('-')[1:]) for i in tag_sequence if i != 'O'))
         result = []
