@@ -262,14 +262,15 @@ class TransformersNER:
                 assert len(_i) == len(_p) == len(_l)
 
                 label = [self.id2label[__p] for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
-                print(inputs[pointer])
-                print(label)
-                input()
+                # print(inputs[pointer])
+                # print(label)
+                # input()
 
                 assert len(label) != len(inputs[pointer])
                 pred_list.append(label)
         if decode_bio:
-            return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
+            raise ValueError('Not fixed')
+            # return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
         return pred_list
 
     def decode_ner_tags(self, tag_sequence, input_sequence):
