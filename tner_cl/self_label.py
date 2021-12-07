@@ -1,6 +1,7 @@
 """ command line tool to test finetuned NER model """
 import logging
 import argparse
+import os
 
 from tner import TransformersNER, get_dataset
 
@@ -71,6 +72,7 @@ def main():
         total_input.append(sequence_input)
         total_label.append(sequence_label)
 
+    os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
     with open(opt.export_file, 'w') as f:
         for _i, _l in zip(total_input, total_label):
             for __i, __l in zip(_i, _l):
