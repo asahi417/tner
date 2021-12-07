@@ -258,23 +258,18 @@ class TransformersNER:
             pred = self.encode_to_prediction(i)
             assert len(input_ids) == len(pred) == len(labels)
             for _i, _p, _l in zip(input_ids, pred, labels):
-                raw_input = inputs[pointer]
                 pointer += 1
                 assert len(_i) == len(_p) == len(_l)
-                # print(self.tokenizer.tokenizer.convert_ids_to_tokens(_i))
-                # print(_l)
-                # print(_p)
-                label = [self.id2label[__p] for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
 
-                # if len(label) != len(raw_input):
-                #     print(label)
-                #     print(raw_input)
-                #     exit()
+                label = [self.id2label[__p] for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
+                print(inputs[pointer])
+                print(label)
+                input()
+
+                assert len(label) != len(inputs[pointer])
                 pred_list.append(label)
-                # inputs_list.append(raw_input)
         if decode_bio:
             return [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
-        # inputs_subtoken = [self.tokenizer.tokenizer.convert_ids_to_tokens(i) for i in inputs_list]
         return pred_list
 
     def decode_ner_tags(self, tag_sequence, input_sequence):
