@@ -72,7 +72,7 @@ SHARED_NER_LABEL = {
     "quantity": ['QUANTITY'],
     "law": ['LAW'],
     "geopolitical area": ['GPE'],
-    "work of art": ["WORK_OF_ART", "creative-work", "CW", 'creative'],
+    "creative-work": ["WORK_OF_ART", "creative-work", "CW", 'creative'],
     "facility": ["FAC"],
     "language": ["LANGUAGE"],
     "event": ["EVENT"],
