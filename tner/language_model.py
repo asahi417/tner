@@ -266,7 +266,9 @@ class TransformersNER:
                 # print(label)
                 # input()
 
-                assert len(label) != len(inputs[pointer])
+                if len(label) != len(inputs[pointer]):
+                    print(label)
+                    print(inputs[pointer])
                 pred_list.append(label)
         if decode_bio:
             raise ValueError('Not fixed')
