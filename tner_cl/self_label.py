@@ -49,6 +49,7 @@ def main():
     with open(opt.export_file, 'w') as f:
         for _i, _l in zip(data, pred_list):
             for __i, __l in zip(_i, _l):
+                __l = __l.replace(' ', '-')
                 f.write('{} {}'.format(__i, __l) + '\n')
             f.write('\n')
 
