@@ -38,10 +38,13 @@ def evaluate(model,
         else:
             path_metric = '{}/metric.json'.format(export_dir)
         if os.path.exists(path_metric):
-            with open(path_metric, 'r') as f:
-                metrics_dict = json.load(f)
-            if not force_update:
-                return metrics_dict
+            try:
+                with open(path_metric, 'r') as f:
+                    metrics_dict = json.load(f)
+                if not force_update:
+                    return metrics_dict
+            except Exception:
+                logging.warning('error at reading {}'.format(path_metric))
 
         os.makedirs(export_dir, exist_ok=True)
 
