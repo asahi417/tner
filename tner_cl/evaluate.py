@@ -13,9 +13,10 @@ def get_options():
     parser.add_argument('-b', '--batch-size', default=16, type=int, help='batch size')
     parser.add_argument('-d', '--dataset', help='dataset to evaluate', default=None, type=str)
     parser.add_argument('--custom-dataset', help='custom data set', default=None, type=str)
-    parser.add_argument('--custom-dataset-name', help='custom data set', default=None, type=str)
+    parser.add_argument('--custom-dataset-name', help='custom data set', default='test', type=str)
     parser.add_argument('-e', '--export-dir', help='path to export the metric', default=None, type=str)
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
+    parser.add_argument('--span-detection', help='', action='store_true')
     return parser.parse_args()
 
 
@@ -41,6 +42,7 @@ def main():
         data=dataset,
         custom_dataset=custom_dataset,
         lower_case=opt.lower_case,
+        span_detection_mode=opt.span_detection,
         force_update=True
     )
 

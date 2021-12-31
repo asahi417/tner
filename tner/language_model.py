@@ -188,7 +188,8 @@ class TransformersNER:
                 labels: List,
                 batch_size: int = None,
                 num_workers: int = 0,
-                cache_path: str = None):
+                cache_path: str = None,
+                span_detection_mode: bool = False):
         self.model.eval()
         loader = self.get_data_loader(
             inputs,
@@ -223,6 +224,17 @@ class TransformersNER:
 
         label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
         pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
+        if span_detection_mode:
+
+            def convert_to_binary_mask(entity_label):
+                if entity_label == 'O':
+                    return entity_label
+                prefix = entity_label.split('-')[0]  # B or I
+                return '{}-entity'.format(prefix)
+
+            label_list = [[convert_to_binary_mask(_i) for _i in i] for i in label_list]
+            pred_list = [[convert_to_binary_mask(_i) for _i in i] for i in pred_list]
+
         # compute metrics
         logging.info('\n{}'.format(classification_report(label_list, pred_list)))
         metric = {

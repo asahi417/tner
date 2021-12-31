@@ -28,15 +28,13 @@ def evaluate(model,
              export_dir=None,
              data_cache_prefix: str = None,
              force_update: bool = False,
-             lower_case: bool = False):
+             lower_case: bool = False,
+             span_detection_mode: bool = False):
     """ Evaluate question-generation model """
     metrics_dict = {}
     path_metric = None
     if export_dir is not None:
-        if lower_case:
-            path_metric = '{}/metric.lower.json'.format(export_dir)
-        else:
-            path_metric = '{}/metric.json'.format(export_dir)
+        path_metric = '{}/metric.json'.format(export_dir)
         if os.path.exists(path_metric):
             try:
                 with open(path_metric, 'r') as f:
@@ -64,11 +62,16 @@ def evaluate(model,
             cache_path = '{}.{}.pkl'.format(data_cache_prefix, split)
         else:
             cache_path = None
+        if span_detection_mode:
+            split = 'span_detection/{}'.format(split)
+        if lower_case:
+            split = 'lower_case/{}'.format(split)
         metrics_dict[split] = lm.span_f1(
             inputs=dataset_split[split]['data'],
             labels=dataset_split[split]['label'],
             batch_size=batch_size,
-            cache_path=cache_path
+            cache_path=cache_path,
+            span_detection_mode=span_detection_mode
         )
     if path_metric is not None:
         with open(path_metric, 'w') as f:
