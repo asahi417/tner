@@ -62,11 +62,12 @@ def evaluate(model,
             cache_path = '{}.{}.pkl'.format(data_cache_prefix, split)
         else:
             cache_path = None
+        split_alias = split
         if span_detection_mode:
-            split = 'span_detection/{}'.format(split)
+            split_alias = '{}/span_detection'.format(split_alias)
         if lower_case:
-            split = 'lower_case/{}'.format(split)
-        metrics_dict[split] = lm.span_f1(
+            split_alias = '{}/lower_case'.format(split_alias)
+        metrics_dict[split_alias] = lm.span_f1(
             inputs=dataset_split[split]['data'],
             labels=dataset_split[split]['label'],
             batch_size=batch_size,
