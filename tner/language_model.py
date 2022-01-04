@@ -189,41 +189,52 @@ class TransformersNER:
                 batch_size: int = None,
                 num_workers: int = 0,
                 cache_path: str = None,
+                export_prediction: str = None,
                 span_detection_mode: bool = False):
-        self.model.eval()
-        loader = self.get_data_loader(
-            inputs,
-            labels=labels,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            mask_by_padding_token=True,
-            cache_path=cache_path)
-        label_list = []
-        pred_list = []
-        ind = 0
-        for i in loader:
-            label = i.pop('labels').cpu().tolist()
-            pred = self.encode_to_prediction(i)
-            assert len(label) == len(pred)
-            for _l, _p in zip(label, pred):
-                assert len(_l) == len(_p)
-                tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
-                tmp_pred = list(list(zip(*tmp))[0])
-                tmp_label = list(list(zip(*tmp))[1])
-                if len(tmp_label) != len(labels[ind]):
-                    if len(tmp_label) < len(labels[ind]):
-                        logging.info('found sequence possibly more than max_length')
-                        logging.info('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
-                        tmp_pred = tmp_pred + [self.label2id['O']] * (len(labels[ind]) - len(tmp_label))
-                    else:
-                        raise ValueError('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
-                assert len(tmp_pred) == len(labels[ind])
-                pred_list.append(tmp_pred)
-                label_list.append(labels[ind])
-                ind += 1
+        if export_prediction is not None and os.path.exists(export_prediction):
+            with open(export_prediction) as f:
+                pred_list = [[self.id2label[__p] for __p in i.split('>>>')] for i in f.read().split('\n')]
+            label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
+        else:
+            self.model.eval()
+            loader = self.get_data_loader(
+                inputs,
+                labels=labels,
+                batch_size=batch_size,
+                num_workers=num_workers,
+                mask_by_padding_token=True,
+                cache_path=cache_path)
+            label_list = []
+            pred_list = []
+            ind = 0
+            for i in loader:
+                label = i.pop('labels').cpu().tolist()
+                pred = self.encode_to_prediction(i)
+                assert len(label) == len(pred)
+                for _l, _p in zip(label, pred):
+                    assert len(_l) == len(_p)
+                    tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
+                    tmp_pred = list(list(zip(*tmp))[0])
+                    tmp_label = list(list(zip(*tmp))[1])
+                    if len(tmp_label) != len(labels[ind]):
+                        if len(tmp_label) < len(labels[ind]):
+                            logging.info('found sequence possibly more than max_length')
+                            logging.info('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
+                            tmp_pred = tmp_pred + [self.label2id['O']] * (len(labels[ind]) - len(tmp_label))
+                        else:
+                            raise ValueError('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
+                    assert len(tmp_pred) == len(labels[ind])
+                    pred_list.append(tmp_pred)
+                    label_list.append(labels[ind])
+                    ind += 1
 
-        label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
-        pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
+            label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
+            pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
+            if export_prediction is not None:
+                os.makedirs(os.path.dirname(export_prediction), exist_ok=True)
+                with open(export_prediction, 'w') as f:
+                    f.write('\n'.join(['>>>'.join(i) for i in pred_list]))
+
         if span_detection_mode:
 
             def convert_to_binary_mask(entity_label):
@@ -245,6 +256,18 @@ class TransformersNER:
             "macro/recall": recall_score(label_list, pred_list, average='macro'),
             "macro/precision": precision_score(label_list, pred_list, average='macro'),
         }
+        if not span_detection_mode:
+            metric["per_entity_metric"] = {}
+            f1 = f1_score(label_list, pred_list, average=None)
+            r = recall_score(label_list, pred_list, average=None)
+            p = precision_score(label_list, pred_list, average=None)
+            target_names = sorted([k.replace('B-', '') for k in self.label2id.keys() if k.startswith('B-')])
+            print(target_names)
+            print(f1)
+            for _name, _p, _r, _f1 in zip(target_names, p, r, f1):
+                metric["per_entity_metric"][_name] = {
+                    "precision": _p, "recall": _r, "f1": _f1
+                }
         return metric
 
     def predict(self,

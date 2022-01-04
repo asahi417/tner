@@ -33,7 +33,9 @@ def evaluate(model,
     """ Evaluate question-generation model """
     metrics_dict = {}
     path_metric = None
+    export_prediction = None
     if export_dir is not None:
+        export_prediction = '{}/prediction'.format(export_dir)
         path_metric = '{}/metric.json'.format(export_dir)
         if os.path.exists(path_metric):
             try:
@@ -67,12 +69,18 @@ def evaluate(model,
             split_alias = '{}/span_detection'.format(split_alias)
         if lower_case:
             split_alias = '{}/lower_case'.format(split_alias)
+        if export_prediction is not None:
+            if lower_case:
+                _export_prediction = '{}.{}.lower.txt'.format(export_prediction, split)
+            else:
+                _export_prediction = '{}.{}.txt'.format(export_prediction, split)
         metrics_dict[split_alias] = lm.span_f1(
             inputs=dataset_split[split]['data'],
             labels=dataset_split[split]['label'],
             batch_size=batch_size,
             cache_path=cache_path,
-            span_detection_mode=span_detection_mode
+            span_detection_mode=span_detection_mode,
+            export_prediction=_export_prediction
         )
     if path_metric is not None:
         with open(path_metric, 'w') as f:
