@@ -75,7 +75,9 @@ class Trainer:
                  lr_warmup_step_ratio: int = None,
                  max_grad_norm: float = None,
                  disable_log: bool = False,
-                 inherit_tner_checkpoint: bool = False):
+                 inherit_tner_checkpoint: bool = False,
+                 adapter: bool = False,
+                 adapter_config: Dict = None):
 
         logging.info('initialize model trainer')
 
@@ -98,8 +100,11 @@ class Trainer:
             gradient_accumulation_steps=gradient_accumulation_steps,
             crf=crf,
             lr_warmup_step_ratio=lr_warmup_step_ratio,
-            max_grad_norm=max_grad_norm
+            max_grad_norm=max_grad_norm,
+            adapter=adapter,
+            adapter_config=adapter_config
         )
+
         random.seed(self.config.random_seed)
         torch.manual_seed(self.config.random_seed)
         if not disable_log:
@@ -121,8 +126,7 @@ class Trainer:
                 epoch = sorted([int(i.split('epoch_')[-1]) for i in ckpts], reverse=True)[0]
                 path = '{}/epoch_{}'.format(self.config.checkpoint_dir, epoch)
                 logging.info('load checkpoint from {}'.format(path))
-                self.model = TransformersNER(
-                    model=path, crf=self.config.crf, max_length=self.config.max_length)
+                self.model = self.get_model_instance(path)
                 self.current_epoch = epoch
                 assert self.current_epoch <= self.config.epoch, 'model training is done'
                 self.dataset_split, label_to_id, self.language, self.unseen_entity_set = get_dataset(
@@ -141,7 +145,7 @@ class Trainer:
         if not flag:
             if inherit_tner_checkpoint:
                 logging.info('inherit checkpoint from {}'.format(self.config.model))
-                self.model = TransformersNER(model=self.config.model, max_length=self.config.max_length)
+                self.model = self.get_model_instance()
                 self.dataset_split, _, self.language, self.unseen_entity_set = get_dataset(
                     data=self.config.dataset,
                     custom_data=self.config.custom_dataset,
@@ -154,11 +158,7 @@ class Trainer:
                     custom_data=self.config.custom_dataset,
                     lower_case=lower_case)
                 logging.info('initialize checkpoint with {}'.format(self.config.model))
-                self.model = TransformersNER(
-                    model=self.config.model,
-                    crf=self.config.crf,
-                    label2id=label_to_id,
-                    max_length=self.config.max_length)
+                self.model = self.get_model_instance(label_to_id=label_to_id)
             step_per_epoch = int(
                 len(self.dataset_split['train'][
                         'data']) / self.config.batch_size / self.config.gradient_accumulation_steps
@@ -181,6 +181,27 @@ class Trainer:
             )
         else:
             self.data_cache_path = None
+
+    def get_model_instance(self, model_path=None, label_to_id=None):
+        adapter_config = {} if self.config.adapter_config is None else self.config.adapter_config
+        if self.config.adapter:
+            model = self.config.model
+            adapter_model = model_path
+        else:
+            if model_path is None:
+                model = self.config.model
+            else:
+                model = model_path
+            adapter_model = None
+        return TransformersNER(
+            model=model,
+            crf=self.config.crf,
+            max_length=self.config.max_length,
+            adapter=self.config.adapter,
+            adapter_model=adapter_model,
+            label2id=label_to_id,
+            **adapter_config
+        )
 
     def setup_optimizer(self, epoch: int = None, step_per_epoch: int = None):
         # optimizer

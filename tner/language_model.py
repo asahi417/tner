@@ -1,10 +1,11 @@
+"""
+https://github.com/Adapter-Hub/adapter-transformers/blob/cea53a392068f56b260b8a51a1c5f05f130a9a2a/src/transformers/adapters/training.py#L6
+"""
 import os
 import logging
 import pickle
-import re
 import gc
 from typing import List, Dict
-from itertools import groupby
 
 import transformers
 import torch
@@ -30,26 +31,37 @@ def pickle_load(path: str):
         return pickle.load(fp)
 
 
-def load_hf(model_name, cache_dir, label2id, local_files_only=False):
+def load_hf(model_name, cache_dir, label2id = None, with_adapter_heads: bool = False):
     """ load huggingface checkpoints """
     logging.info('initialize language model with `{}`'.format(model_name))
-    if label2id is not None:
-        config = transformers.AutoConfig.from_pretrained(
-            model_name,
-            num_labels=len(label2id),
-            id2label={v: k for k, v in label2id.items()},
-            label2id=label2id,
-            cache_dir=cache_dir,
-            local_files_only=local_files_only)
-    else:
-        config = transformers.AutoConfig.from_pretrained(
-            model_name,
-            cache_dir=cache_dir,
-            local_files_only=local_files_only)
-    gc.collect()
-    model = transformers.AutoModelForTokenClassification.from_pretrained(
-        model_name, config=config, cache_dir=cache_dir, local_files_only=local_files_only)
-    return model
+
+    def _load_hf(local_files_only=False):
+        if label2id is not None:
+            config = transformers.AutoConfig.from_pretrained(
+                model_name,
+                num_labels=len(label2id),
+                id2label={v: k for k, v in label2id.items()},
+                label2id=label2id,
+                cache_dir=cache_dir,
+                local_files_only=local_files_only)
+        else:
+            config = transformers.AutoConfig.from_pretrained(
+                model_name,
+                cache_dir=cache_dir,
+                local_files_only=local_files_only)
+
+        if with_adapter_heads:
+            model = transformers.AutoModelWithHeads.from_pretrained(
+                model_name, config=config, cache_dir=cache_dir, local_files_only=local_files_only)
+        else:
+            model = transformers.AutoModelForTokenClassification.from_pretrained(
+                model_name, config=config, cache_dir=cache_dir, local_files_only=local_files_only)
+        return model
+
+    try:
+        return _load_hf()
+    except Exception:
+        return _load_hf(True)
 
 
 class TransformersNER:
@@ -59,28 +71,67 @@ class TransformersNER:
                  max_length: int = 128,
                  crf: bool = False,
                  label2id: Dict = None,
-                 cache_dir: str = None):
+                 cache_dir: str = None,
+                 adapter: bool = False,
+                 adapter_model: str = None,  # adapter model to load
+                 adapter_task_name: str = 'ner',
+                 adapter_non_linearity: str = None,
+                 adapter_config: str = "pfeiffer",
+                 adapter_reduction_factor: int = None,
+                 adapter_language: str = 'en'):
         self.model_name = model
         self.max_length = max_length
+        self.crf_layer = None
+
+        # adapter configuration
+        self.adapter = adapter
+        self.adapter_task_name = adapter_task_name
 
         # load model
-        try:
-            self.model = load_hf(self.model_name, cache_dir, label2id)
-        except Exception:
-            self.model = load_hf(self.model_name, cache_dir, label2id, local_files_only=True)
+        model = load_hf(self.model_name, cache_dir, label2id)
 
         # load crf layer
-        if 'crf_state_dict' in self.model.config.to_dict().keys() or crf:
+        if 'crf_state_dict' in model.config.to_dict().keys() or crf:
+            assert not self.adapter, 'CRF is not compatible with adapters'
+            logging.info('use CRF')
             self.crf_layer = ConditionalRandomField(
                 num_tags=len(self.model.config.id2label),
                 constraints=allowed_transitions(constraint_type="BIO", labels=self.model.config.id2label)
             )
-            if 'crf_state_dict' in self.model.config.to_dict().keys():
-                state = {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
-                self.crf_layer.load_state_dict(state)
-        else:
-            self.crf_layer = None
+            if 'crf_state_dict' in model.config.to_dict().keys():
+                logging.info('loading pre-trained CRF layer')
+                self.crf_layer.load_state_dict(
+                    {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
+                )
 
+        if self.adapter:
+            logging.info('use Adapter')
+            # resolve the adapter config
+            adapter_config = transformers.AdapterConfig.load(
+                adapter_config,
+                adapter_reduction_factor=adapter_reduction_factor,
+                adapter_non_linearity=adapter_non_linearity,
+                language=adapter_language
+            )
+            if adapter_model is not None:
+                # load a pre-trained from Hub if specified
+                logging.info('loading pre-trained Adapter from {}'.format(adapter_model))
+                # initialize with AutoModelWithHeads to get label2id
+                tmp_model = load_hf(self.model_name, cache_dir, with_adapter_heads=True)
+                tmp_model.load_adapter(
+                    adapter_model, config=adapter_config, load_as=self.adapter_task_name, source='hf'
+                )
+                label2id = tmp_model.config.prediction_heads['ner']['label2id']
+                # with the label2id, initialize the AutoModelForTokenClassification
+                model = load_hf(self.model_name, cache_dir, label2id)
+                model.load_adapter(
+                    adapter_model, config=adapter_config, load_as=self.adapter_task_name, source='hf'
+                )
+            else:
+                # otherwise, add a fresh adapter
+                model.add_adapter(self.adapter_task_name, config=adapter_config)
+
+        self.model = model
         self.label2id = self.model.config.label2id
         self.id2label = self.model.config.id2label
 
@@ -107,28 +158,35 @@ class TransformersNER:
 
     def train(self):
         self.model.train()
+        if self.adapter:
+            self.model.train_adapter(self.adapter_task_name)
 
     def eval(self):
         self.model.eval()
+        if self.adapter:
+            self.model.set_active_adapters(self.adapter_task_name)
 
     def save(self, save_dir):
 
-        if self.parallel:
-            if self.crf_layer is not None:
-                self.model.module.config.update(
-                    {'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.module.state_dict().items()}})
-            self.model.module.save_pretrained(save_dir)
+        def model_state(model):
+            if self.parallel:
+                return model.module
+            return model
+
+        if self.adapter:
+            model_state(self.model).save_adapter(save_dir, self.adapter_task_name)
         else:
             if self.crf_layer is not None:
-                self.model.config.update(
-                    {'crf_state_dict': {k: v.tolist() for k, v in self.crf_layer.state_dict().items()}})
-            self.model.save_pretrained(save_dir)
-        self.tokenizer.tokenizer.save_pretrained(save_dir)
+                model_state(self.model).config.update(
+                    {'crf_state_dict': {k: v.tolist() for k, v in model_state(self.crf_layer).state_dict().items()}})
+            model_state(self.model).save_pretrained(save_dir)
+            self.tokenizer.tokenizer.save_pretrained(save_dir)
 
     def encode_to_loss(self, encode: Dict):
         assert 'labels' in encode
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
+        print(output)
         if self.crf_layer is not None:
             loss = - self.crf_layer(output['logits'], encode['labels'], encode['attention_mask'])
         else:
@@ -262,8 +320,6 @@ class TransformersNER:
             r = recall_score(label_list, pred_list, average=None)
             p = precision_score(label_list, pred_list, average=None)
             target_names = sorted([k.replace('B-', '') for k in self.label2id.keys() if k.startswith('B-')])
-            print(target_names)
-            print(f1)
             for _name, _p, _r, _f1 in zip(target_names, p, r, f1):
                 metric["per_entity_metric"][_name] = {
                     "precision": _p, "recall": _r, "f1": _f1

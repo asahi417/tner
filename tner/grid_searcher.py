@@ -113,7 +113,9 @@ class GridSearcher:
                  lr_warmup_step_ratio: List or int = None,
                  max_grad_norm: List or float = None,
                  metric: str = 'micro/f1',
-                 inherit_tner_checkpoint: bool = False):
+                 inherit_tner_checkpoint: bool = False,
+                 adapter: List or bool = False,
+                 adapter_config: Dict = None):
         self.inherit_tner_checkpoint = inherit_tner_checkpoint
         # evaluation configs
         assert metric in ['macro/f1', 'micro/f1']
@@ -133,7 +135,8 @@ class GridSearcher:
             'batch_size': batch_size,
             'epoch': epoch,
             'max_length': max_length,
-            'lower_case': lower_case
+            'lower_case': lower_case,
+            'adapter_config': adapter_config
         }
 
         # dynamic config
@@ -159,7 +162,8 @@ class GridSearcher:
             'weight_decay': to_list(weight_decay),
             'lr_warmup_step_ratio': to_list(lr_warmup_step_ratio),
             'max_grad_norm': to_list(max_grad_norm),
-            'gradient_accumulation_steps': to_list(gradient_accumulation_steps)
+            'gradient_accumulation_steps': to_list(gradient_accumulation_steps),
+            'adapter': to_list(adapter),
         }
 
         self.all_dynamic_configs = list(product(
@@ -169,7 +173,8 @@ class GridSearcher:
             self.dynamic_config['weight_decay'],
             self.dynamic_config['lr_warmup_step_ratio'],
             self.dynamic_config['max_grad_norm'],
-            self.dynamic_config['gradient_accumulation_steps']
+            self.dynamic_config['gradient_accumulation_steps'],
+            self.dynamic_config['adapter']
         ))
 
     def initialize_searcher(self):
@@ -248,7 +253,8 @@ class GridSearcher:
                 'weight_decay': dynamic_config[3],
                 'lr_warmup_step_ratio': dynamic_config[4],
                 'max_grad_norm': dynamic_config[5],
-                'gradient_accumulation_steps': dynamic_config[6]
+                'gradient_accumulation_steps': dynamic_config[6],
+                'adapter': dynamic_config[7]
             }
             config.update(tmp_dynamic_config)
             ex_dynamic_config = [(k_, [v[k] for k in sorted(tmp_dynamic_config.keys())]) for k_, v in ckpt_exist.items()]

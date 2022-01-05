@@ -23,6 +23,12 @@ def arguments(parser):
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     parser.add_argument('--additional-special-tokens', help='', default=None, type=str)
     parser.add_argument('--inherit-tner-checkpoint', action='store_true')
+    # adapter
+    parser.add_argument('--adapter-task-name', default='ner', type=str)
+    parser.add_argument('--adapter-non-linearity', default=None, type=str)
+    parser.add_argument('--adapter-config', default='pfeiffer', type=str)
+    parser.add_argument('--adapter-language', default='en', type=str)
+    parser.add_argument('--adapter-reduction-factor', default=None, type=int)
     return parser
 
 
@@ -35,6 +41,7 @@ def arguments_training(parser):
     parser.add_argument('--max-grad-norm', default=None, type=float)
     parser.add_argument('--lr-warmup-step-ratio', default=None, type=float)
     parser.add_argument('-g', '--gradient-accumulation-steps', help='', default=1, type=int)
+    parser.add_argument('--adapter', action='store_true')
     # monitoring parameter
     parser.add_argument('--epoch-save', default=1, type=int)
     return parser
@@ -49,6 +56,7 @@ def arguments_parameter_search(parser):
     parser.add_argument('-l', '--lr', help='learning rate', default='1e-6,1e-5,1e-4', type=str)
     parser.add_argument('--random-seed', help='random seed', default='0', type=str)
     parser.add_argument('--crf', default='0,1', type=str)
+    parser.add_argument('--adapter', default='0', type=str)
     parser.add_argument('--max-grad-norm', default='-1,1', type=str)
     parser.add_argument('--lr-warmup-step-ratio', default='-1,0.3', type=str)
     parser.add_argument('-g', '--gradient-accumulation-steps', help='', default='1,4', type=str)
@@ -92,7 +100,15 @@ def main_train():
         gradient_accumulation_steps=opt.gradient_accumulation_steps,
         max_grad_norm=opt.max_grad_norm,
         lr_warmup_step_ratio=opt.lr_warmup_step_ratio,
-        inherit_tner_checkpoint=opt.inherit_tner_checkpoint
+        inherit_tner_checkpoint=opt.inherit_tner_checkpoint,
+        adapter=opt.adapter,
+        adapter_config={
+            "adapter_task_name": opt.adapter_task_name,
+            "adapter_non_linearity": opt.adapter_non_linearity,
+            "adapter_config": opt.adapter_config,
+            "adapter_reduction_factor": opt.adapter_reduction_factor,
+            "adapter_language": opt.adapter_language
+        }
     )
     trainer.train(
         epoch_save=opt.epoch_save,
@@ -129,7 +145,15 @@ def main_train_search():
         max_grad_norm=[float(i) if float(i) != -1 else None for i in opt.max_grad_norm.split(',')],
         batch_size_eval=opt.batch_size_eval,
         max_length_eval=opt.max_length_eval,
-        inherit_tner_checkpoint=opt.inherit_tner_checkpoint
+        inherit_tner_checkpoint=opt.inherit_tner_checkpoint,
+        adapter=[bool(int(i)) for i in opt.adapter.split(',')],
+        adapter_config={
+            "adapter_task_name": opt.adapter_task_name,
+            "adapter_non_linearity": opt.adapter_non_linearity,
+            "adapter_config": opt.adapter_config,
+            "adapter_reduction_factor": opt.adapter_reduction_factor,
+            "adapter_language": opt.adapter_language
+        }
     )
     trainer.run(interval=opt.interval, num_workers=opt.num_workers)
 

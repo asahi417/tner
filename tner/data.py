@@ -116,7 +116,8 @@ def get_dataset(data: (List, str) = None,
                 custom_data: Dict = None,
                 label_to_id: Dict = None,
                 fix_label_dict: bool = False,
-                lower_case: bool = False):
+                lower_case: bool = False,
+                keep_original_surface: bool = False):
     """ Fetch NER dataset
 
      Parameter
@@ -176,7 +177,8 @@ def get_dataset(data: (List, str) = None,
             label_to_id=label_to_id,
             fix_label_dict=fix_label_dict,
             lower_case=lower_case,
-            custom_data=custom_data)
+            custom_data=custom_data,
+            keep_original_surface=keep_original_surface)
 
     return unified_data, label_to_id, language, unseen_entity_set
 
@@ -187,7 +189,8 @@ def get_dataset_single(data_name: str = None,
                        fix_label_dict: bool = False,
                        lower_case: bool = False,
                        allow_new_entity: bool = True,
-                       cache_dir: str = None):
+                       cache_dir: str = None,
+                       keep_original_surface: bool = False):
     """ download dataset file and return dictionary including training/validation split
 
     :param data_name: data set name or path to the data
@@ -363,7 +366,7 @@ def get_dataset_single(data_name: str = None,
     label_to_id = dict() if label_to_id is None else label_to_id
     data_split_all, unseen_entity_set, label_to_id = decode_all_files(
         files_info, data_path=data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first,
-        to_bio=to_bio, allow_new_entity=allow_new_entity)
+        to_bio=to_bio, allow_new_entity=allow_new_entity, keep_original_surface=keep_original_surface)
 
     if post_process_ja:
         logging.info('Japanese tokenization post processing')
@@ -394,7 +397,8 @@ def decode_file(file_name: str,
                 fix_label_dict: bool,
                 entity_first: bool = False,
                 to_bio: bool = False,
-                allow_new_entity: bool = False):
+                allow_new_entity: bool = False,
+                keep_original_surface: bool = False):
     inputs, labels, seen_entity = [], [], []
     past_mention = 'O'
     if data_path is not None:
@@ -434,20 +438,22 @@ def decode_file(file_name: str,
 
                 # convert tag into unified label set
                 if tag != 'O':  # map tag by custom dictionary
-                    location = tag.split('-')[0]
                     mention = '-'.join(tag.split('-')[1:])
-                    if to_bio and mention == past_mention:
-                        location = 'I'
-                    elif to_bio:
-                        location = 'B'
+                    if not keep_original_surface:
+                        location = tag.split('-')[0]
 
-                    fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
-                    if len(fixed_mention) == 0 and allow_new_entity:
-                        tag = '-'.join([location, mention])
-                    elif len(fixed_mention) == 0:
-                        tag = 'O'
-                    else:
-                        tag = '-'.join([location, fixed_mention[0]])
+                        if to_bio and mention == past_mention:
+                            location = 'I'
+                        elif to_bio:
+                            location = 'B'
+                        fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
+
+                        if len(fixed_mention) == 0 and allow_new_entity:
+                            tag = '-'.join([location, mention])
+                        elif len(fixed_mention) == 0:
+                            tag = 'O'
+                        else:
+                            tag = '-'.join([location, fixed_mention[0]])
                     past_mention = mention
                 else:
                     past_mention = 'O'
@@ -469,16 +475,18 @@ def decode_file(file_name: str,
 def decode_all_files(files: Dict,
                      label_to_id: Dict,
                      fix_label_dict: bool,
-                     data_path: str=None,
+                     data_path: str = None,
                      entity_first: bool = False,
                      to_bio: bool = False,
-                     allow_new_entity: bool = False):
+                     allow_new_entity: bool = False,
+                     keep_original_surface: bool = False):
     data_split = dict()
     unseen_entity = None
     for name, filepath in files.items():
         label_to_id, unseen_entity_set, data_dict = decode_file(
             filepath, data_path=data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict,
-            entity_first=entity_first, to_bio=to_bio, allow_new_entity=allow_new_entity)
+            entity_first=entity_first, to_bio=to_bio, allow_new_entity=allow_new_entity,
+            keep_original_surface=keep_original_surface)
         if unseen_entity is None:
             unseen_entity = unseen_entity_set
         else:
