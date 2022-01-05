@@ -186,7 +186,6 @@ class TransformersNER:
         assert 'labels' in encode
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
-        print(output)
         if self.crf_layer is not None:
             loss = - self.crf_layer(output['logits'], encode['labels'], encode['attention_mask'])
         else:
