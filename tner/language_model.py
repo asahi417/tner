@@ -245,7 +245,7 @@ class TransformersNER:
                 span_detection_mode: bool = False):
         if export_prediction is not None and os.path.exists(export_prediction):
             with open(export_prediction) as f:
-                pred_list = [[self.id2label[__p] for __p in i.split('>>>')] for i in f.read().split('\n')]
+                pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
             label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
         else:
             self.model.eval()
