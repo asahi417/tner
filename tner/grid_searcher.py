@@ -340,7 +340,9 @@ class GridSearcher:
             for checkpoint_dir_model in sorted(glob.glob('{}/epoch_*'.format(checkpoint_dir))):
                 try:
                     metric = evaluate(
+                        base_model=self.static_config['model'],
                         model=checkpoint_dir_model,
+                        adapter=self.static_config['adapter'],
                         export_dir='{}/eval'.format(checkpoint_dir_model),
                         batch_size=self.batch_size_eval,
                         max_length=self.eval_config['max_length_eval'],
