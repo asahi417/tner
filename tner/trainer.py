@@ -18,6 +18,29 @@ from .data import get_dataset, CACHE_DIR
 OPTIMIZER_ON_CPU = int(os.getenv('OPTIMIZER_ON_CPU', 0))
 
 
+def get_model_instance(
+        base_model=None, max_length=None, model_path: str = None,
+        label_to_id: Dict = None, adapter_config: Dict = None,
+        adapter: bool = False, crf: bool = False):
+    adapter_config = {} if adapter_config is None else adapter_config
+    if adapter:
+        assert base_model is not None, 'adapter needs base model'
+        model = base_model
+        adapter_model = model_path
+    else:
+        model = base_model if model_path is None else model_path
+        adapter_model = None
+    return TransformersNER(
+        model=model,
+        crf=crf,
+        max_length=max_length,
+        adapter=adapter,
+        adapter_model=adapter_model,
+        label2id=label_to_id,
+        **adapter_config
+    )
+
+
 class Config:
     """ Model checkpoint managing class. """
 
@@ -183,25 +206,8 @@ class Trainer:
             self.data_cache_path = None
 
     def get_model_instance(self, model_path=None, label_to_id=None):
-        adapter_config = {} if self.config.adapter_config is None else self.config.adapter_config
-        if self.config.adapter:
-            model = self.config.model
-            adapter_model = model_path
-        else:
-            if model_path is None:
-                model = self.config.model
-            else:
-                model = model_path
-            adapter_model = None
-        return TransformersNER(
-            model=model,
-            crf=self.config.crf,
-            max_length=self.config.max_length,
-            adapter=self.config.adapter,
-            adapter_model=adapter_model,
-            label2id=label_to_id,
-            **adapter_config
-        )
+        return get_model_instance(self.config.model, self.config.max_length, model_path,
+                                  label_to_id, self.config.adapter_config, self.config.adapter, self.config.crf)
 
     def setup_optimizer(self, epoch: int = None, step_per_epoch: int = None):
         # optimizer

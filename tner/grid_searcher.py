@@ -7,9 +7,8 @@ import random
 from typing import List, Dict
 from itertools import product
 
-from .trainer import Trainer
+from .trainer import Trainer, get_model_instance
 from .data import get_dataset, CACHE_DIR
-from .language_model import TransformersNER
 
 
 def get_random_string(length: int = 6, exclude: List = None):
@@ -23,13 +22,17 @@ def get_random_string(length: int = 6, exclude: List = None):
 def evaluate(model,
              batch_size,
              max_length,
+             base_model=None,
              data=None,
              custom_dataset=None,
              export_dir=None,
              data_cache_prefix: str = None,
              force_update: bool = False,
              lower_case: bool = False,
-             span_detection_mode: bool = False):
+             span_detection_mode: bool = False,
+             adapter: bool = False,
+             adapter_model: str = None,
+             ):
     """ Evaluate question-generation model """
     metrics_dict = {}
     path_metric = None
@@ -47,8 +50,7 @@ def evaluate(model,
                 logging.warning('error at reading {}'.format(path_metric))
 
         os.makedirs(export_dir, exist_ok=True)
-
-    lm = TransformersNER(model, max_length=max_length)
+    lm = get_model_instance(base_model, max_length, model_path=model, adapter=adapter)
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data=data,
                                          custom_data=custom_dataset,
@@ -69,6 +71,7 @@ def evaluate(model,
             split_alias = '{}/span_detection'.format(split_alias)
         if lower_case:
             split_alias = '{}/lower_case'.format(split_alias)
+        _export_prediction = None
         if export_prediction is not None:
             if lower_case:
                 _export_prediction = '{}.{}.lower.txt'.format(export_prediction, split)
@@ -114,7 +117,7 @@ class GridSearcher:
                  max_grad_norm: List or float = None,
                  metric: str = 'micro/f1',
                  inherit_tner_checkpoint: bool = False,
-                 adapter: List or bool = False,
+                 adapter: bool = False,
                  adapter_config: Dict = None):
         self.inherit_tner_checkpoint = inherit_tner_checkpoint
         # evaluation configs
@@ -136,6 +139,7 @@ class GridSearcher:
             'epoch': epoch,
             'max_length': max_length,
             'lower_case': lower_case,
+            'adapter': adapter,
             'adapter_config': adapter_config
         }
 
@@ -162,8 +166,7 @@ class GridSearcher:
             'weight_decay': to_list(weight_decay),
             'lr_warmup_step_ratio': to_list(lr_warmup_step_ratio),
             'max_grad_norm': to_list(max_grad_norm),
-            'gradient_accumulation_steps': to_list(gradient_accumulation_steps),
-            'adapter': to_list(adapter),
+            'gradient_accumulation_steps': to_list(gradient_accumulation_steps)
         }
 
         self.all_dynamic_configs = list(product(
@@ -174,7 +177,6 @@ class GridSearcher:
             self.dynamic_config['lr_warmup_step_ratio'],
             self.dynamic_config['max_grad_norm'],
             self.dynamic_config['gradient_accumulation_steps'],
-            self.dynamic_config['adapter']
         ))
 
     def initialize_searcher(self):
@@ -254,7 +256,6 @@ class GridSearcher:
                 'lr_warmup_step_ratio': dynamic_config[4],
                 'max_grad_norm': dynamic_config[5],
                 'gradient_accumulation_steps': dynamic_config[6],
-                'adapter': dynamic_config[7]
             }
             config.update(tmp_dynamic_config)
             ex_dynamic_config = [(k_, [v[k] for k in sorted(tmp_dynamic_config.keys())]) for k_, v in ckpt_exist.items()]
@@ -287,14 +288,17 @@ class GridSearcher:
             logging.info('## 1st RUN (EVAL): Configuration {}/{} ##'.format(n, len(checkpoints)))
             checkpoint_dir_model = '{}/epoch_{}'.format(checkpoint_dir, self.epoch_partial)
             try:
+
                 metric = evaluate(
+                    base_model=self.static_config['model'],
                     model=checkpoint_dir_model,
+                    adapter=self.static_config['adapter'],
                     export_dir='{}/eval'.format(checkpoint_dir_model),
                     batch_size=self.batch_size_eval,
                     max_length=self.eval_config['max_length_eval'],
                     data=self.static_config['dataset'],
                     custom_dataset=self.static_config['custom_dataset'],
-                    data_cache_prefix=data_cache_prefix
+                    data_cache_prefix=data_cache_prefix,
                 )
             except Exception:
                 logging.exception('ERROR IN EVALUATION')

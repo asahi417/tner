@@ -92,7 +92,7 @@ class TransformersNER:
 
         # load crf layer
         if 'crf_state_dict' in model.config.to_dict().keys() or crf:
-            assert not self.adapter, 'CRF is not compatible with adapters'
+            assert not self.adapter and adapter_model is None, 'CRF is not compatible with adapters'
             logging.info('use CRF')
             self.crf_layer = ConditionalRandomField(
                 num_tags=len(self.model.config.id2label),
@@ -104,31 +104,26 @@ class TransformersNER:
                     {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
                 )
 
-        if self.adapter:
+        if self.adapter or adapter_model is not None:
             logging.info('use Adapter')
-            # resolve the adapter config
-            adapter_config = transformers.AdapterConfig.load(
-                adapter_config,
-                adapter_reduction_factor=adapter_reduction_factor,
-                adapter_non_linearity=adapter_non_linearity,
-                language=adapter_language
-            )
             if adapter_model is not None:
                 # load a pre-trained from Hub if specified
                 logging.info('loading pre-trained Adapter from {}'.format(adapter_model))
                 # initialize with AutoModelWithHeads to get label2id
                 tmp_model = load_hf(self.model_name, cache_dir, with_adapter_heads=True)
-                tmp_model.load_adapter(
-                    adapter_model, config=adapter_config, load_as=self.adapter_task_name, source='hf'
-                )
+                tmp_model.load_adapter(adapter_model, load_as=self.adapter_task_name, source='hf')
                 label2id = tmp_model.config.prediction_heads['ner']['label2id']
                 # with the label2id, initialize the AutoModelForTokenClassification
                 model = load_hf(self.model_name, cache_dir, label2id)
-                model.load_adapter(
-                    adapter_model, config=adapter_config, load_as=self.adapter_task_name, source='hf'
-                )
+                model.load_adapter(adapter_model, load_as=self.adapter_task_name, source='hf')
             else:
                 # otherwise, add a fresh adapter
+                adapter_config = transformers.AdapterConfig.load(
+                    adapter_config,
+                    adapter_reduction_factor=adapter_reduction_factor,
+                    adapter_non_linearity=adapter_non_linearity,
+                    language=adapter_language
+                )
                 model.add_adapter(self.adapter_task_name, config=adapter_config)
 
         self.model = model

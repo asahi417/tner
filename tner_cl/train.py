@@ -24,6 +24,7 @@ def arguments(parser):
     parser.add_argument('--additional-special-tokens', help='', default=None, type=str)
     parser.add_argument('--inherit-tner-checkpoint', action='store_true')
     # adapter
+    parser.add_argument('--adapter', action='store_true')
     parser.add_argument('--adapter-task-name', default='ner', type=str)
     parser.add_argument('--adapter-non-linearity', default=None, type=str)
     parser.add_argument('--adapter-config', default='pfeiffer', type=str)
@@ -41,7 +42,6 @@ def arguments_training(parser):
     parser.add_argument('--max-grad-norm', default=None, type=float)
     parser.add_argument('--lr-warmup-step-ratio', default=None, type=float)
     parser.add_argument('-g', '--gradient-accumulation-steps', help='', default=1, type=int)
-    parser.add_argument('--adapter', action='store_true')
     # monitoring parameter
     parser.add_argument('--epoch-save', default=1, type=int)
     return parser
@@ -56,7 +56,6 @@ def arguments_parameter_search(parser):
     parser.add_argument('-l', '--lr', help='learning rate', default='1e-6,1e-5,1e-4', type=str)
     parser.add_argument('--random-seed', help='random seed', default='0', type=str)
     parser.add_argument('--crf', default='0,1', type=str)
-    parser.add_argument('--adapter', default='0', type=str)
     parser.add_argument('--max-grad-norm', default='-1,1', type=str)
     parser.add_argument('--lr-warmup-step-ratio', default='-1,0.3', type=str)
     parser.add_argument('-g', '--gradient-accumulation-steps', help='', default='1,4', type=str)
@@ -146,7 +145,7 @@ def main_train_search():
         batch_size_eval=opt.batch_size_eval,
         max_length_eval=opt.max_length_eval,
         inherit_tner_checkpoint=opt.inherit_tner_checkpoint,
-        adapter=[bool(int(i)) for i in opt.adapter.split(',')],
+        adapter=opt.adapter,
         adapter_config={
             "adapter_task_name": opt.adapter_task_name,
             "adapter_non_linearity": opt.adapter_non_linearity,
