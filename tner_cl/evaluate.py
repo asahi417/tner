@@ -8,6 +8,7 @@ from tner.grid_searcher import evaluate
 
 def get_options():
     parser = argparse.ArgumentParser(description='Fine-tune transformers on NER dataset')
+    parser.add_argument('--base-model', help='base model', default=None, type=str)
     parser.add_argument('-m', '--model', help='model', required=True, type=str)
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     parser.add_argument('-b', '--batch-size', default=16, type=int, help='batch size')
@@ -17,6 +18,7 @@ def get_options():
     parser.add_argument('-e', '--export-dir', help='path to export the metric', default=None, type=str)
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
     parser.add_argument('--span-detection', help='', action='store_true')
+    parser.add_argument('--adapter', help='', action='store_true')
     return parser.parse_args()
 
 
@@ -36,6 +38,7 @@ def main():
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
     metric = evaluate(
         model=opt.model,
+        base_model=opt.base_model,
         export_dir=opt.export_dir,
         batch_size=opt.batch_size,
         max_length=opt.max_length,
@@ -43,6 +46,7 @@ def main():
         custom_dataset=custom_dataset,
         lower_case=opt.lower_case,
         span_detection_mode=opt.span_detection,
+        adapter=opt.adapter,
         force_update=True
     )
 

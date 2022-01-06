@@ -30,9 +30,7 @@ def evaluate(model,
              force_update: bool = False,
              lower_case: bool = False,
              span_detection_mode: bool = False,
-             adapter: bool = False,
-             adapter_model: str = None,
-             ):
+             adapter: bool = False):
     """ Evaluate question-generation model """
     metrics_dict = {}
     path_metric = None
