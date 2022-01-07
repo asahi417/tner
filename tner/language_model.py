@@ -95,13 +95,13 @@ class TransformersNER:
             assert not self.adapter and adapter_model is None, 'CRF is not compatible with adapters'
             logging.info('use CRF')
             self.crf_layer = ConditionalRandomField(
-                num_tags=len(self.model.config.id2label),
-                constraints=allowed_transitions(constraint_type="BIO", labels=self.model.config.id2label)
+                num_tags=len(model.config.id2label),
+                constraints=allowed_transitions(constraint_type="BIO", labels=model.config.id2label)
             )
             if 'crf_state_dict' in model.config.to_dict().keys():
                 logging.info('loading pre-trained CRF layer')
                 self.crf_layer.load_state_dict(
-                    {k: torch.FloatTensor(v) for k, v in self.model.config.crf_state_dict.items()}
+                    {k: torch.FloatTensor(v) for k, v in model.config.crf_state_dict.items()}
                 )
 
         if self.adapter or adapter_model is not None:
