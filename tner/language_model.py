@@ -4,7 +4,6 @@ https://github.com/Adapter-Hub/adapter-transformers/blob/cea53a392068f56b260b8a5
 import os
 import logging
 import pickle
-import gc
 from typing import List, Dict
 
 import transformers
