@@ -58,7 +58,8 @@ setup(
             'tner-eval = tner_cl.evaluate:main',
             'tner-predict = tner_cl.predict:main',
             'tner-self-label = tner_cl.self_label:main',
-            'tner-text-search = tner_cl.text_search:main'
+            'tner-text-search = tner_cl.text_search:main',
+            'tner-text-search-cache-prediction = tner_cl.text_search_cache_prediction:main'
         ],
     }
 )

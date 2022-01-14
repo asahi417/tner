@@ -328,7 +328,9 @@ class TransformersNER:
             return self.base_predict(inputs, labels, batch_size, num_workers, cache_path, decode_bio)
         # assert self.searcher is not None, '`index_path` is None'
         # 1st Round
-        pred_list = self.base_predict(inputs, labels, batch_size, num_workers, cache_path, True)[0]
+        pred_list = self.base_predict(inputs, labels, batch_size, num_workers, cache_path, True)
+        if labels is None:
+            pred_list = pred_list[0]
         # 2nd Round
         # input(pred_list)
         for pred_sentence in tqdm(pred_list):
@@ -366,7 +368,7 @@ class TransformersNER:
         for i in loader:
             label = i.pop('labels').cpu().tolist()
             pred = self.encode_to_prediction(i)
-            assert len(labels) == len(pred)
+            assert len(labels) == len(pred), '{} != {}'.format(labels, pred)
             input_ids = i.pop('input_ids').cpu().tolist()
             for _i, _p, _l in zip(input_ids, pred, label):
                 assert len(_i) == len(_p) == len(_l)
@@ -393,7 +395,7 @@ class TransformersNER:
             pred_list = [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
             label_list = [self.decode_ner_tags(_p, _i) for _p, _i in zip(label_list, inputs_list)]
         if dummy_label:
-            return pred_list,
+            return pred_list
         return pred_list, label_list
 
     @staticmethod

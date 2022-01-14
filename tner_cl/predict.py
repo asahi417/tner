@@ -1,7 +1,6 @@
 """ command line tool to test finetuned NER model
 tner-predict -m tner_output/twitter_ner_baseline/roberta_base/model_bzracx/epoch_9
 tner-predict -m tner_output/twitter_ner_baseline/adapter_roberta_base/model_ncould/epoch_24 --base-model roberta-base --adapter
-tner-predict -m tner_output/twitter_ner_baseline/adapter_roberta_large/model_mynbiq/epoch_15 --base-model roberta-large --adapter
 """
 import logging
 import argparse

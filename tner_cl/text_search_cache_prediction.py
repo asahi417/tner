@@ -1,7 +1,9 @@
 """ Cache prediction for contextualized prediction """
 import argparse
-import logging
 import json
+import logging
+import os
+import pandas as pd
 
 from tner import TransformersNER
 
@@ -15,39 +17,37 @@ def get_options():
     parser.add_argument('-m', '--model', help='model', required=True, type=str)
     parser.add_argument('--max-length', default=128, type=int, help='max sequence length for input sequence')
     parser.add_argument('-b', '--batch-size', default=64, type=int, help='batch size')
-    parser.add_argument('-e', '--export-file', help='path to export the metric', default=None, type=str)
+    parser.add_argument('-e', '--export-file', help='path to export the metric', required=True, type=str)
     parser.add_argument('--adapter', help='', action='store_true')
     return parser.parse_args()
 
 
 def main():
     opt = get_options()
+    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO,
+                        datefmt='%Y-%m-%d %H:%M:%S')
+    # setup model
     if opt.adapter:
-        assert opt.base_model is not None
-        classifier = TransformersNER(opt.base_model, max_length=opt.max_length)
+        assert opt.base_model is not None, 'adapter needs base model'
+        classifier = TransformersNER(
+            opt.base_model, max_length=opt.max_length, adapter=opt.adapter,
+            adapter_model=opt.model)
     else:
         classifier = TransformersNER(opt.model, max_length=opt.max_length)
+    classifier.eval()
 
-    dataset, custom_dataset = format_data(opt)
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-    metric = evaluate(
-        model=opt.model,
-        base_model=opt.base_model,
-        export_dir=opt.export_dir,
-        batch_size=opt.batch_size,
-        max_length=opt.max_length,
-        data=dataset,
-        custom_dataset=custom_dataset,
-        lower_case=opt.lower_case,
-        span_detection_mode=opt.span_detection,
-        adapter=opt.adapter,
-        entity_list=opt.entity_list,
-        force_update=True,
-        index_path=opt.index_path,
-        max_retrieval_size=opt.max_retrieval_size
-    )
+    # run inference
+    df = pd.read_csv(opt.csv_file, lineterminator='\n', index_col=0)
+    text = df[opt.column_text].tolist()[:20]
+    ids = df[opt.column_id].tolist()
+    text = [i.split(' ') for i in text]
+    out = classifier.predict(text, batch_size=opt.batch_size, decode_bio=True)
 
-    print(json.dumps(metric, indent=4))
+    # save the result
+    os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
+    with open(opt.export_file, 'w') as f:
+        for _id, _out in zip(ids, out):
+            f.write(json.dumps({'id': _id, 'entity': out}) + '\n')
 
 
 if __name__ == '__main__':
