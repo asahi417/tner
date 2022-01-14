@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import pandas as pd
-
 from tner import TransformersNER
 
 
@@ -38,7 +37,7 @@ def main():
 
     # run inference
     df = pd.read_csv(opt.csv_file, lineterminator='\n', index_col=0)
-    text = df[opt.column_text].tolist()[:20]
+    text = df[opt.column_text].tolist()
     ids = df[opt.column_id].tolist()
     text = [i.split(' ') for i in text]
     out = classifier.predict(text, batch_size=opt.batch_size, decode_bio=True)
@@ -47,7 +46,7 @@ def main():
     os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
     with open(opt.export_file, 'w') as f:
         for _id, _out in zip(ids, out):
-            f.write(json.dumps({'id': _id, 'entity': out}) + '\n')
+            f.write(json.dumps({'id': _id, 'predicted_entity': _out}) + '\n')
 
 
 if __name__ == '__main__':
