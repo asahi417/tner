@@ -30,7 +30,10 @@ def evaluate(model,
              force_update: bool = False,
              lower_case: bool = False,
              span_detection_mode: bool = False,
-             adapter: bool = False):
+             adapter: bool = False,
+             entity_list: bool = False,
+             index_path: str = None,
+             max_retrieval_size: int = 10):
     """ Evaluate question-generation model """
     metrics_dict = {}
     path_metric = None
@@ -48,7 +51,7 @@ def evaluate(model,
                 logging.warning('error at reading {}'.format(path_metric))
 
         os.makedirs(export_dir, exist_ok=True)
-    lm = get_model_instance(base_model, max_length, model_path=model, adapter=adapter)
+    lm = get_model_instance(base_model, max_length, model_path=model, adapter=adapter, index_path=index_path)
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data=data,
                                          custom_data=custom_dataset,
@@ -81,7 +84,9 @@ def evaluate(model,
             batch_size=batch_size,
             cache_path=cache_path,
             span_detection_mode=span_detection_mode,
-            export_prediction=_export_prediction
+            export_prediction=_export_prediction,
+            entity_list=entity_list,
+            max_retrieval_size=max_retrieval_size
         )
     if path_metric is not None:
         with open(path_metric, 'w') as f:

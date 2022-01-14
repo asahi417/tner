@@ -40,6 +40,7 @@ def main():
     opt = get_options()
     data = format_data(opt)
     classifier = TransformersNER(opt.model, max_length=opt.max_length)
+    classifier.eval()
     pred_list = classifier.predict(
         data,
         decode_bio=False,

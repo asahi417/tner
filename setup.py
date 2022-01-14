@@ -47,7 +47,8 @@ setup(
         'sentencepiece==0.1.96',
         'seqeval==1.2.2',
         'segtok==1.5.10',
-        'allennlp==2.8.0'
+        'allennlp==2.8.0',
+        'whoosh'
     ],
     python_requires='>=3.6',
     entry_points={
@@ -56,7 +57,8 @@ setup(
             'tner-train-search = tner_cl.train:main_train_search',
             'tner-eval = tner_cl.evaluate:main',
             'tner-predict = tner_cl.predict:main',
-            'tner-self-label = tner_cl.self_label:main'
+            'tner-self-label = tner_cl.self_label:main',
+            'tner-text-search = tner_cl.text_search:main'
         ],
     }
 )

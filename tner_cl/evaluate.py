@@ -18,7 +18,10 @@ def get_options():
     parser.add_argument('-e', '--export-dir', help='path to export the metric', default=None, type=str)
     parser.add_argument('--lower-case', help='lower case all the data', action='store_true')
     parser.add_argument('--span-detection', help='', action='store_true')
+    parser.add_argument('--entity-list', help='', action='store_true')
     parser.add_argument('--adapter', help='', action='store_true')
+    parser.add_argument('--max-retrieval-size', help='', default=10, type=int)
+    parser.add_argument('--index-path', help='index for retrieval at prediction phase', default=None, type=str)
     return parser.parse_args()
 
 
@@ -34,6 +37,7 @@ def format_data(opt):
 
 def main():
     opt = get_options()
+
     dataset, custom_dataset = format_data(opt)
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
     metric = evaluate(
@@ -47,7 +51,10 @@ def main():
         lower_case=opt.lower_case,
         span_detection_mode=opt.span_detection,
         adapter=opt.adapter,
-        force_update=True
+        entity_list=opt.entity_list,
+        force_update=True,
+        index_path=opt.index_path,
+        max_retrieval_size=opt.max_retrieval_size
     )
 
     print(json.dumps(metric, indent=4))

@@ -21,7 +21,8 @@ OPTIMIZER_ON_CPU = int(os.getenv('OPTIMIZER_ON_CPU', 0))
 def get_model_instance(
         base_model=None, max_length=None, model_path: str = None,
         label_to_id: Dict = None, adapter_config: Dict = None,
-        adapter: bool = False, crf: bool = False):
+        adapter: bool = False, crf: bool = False,
+        index_path: str = None):
     adapter_config = {} if adapter_config is None else adapter_config
     if adapter:
         assert base_model is not None, 'adapter needs base model'
@@ -37,6 +38,7 @@ def get_model_instance(
         adapter=adapter,
         adapter_model=adapter_model,
         label2id=label_to_id,
+        index_path=index_path,
         **adapter_config
     )
 
