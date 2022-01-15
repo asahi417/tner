@@ -378,6 +378,8 @@ class TransformersNER:
             for _i, _p, _l in zip(input_ids, pred, label):
                 assert len(_i) == len(_p) == len(_l)
                 tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
+                print(tmp)
+                input()
                 tmp_pred = list(list(zip(*tmp))[0])
                 tmp_label = list(list(zip(*tmp))[1])
                 if len(tmp_label) != len(labels[ind]):
