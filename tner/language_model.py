@@ -261,8 +261,6 @@ class TransformersNER:
                 pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
             label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
         else:
-            print(inputs)
-            print(labels)
             pred_list, label_list = self.predict(
                 inputs, labels, batch_size, num_workers, cache_path, max_retrieval_size)
             if export_prediction is not None:
@@ -282,9 +280,6 @@ class TransformersNER:
             pred_list = [[convert_to_binary_mask(_i) for _i in i] for i in pred_list]
 
         # compute metrics
-        # print(label_list)
-        print(pred_list)
-        input()
         logging.info('\n{}'.format(classification_report(label_list, pred_list)))
         metric = {
             "micro/f1": f1_score(label_list, pred_list, average='micro'),
@@ -328,7 +323,7 @@ class TransformersNER:
     def predict(self, inputs: List, labels: List = None, batch_size: int = None,
                 num_workers: int = 0, cache_path: str = None,
                 max_retrieval_size: int = 10,
-                decode_bio: bool = True):
+                decode_bio: bool = False):
         if self.searcher is None:
             return self.base_predict(inputs, labels, batch_size, num_workers, cache_path, decode_bio)
         # assert self.searcher is not None, '`index_path` is None'
@@ -352,7 +347,7 @@ class TransformersNER:
                     print(_types)
 
     def base_predict(self, inputs: List, labels: List = None, batch_size: int = None,
-                     num_workers: int = 0, cache_path: str = None, decode_bio: bool = True):
+                     num_workers: int = 0, cache_path: str = None, decode_bio: bool = False):
         dummy_label = False
         if labels is None:
             labels = [[0] * len(i) for i in inputs]
@@ -377,10 +372,7 @@ class TransformersNER:
             input_ids = i.pop('input_ids').cpu().tolist()
             for _i, _p, _l in zip(input_ids, pred, label):
                 assert len(_i) == len(_p) == len(_l)
-                print(_p)
                 tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
-                print(tmp)
-                input()
                 tmp_pred = list(list(zip(*tmp))[0])
                 tmp_label = list(list(zip(*tmp))[1])
                 if len(tmp_label) != len(labels[ind]):
