@@ -261,6 +261,8 @@ class TransformersNER:
                 pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
             label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
         else:
+            print(inputs)
+            print(labels)
             pred_list, label_list = self.predict(
                 inputs, labels, batch_size, num_workers, cache_path, max_retrieval_size)
             if export_prediction is not None:
@@ -280,7 +282,7 @@ class TransformersNER:
             pred_list = [[convert_to_binary_mask(_i) for _i in i] for i in pred_list]
 
         # compute metrics
-        print(label_list)
+        # print(label_list)
         print(pred_list)
         input()
         logging.info('\n{}'.format(classification_report(label_list, pred_list)))
