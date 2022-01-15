@@ -377,6 +377,7 @@ class TransformersNER:
             input_ids = i.pop('input_ids').cpu().tolist()
             for _i, _p, _l in zip(input_ids, pred, label):
                 assert len(_i) == len(_p) == len(_l)
+                print(_p)
                 tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
                 print(tmp)
                 input()
