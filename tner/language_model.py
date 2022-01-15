@@ -280,6 +280,9 @@ class TransformersNER:
             pred_list = [[convert_to_binary_mask(_i) for _i in i] for i in pred_list]
 
         # compute metrics
+        print(label_list)
+        print(pred_list)
+        input()
         logging.info('\n{}'.format(classification_report(label_list, pred_list)))
         metric = {
             "micro/f1": f1_score(label_list, pred_list, average='micro'),
