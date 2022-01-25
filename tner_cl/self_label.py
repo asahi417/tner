@@ -55,7 +55,7 @@ def main():
         data,
         decode_bio=False,
         batch_size=opt.batch_size)
-
+    pred_list = pred_list[0]
     os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
     with open(opt.export_file, 'w') as f:
         for _i, _l in zip(data, pred_list):
