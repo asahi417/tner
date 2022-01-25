@@ -21,7 +21,12 @@ def get_options():
     parser.add_argument('--entity-list', help='', action='store_true')
     parser.add_argument('--adapter', help='', action='store_true')
     parser.add_argument('--max-retrieval-size', help='', default=10, type=int)
-    parser.add_argument('--index-path', help='index for retrieval at prediction phase', default=None, type=str)
+    parser.add_argument('--timeout', help='', default=None, type=int)
+    parser.add_argument('--index-data-path', help='index for retrieval at prediction phase', default=None, type=str)
+    parser.add_argument('--index-prediction-path', help='index for retrieval at prediction phase', default=None, type=str)
+    parser.add_argument('--contextualisation-cache-prefix', help='index for retrieval at prediction phase', default=None, type=str)
+    parser.add_argument('--timedelta-hour-after', help='', default=None, type=float)
+    parser.add_argument('--timedelta-hour-before', help='', default=None, type=float)
     return parser.parse_args()
 
 
@@ -53,8 +58,13 @@ def main():
         adapter=opt.adapter,
         entity_list=opt.entity_list,
         force_update=True,
-        index_path=opt.index_path,
-        max_retrieval_size=opt.max_retrieval_size
+        index_data_path=opt.index_data_path,
+        index_prediction_path=opt.index_prediction_path,
+        max_retrieval_size=opt.max_retrieval_size,
+        contextualisation_cache_prefix=opt.contextualisation_cache_prefix,
+        timeout=opt.timeout,
+        timedelta_hour_after=opt.timedelta_hour_after,
+        timedelta_hour_before=opt.timedelta_hour_before
     )
 
     print(json.dumps(metric, indent=4))

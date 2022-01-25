@@ -27,13 +27,19 @@ def evaluate(model,
              custom_dataset=None,
              export_dir=None,
              data_cache_prefix: str = None,
+             contextualisation_cache_prefix: str = None,
              force_update: bool = False,
              lower_case: bool = False,
              span_detection_mode: bool = False,
              adapter: bool = False,
              entity_list: bool = False,
-             index_path: str = None,
-             max_retrieval_size: int = 10):
+             index_data_path: str = None,
+             index_prediction_path: str = None,
+             max_retrieval_size: int = 10,
+             timeout: int = None,
+             datetime_format: str = '%Y-%m-%d',
+             timedelta_hour_before: float = None,
+             timedelta_hour_after: float = None):
     """ Evaluate question-generation model """
     metrics_dict = {}
     path_metric = None
@@ -51,42 +57,59 @@ def evaluate(model,
                 logging.warning('error at reading {}'.format(path_metric))
 
         os.makedirs(export_dir, exist_ok=True)
-    lm = get_model_instance(base_model, max_length, model_path=model, adapter=adapter, index_path=index_path)
+    lm = get_model_instance(base_model, max_length, model_path=model, adapter=adapter,
+                            index_data_path=index_data_path, index_prediction_path=index_prediction_path)
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data=data,
                                          custom_data=custom_dataset,
                                          lower_case=lower_case,
                                          label_to_id=lm.label2id,
                                          fix_label_dict=True)
+
     if data_cache_prefix is not None and lm.crf_layer is not None:
         data_cache_prefix = '{}.crf'.format(data_cache_prefix)
     for split in dataset_split.keys():
         if split == 'train':
             continue
         if data_cache_prefix is not None:
-            cache_path = '{}.{}.pkl'.format(data_cache_prefix, split)
+            cache_data_path = '{}.{}.pkl'.format(data_cache_prefix, split)
         else:
-            cache_path = None
+            cache_data_path = None
         split_alias = split
         if span_detection_mode:
             split_alias = '{}/span_detection'.format(split_alias)
         if lower_case:
             split_alias = '{}/lower_case'.format(split_alias)
-        _export_prediction = None
+        if contextualisation_cache_prefix is not None:
+            split_alias = '{}/{}'.format(split_alias, contextualisation_cache_prefix)
+        cache_prediction_path = None
         if export_prediction is not None:
             if lower_case:
-                _export_prediction = '{}.{}.lower.txt'.format(export_prediction, split)
+                cache_prediction_path = '{}.{}.lower.txt'.format(export_prediction, split)
+                if contextualisation_cache_prefix is not None:
+                    contextualisation_cache_prefix = '{}.{}.{}.lower.txt'.format(
+                        export_prediction, split, contextualisation_cache_prefix)
             else:
-                _export_prediction = '{}.{}.txt'.format(export_prediction, split)
+                cache_prediction_path = '{}.{}.txt'.format(export_prediction, split)
+                if contextualisation_cache_prefix is not None:
+                    contextualisation_cache_prefix = '{}.{}.{}.txt'.format(
+                        export_prediction, split, contextualisation_cache_prefix)
+        dates = dataset_split[split]['date'] if 'date' in dataset_split[split] else None
         metrics_dict[split_alias] = lm.span_f1(
             inputs=dataset_split[split]['data'],
             labels=dataset_split[split]['label'],
+            dates=dates,
             batch_size=batch_size,
-            cache_path=cache_path,
+            cache_data_path=cache_data_path,
+            cache_prediction_path=cache_prediction_path,
+            cache_prediction_path_contextualisation=contextualisation_cache_prefix,
             span_detection_mode=span_detection_mode,
-            export_prediction=_export_prediction,
             entity_list=entity_list,
-            max_retrieval_size=max_retrieval_size
+            max_retrieval_size=max_retrieval_size,
+            datetime_format=datetime_format,
+            timedelta_hour_before=timedelta_hour_before,
+            timedelta_hour_after=timedelta_hour_after,
+            timeout=timeout
         )
     if path_metric is not None:
         with open(path_metric, 'w') as f:

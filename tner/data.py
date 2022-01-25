@@ -399,7 +399,7 @@ def decode_file(file_name: str,
                 to_bio: bool = False,
                 allow_new_entity: bool = False,
                 keep_original_surface: bool = False):
-    inputs, labels, seen_entity = [], [], []
+    inputs, labels, seen_entity, dates = [], [], [], []
     past_mention = 'O'
     if data_path is not None:
         file_name = os.path.join(data_path, file_name)
@@ -410,6 +410,11 @@ def decode_file(file_name: str,
 
             # MultiCoNER has header
             if line.startswith('# id '):
+                continue
+
+            if line.startswith('# "id":'):
+                date = line.split('"created_at": ')[-1].replace('"', '')
+                dates.append(date)
                 continue
 
             if len(line) == 0 or line.startswith("-DOCSTART-"):
@@ -469,7 +474,12 @@ def decode_file(file_name: str,
     id_to_label = {v: k for k, v in label_to_id.items()}
     unseen_entity_id = set(label_to_id.values()) - set(list(chain(*labels)))
     unseen_entity_label = {id_to_label[i] for i in unseen_entity_id}
-    return label_to_id, unseen_entity_label, {"data": inputs, "label": labels}
+    if len(dates) > 0:
+        assert len(dates) == len(labels) == len(inputs)
+        return label_to_id, unseen_entity_label, {"data": inputs, "label": labels, "date": dates}
+    else:
+        return label_to_id, unseen_entity_label, {"data": inputs, "label": labels}
+
 
 
 def decode_all_files(files: Dict,

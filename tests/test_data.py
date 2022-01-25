@@ -18,6 +18,7 @@ class Test(unittest.TestCase):
             logging.info('######## {} ########'.format(i))
             unified_data, label_to_id, language, unseen_entity_set = tner.get_dataset([i])
             print(unified_data, label_to_id)
+            print(unified_data['train'].keys())
             input()
             tags = list(filter(lambda x: len(x) > 0, list(set([k[2:] for k in label_to_id.keys()]))))
             logging.info('- data: {}'.format(tags, len(tags)))

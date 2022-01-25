@@ -34,7 +34,7 @@ def main():
         ['I', 'live', 'in', 'United', 'States', '.'],
         ['I', 'have', 'an', 'Apple', 'computer', '.']
     ]
-    test_result = classifier.predict(test_sentences)
+    _, test_result = classifier.predict(test_sentences, decode_bio=True)
     pprint('-- DEMO --')
     pprint(test_result)
     pprint('----------')
@@ -45,7 +45,7 @@ def main():
         elif _inp == '':
             continue
         else:
-            pprint(classifier.predict([_inp.split(' ')]))
+            pprint(classifier.predict([_inp.split(' ')], decode_bio=True)[1])
 
 
 if __name__ == '__main__':

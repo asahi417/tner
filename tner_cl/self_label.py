@@ -17,6 +17,8 @@ def get_options():
     parser.add_argument('--dataset-split', help='dataset to evaluate', default='train', type=str)
     parser.add_argument('--custom-dataset', help='custom data set', default=None, type=str)
     parser.add_argument('-e', '--export-file', help='path to export the metric', required=True, type=str)
+    parser.add_argument('--base-model', help='base model', default=None, type=str)
+    parser.add_argument('--adapter', help='', action='store_true')
     return parser.parse_args()
 
 
@@ -39,7 +41,15 @@ def format_data(opt):
 def main():
     opt = get_options()
     data = format_data(opt)
-    classifier = TransformersNER(opt.model, max_length=opt.max_length)
+
+    if opt.adapter:
+        assert opt.base_model is not None, 'adapter needs base model'
+        classifier = TransformersNER(
+            opt.base_model, max_length=opt.max_length, adapter=opt.adapter,
+            adapter_model=opt.model)
+    else:
+        classifier = TransformersNER(opt.model, max_length=opt.max_length)
+
     classifier.eval()
     pred_list = classifier.predict(
         data,

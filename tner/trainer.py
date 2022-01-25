@@ -22,7 +22,7 @@ def get_model_instance(
         base_model=None, max_length=None, model_path: str = None,
         label_to_id: Dict = None, adapter_config: Dict = None,
         adapter: bool = False, crf: bool = False,
-        index_path: str = None):
+        index_data_path: str = None, index_prediction_path: str = None):
     adapter_config = {} if adapter_config is None else adapter_config
     if adapter:
         assert base_model is not None, 'adapter needs base model'
@@ -38,7 +38,8 @@ def get_model_instance(
         adapter=adapter,
         adapter_model=adapter_model,
         label2id=label_to_id,
-        index_path=index_path,
+        index_data_path=index_data_path,
+        index_prediction_path=index_prediction_path,
         **adapter_config
     )
 
@@ -196,7 +197,7 @@ class Trainer:
         # cached data folder
         if self.config.dataset is not None:
             os.makedirs(CACHE_DIR, exist_ok=True)
-            self.data_cache_path = '{}/data_encoded/{}.{}.{}{}{}.train.pkl'.format(
+            self.cache_data_path = '{}/data_encoded/{}.{}.{}{}{}.train.pkl'.format(
                 CACHE_DIR,
                 '_'.join(sorted(self.config.dataset)),
                 self.config.model,
@@ -205,7 +206,7 @@ class Trainer:
                 '.crf' if self.config.crf else ''
             )
         else:
-            self.data_cache_path = None
+            self.cache_data_path = None
 
     def get_model_instance(self, model_path=None, label_to_id=None):
         return get_model_instance(self.config.model, self.config.max_length, model_path,
@@ -295,7 +296,7 @@ class Trainer:
             shuffle=True,
             drop_last=True,
             num_workers=num_workers,
-            cache_path=self.data_cache_path)
+            cache_data_path=self.cache_data_path)
         self.model.train()
 
         logging.info('start model training')

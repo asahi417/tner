@@ -2,10 +2,12 @@
 https://github.com/Adapter-Hub/adapter-transformers/blob/cea53a392068f56b260b8a51a1c5f05f130a9a2a/src/transformers/adapters/training.py#L6
 """
 import os
+import json
 import logging
 import pickle
 from tqdm import tqdm
 from typing import List, Dict
+from datetime import datetime, timedelta
 
 import transformers
 import torch
@@ -80,7 +82,8 @@ class TransformersNER:
                  adapter_config: str = "pfeiffer",
                  adapter_reduction_factor: int = None,
                  adapter_language: str = 'en',
-                 index_path: str = None):
+                 index_data_path: str = None,
+                 index_prediction_path: str = None):
         self.model_name = model
         self.max_length = max_length
         self.crf_layer = None
@@ -155,8 +158,17 @@ class TransformersNER:
 
         # setup text search engine
         self.searcher = None
-        if index_path is not None:
-            self.searcher = WhooshSearcher(index_path)
+        self.searcher_prediction = None
+        if index_data_path is not None:
+            self.searcher = WhooshSearcher(index_data_path)
+        if index_prediction_path is not None:
+            assert self.searcher is not None
+            with open(index_prediction_path) as f:
+                self.searcher_prediction = {}
+                for i in f.read().split('\n'):
+                    if len(i) > 0:
+                        tmp = json.loads(i)
+                        self.searcher_prediction[str(tmp['id'])] = tmp['predicted_entity']
 
     def index_document(self, csv_file: str, column_text: str):
         assert self.searcher is not None, '`index_path` is None'
@@ -221,11 +233,11 @@ class TransformersNER:
                         shuffle: bool = False,
                         drop_last: bool = False,
                         mask_by_padding_token: bool = False,
-                        cache_path: str = None):
+                        cache_data_path: str = None):
         """ Transform features (produced by BERTClassifier.preprocess method) to data loader. """
-        if cache_path is not None and os.path.exists(cache_path):
-            logging.info('loading preprocessed feature from {}'.format(cache_path))
-            out = pickle_load(cache_path)
+        if cache_data_path is not None and os.path.exists(cache_data_path):
+            logging.info('loading preprocessed feature from {}'.format(cache_data_path))
+            out = pickle_load(cache_data_path)
         else:
             out = self.tokenizer.encode_plus_all(
                 tokens=inputs,
@@ -237,10 +249,10 @@ class TransformersNER:
             logging.info('encode all the data: {}'.format(len(out)))
 
             # cache the encoded data
-            if cache_path is not None:
-                os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-                pickle_save(out, cache_path)
-                logging.info('preprocessed feature is saved at {}'.format(cache_path))
+            if cache_data_path is not None:
+                os.makedirs(os.path.dirname(cache_data_path), exist_ok=True)
+                pickle_save(out, cache_data_path)
+                logging.info('preprocessed feature is saved at {}'.format(cache_data_path))
 
         batch_size = len(out) if batch_size is None else batch_size
         return torch.utils.data.DataLoader(
@@ -249,24 +261,34 @@ class TransformersNER:
     def span_f1(self,
                 inputs: List,
                 labels: List,
+                dates: List = None,
+                datetime_format: str = '%Y-%m-%d',
                 batch_size: int = None,
                 num_workers: int = 0,
-                cache_path: str = None,
-                export_prediction: str = None,
+                cache_data_path: str = None,
+                cache_prediction_path: str = None,
+                cache_prediction_path_contextualisation: str = None,
                 span_detection_mode: bool = False,
                 entity_list: bool = False,
-                max_retrieval_size: int = 10):
-        if export_prediction is not None and os.path.exists(export_prediction):
-            with open(export_prediction) as f:
-                pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
-            label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
-        else:
-            pred_list, label_list = self.predict(
-                inputs, labels, batch_size, num_workers, cache_path, max_retrieval_size)
-            if export_prediction is not None:
-                os.makedirs(os.path.dirname(export_prediction), exist_ok=True)
-                with open(export_prediction, 'w') as f:
-                    f.write('\n'.join(['>>>'.join(i) for i in pred_list]))
+                max_retrieval_size: int = 10,
+                timeout: int = None,
+                timedelta_hour_before: float = None,
+                timedelta_hour_after: float = None):
+        pred_list, label_list = self.predict(
+            inputs=inputs,
+            labels=labels,
+            dates=dates,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            cache_data_path=cache_data_path,
+            cache_prediction_path=cache_prediction_path,
+            cache_prediction_path_contextualisation=cache_prediction_path_contextualisation,
+            max_retrieval_size=max_retrieval_size,
+            timeout=timeout,
+            timedelta_hour_before=timedelta_hour_before,
+            timedelta_hour_after=timedelta_hour_after,
+            datetime_format=datetime_format,
+        )
 
         if span_detection_mode:
 
@@ -320,90 +342,306 @@ class TransformersNER:
                 }
         return metric
 
-    def predict(self, inputs: List, labels: List = None, batch_size: int = None,
-                num_workers: int = 0, cache_path: str = None,
+    def predict(self,
+                inputs: List,
+                labels: List = None,
+                dates: List = None,
+                batch_size: int = None,
+                num_workers: int = 0,
+                cache_prediction_path: str = None,
+                cache_prediction_path_contextualisation: str = None,
+                cache_data_path: str = None,
                 max_retrieval_size: int = 10,
-                decode_bio: bool = False):
-        if self.searcher is None:
-            return self.base_predict(inputs, labels, batch_size, num_workers, cache_path, decode_bio)
-        # assert self.searcher is not None, '`index_path` is None'
-        # 1st Round
-        pred_list = self.base_predict(inputs, labels, batch_size, num_workers, cache_path, True)
-        if labels is None:
-            pred_list = pred_list[0]
-        # 2nd Round
-        # input(pred_list)
-        for pred_sentence in tqdm(pred_list):
-            for entity in pred_sentence:
-                query = ' '.join(entity['entity'])
-                print(query)
-                retrieved_text = self.searcher.search(query, limit=max_retrieval_size)
-                print(retrieved_text)
-                if len(retrieved_text) != 0:
-                    retrieved_text = [i.split(' ') for i in retrieved_text]
-                    tmp_pred = self.base_predict(retrieved_text, None, batch_size, num_workers, cache_path, True)[0]
-                    print(tmp_pred)
-                    _types = [[_i['type'] for _i in i if ' '.join(_i['entity']) == query] for i in tmp_pred]
-                    print(_types)
+                decode_bio: bool = False,
+                contextualisation_type: str = 'bm25_single_entity',
+                contextualisation_score: str = 'bm25',
+                timeout: int = None,
+                datetime_format: str = '%Y-%m-%d',
+                timedelta_hour_before: float = None,
+                timedelta_hour_after: float = None):
 
-    def base_predict(self, inputs: List, labels: List = None, batch_size: int = None,
-                     num_workers: int = 0, cache_path: str = None, decode_bio: bool = False):
+        if dates is not None:
+            assert len(dates) == len(inputs)
+            if datetime_format is None:
+                assert all(type(i) == datetime for i in dates)
+            else:
+                dates = [datetime.strptime(i, datetime_format) for i in dates]
+        else:
+            dates = [None] * len(inputs)
+
+        if self.searcher is None:
+            return self.base_predict(inputs, labels, batch_size, num_workers, cache_data_path, cache_prediction_path,
+                                     decode_bio=decode_bio)
+
+        out = self.base_predict(
+            inputs, labels, batch_size, num_workers, cache_data_path, cache_prediction_path,
+            decode_bio=True)
+        pred_list, pred_decode = out[0]
+        if len(out) > 1:
+            label_list, label_decode = out[1]
+        else:
+            label_list = label_decode = None
+
+        # Contextualisation
+        if cache_prediction_path_contextualisation is not None \
+                and os.path.exists(cache_prediction_path_contextualisation):
+            with open(cache_prediction_path_contextualisation) as f:
+                new_pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
+        else:
+            new_pred_list = []
+            for pred_list_sent, pred_decode_sent, input_sent, label_sent, date_sent in tqdm(list(zip(
+                    pred_list, pred_decode, inputs, label_list, dates))):
+
+                date_range_start = None
+                date_range_end = None
+                if date_sent is not None:
+                    if timedelta_hour_before is not None:
+                        date_range_start = date_sent - timedelta(hours=timedelta_hour_before)
+                    if timedelta_hour_after is not None:
+                        date_range_end = date_sent + timedelta(hours=timedelta_hour_after)
+                    logging.info('date range: {} -- {}'.format(date_range_start, date_range_end))
+
+                tmp_new_pred_list = self.contextualisation(
+                    pred_list_sent, input_sent, pred_decode_sent, max_retrieval_size, batch_size, num_workers,
+                    contextualisation_type=contextualisation_type, contextualisation_score=contextualisation_score,
+                    timeout=timeout, date_range_start=date_range_start, date_range_end=date_range_end)
+                if tmp_new_pred_list is None:
+                    new_pred_list.append(pred_list_sent)
+                else:
+                    new_pred_list.append(tmp_new_pred_list)
+
+                    # For DEBUGGING
+                    if tmp_new_pred_list != pred_list_sent:
+                        print()
+                        print('Label:', self.decode_ner_tags(label_sent, input_sent))
+                        print('Old:', self.decode_ner_tags(pred_list_sent, input_sent))
+                        print('New:', self.decode_ner_tags(tmp_new_pred_list, input_sent))
+                        print()
+
+                if cache_prediction_path_contextualisation is not None:
+                    os.makedirs(os.path.dirname(cache_prediction_path_contextualisation), exist_ok=True)
+                    with open(cache_prediction_path_contextualisation, 'w') as f:
+                        f.write('\n'.join(['>>>'.join(i) for i in new_pred_list]))
+        if decode_bio:
+            new_pred_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(new_pred_list, inputs)]
+            if label_list is not None:
+                return (new_pred_list, new_pred_decode), (label_list, label_decode)
+            return (new_pred_list, new_pred_decode),
+        if label_list is not None:
+            return new_pred_list, label_list
+        return new_pred_list,
+
+    def contextualisation(self, pred_list_sent, input_sent, pred_decode_sent, max_retrieval_size,
+                          batch_size, num_workers, contextualisation_type: str, contextualisation_score: str,
+                          timeout: int, date_range_start, date_range_end):
+
+        def _get_score(target_search_result, **kwargs):
+            """ document scoring function """
+            if contextualisation_score == 'bm25':
+                return target_search_result['score']
+            elif contextualisation_score == 'frequency':
+                return 1
+            else:
+                raise ValueError('unknown score: {}'.format(contextualisation_score))
+
+        def _get_context(query, entity_type):
+            """ get context given a query """
+            # query documents
+
+            retrieved_text = self.searcher.search(query, limit=max_retrieval_size, return_field=['text', 'id'],
+                                                  timeout=timeout, date_range_start=date_range_start,
+                                                  date_range_end=date_range_end)
+            logging.info('query: {}, retrieved text: {}'.format(query, len(retrieved_text)))
+            if len(retrieved_text) == 0:
+                return None
+            # get prediction on the retrieved text
+            tmp_pred = []
+            tmp_score = []
+            if self.searcher_prediction is None:
+                to_run_prediction = [i['text'].split(' ') for i in retrieved_text]
+                tmp_score = [_get_score(i) for i in retrieved_text]
+                to_run_prediction_score = []
+            else:
+                to_run_prediction = []
+                to_run_prediction_score = []
+                for i in retrieved_text:
+                    try:
+                        tmp_pred.append(self.searcher_prediction[str(i['id'])])
+                        tmp_score.append(_get_score(i))
+                    except KeyError:
+                        to_run_prediction.append(i['text'].split(' '))
+                        to_run_prediction_score.append(_get_score(i))
+
+            if len(to_run_prediction) > 0:
+                logging.info('run prediction over {} docs'.format(len(to_run_prediction)))
+                _, tmp_decode = self.base_predict(to_run_prediction, None, batch_size, num_workers, decode_bio=True)[0]
+                tmp_pred += tmp_decode
+                tmp_score += to_run_prediction_score
+            # formatting the result
+            _out = {query: {entity_type: {'count': 1, 'score': 0}}}
+            for _pred, _score in zip(tmp_pred, tmp_score):
+                for __p in _pred:
+                    _key = ' '.join(__p['entity'])
+                    if _key not in _out:
+                        _out[_key] = {}
+                    if __p['type'] not in _out[_key]:
+                        _out[_key][__p['type']] = {'count': 1, 'score': _score}
+                    else:
+                        _out[_key][__p['type']]['score'] += _score
+                        _out[_key][__p['type']]['count'] += 1
+            # aggregation
+            _result = {}
+            for k, v in _out.items():
+                count = {k: v['count'] for k, v in v.items()}
+                count_max = max(count.values())
+                count = {k: v for k, v in count.items() if v == count_max}
+                if len(count) == 1:
+                    _out[k] = list(count.keys())[0]
+                else:
+                    _out[k] = sorted(v.items(), key=lambda kv: kv[1]['score'], reverse=True)[0][0]
+            return _out
+
+        # unique_entities = list(set([' '.join(e['entity']) for e in pred_decode_sent]))
+
+        if contextualisation_type == 'bm25_single_entity':
+            context = {}  # {'Gaza': [{'score': 12.369498962574873, 'type': 'location'}]}
+            for _dict in pred_decode_sent:
+                _query = ' '.join(_dict['entity'])
+                _context = _get_context(_query, _dict['type'])
+                if _context is not None and _query in _context:
+                    context[_query] = _context[_query]
+            if len(context) == 0:
+                return None
+        else:
+            raise ValueError('unknown contextualisation type: {}'.format(contextualisation_type))
+        new_pred_list_sent = self.convert_tags_to_bio(pred_list_sent, input_sent, custom_dict=context)
+        return new_pred_list_sent
+
+    def base_predict(self,
+                     inputs: List,
+                     labels: List = None,
+                     batch_size: int = None,
+                     num_workers: int = 0,
+                     cache_data_path: str = None,
+                     cache_prediction_path: str = None,
+                     decode_bio: bool = False):
+
         dummy_label = False
         if labels is None:
             labels = [[0] * len(i) for i in inputs]
             dummy_label = True
-        self.model.eval()
-        loader = self.get_data_loader(
-            inputs,
-            labels=labels,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            mask_by_padding_token=True,
-            cache_path=cache_path)
-        label_list = []
-        pred_list = []
-        ind = 0
+        if cache_prediction_path is not None and os.path.exists(cache_prediction_path):
+            with open(cache_prediction_path) as f:
+                pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
+            label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
+            inputs_list = inputs
+        else:
+            self.model.eval()
+            loader = self.get_data_loader(
+                inputs,
+                labels=labels,
+                batch_size=batch_size,
+                num_workers=num_workers,
+                mask_by_padding_token=True,
+                cache_data_path=cache_data_path)
+            label_list = []
+            pred_list = []
+            ind = 0
 
-        inputs_list = []
-        for i in loader:
-            label = i.pop('labels').cpu().tolist()
-            pred = self.encode_to_prediction(i)
-            assert len(label) == len(pred), '{} != {}'.format(label, pred)
-            input_ids = i.pop('input_ids').cpu().tolist()
-            for _i, _p, _l in zip(input_ids, pred, label):
-                assert len(_i) == len(_p) == len(_l)
-                tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
-                tmp_pred = list(list(zip(*tmp))[0])
-                tmp_label = list(list(zip(*tmp))[1])
-                if len(tmp_label) != len(labels[ind]):
-                    if len(tmp_label) < len(labels[ind]):
-                        logging.info('found sequence possibly more than max_length')
-                        logging.info('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
-                        tmp_pred = tmp_pred + [self.label2id['O']] * (len(labels[ind]) - len(tmp_label))
-                    else:
-                        raise ValueError(
-                            '{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
-                assert len(tmp_pred) == len(labels[ind])
+            inputs_list = []
+            for i in loader:
+                label = i.pop('labels').cpu().tolist()
+                pred = self.encode_to_prediction(i)
+                assert len(label) == len(pred), '{} != {}'.format(label, pred)
+                input_ids = i.pop('input_ids').cpu().tolist()
+                for _i, _p, _l in zip(input_ids, pred, label):
+                    assert len(_i) == len(_p) == len(_l)
+                    tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
+                    tmp_pred = list(list(zip(*tmp))[0])
+                    tmp_label = list(list(zip(*tmp))[1])
+                    if len(tmp_label) != len(labels[ind]):
+                        if len(tmp_label) < len(labels[ind]):
+                            logging.info('found sequence possibly more than max_length')
+                            logging.info('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
+                            tmp_pred = tmp_pred + [self.label2id['O']] * (len(labels[ind]) - len(tmp_label))
+                        else:
+                            raise ValueError(
+                                '{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
+                    assert len(tmp_pred) == len(labels[ind])
+                    pred_list.append(tmp_pred)
+                    label_list.append(labels[ind])
+                    inputs_list.append(inputs[ind])
+                    ind += 1
+            label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
+            pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
+            if cache_prediction_path is not None:
+                os.makedirs(os.path.dirname(cache_prediction_path), exist_ok=True)
+                with open(cache_prediction_path, 'w') as f:
+                    f.write('\n'.join(['>>>'.join(i) for i in pred_list]))
 
-                pred_list.append(tmp_pred)
-                label_list.append(labels[ind])
-                inputs_list.append(inputs[ind])
-                ind += 1
-        label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
-        pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
-        if decode_bio:
-            pred_list = [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
-            label_list = [self.decode_ner_tags(_p, _i) for _p, _i in zip(label_list, inputs_list)]
-        if dummy_label:
-            return pred_list
-        return pred_list, label_list
+        if not decode_bio:
+            if dummy_label:
+                return pred_list,
+            return pred_list, label_list
+        else:
+            pred_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
+            label_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(label_list, inputs_list)]
+            if dummy_label:
+                return (pred_list, pred_decode),
+            return (pred_list, pred_decode), (label_list, label_decode)
 
     @staticmethod
-    def decode_ner_tags(tag_sequence, input_sequence):
+    def convert_tags_to_bio(tag_sequence, input_sequence, custom_dict: Dict = None):
+
+        def update_collection(_tmp_entity, _tmp_type, _new_tag_sequence):
+            if len(_tmp_entity) > 0:
+                assert _tmp_type is not None
+                if custom_dict is not None and ' '.join(_tmp_entity) in custom_dict:
+                    _tmp_type = custom_dict[' '.join(_tmp_entity)]
+                _new_tag_sequence += ['B-{}'.format(_tmp_type)] + ['I-{}'.format(_tmp_type)] * (len(_tmp_entity) - 1)
+                _tmp_entity = []
+                _tmp_type = None
+            return _tmp_entity, _tmp_type, _new_tag_sequence
+
+        tmp_entity = []
+        tmp_entity_type = None
+        new_tag_sequence = []
+        for _l, _i in zip(tag_sequence, input_sequence):
+            if _l.startswith('B-'):
+                tmp_entity, tmp_entity_type, new_tag_sequence = update_collection(
+                    tmp_entity, tmp_entity_type, new_tag_sequence)
+                tmp_entity = [_i]
+                tmp_entity_type = '-'.join(_l.split('-')[1:])
+            elif _l.startswith('I-'):
+                tmp_tmp_entity_type = '-'.join(_l.split('-')[1:])
+                if len(tmp_entity) == 0:
+                    # if 'I' not start with 'B', skip it
+                    new_tag_sequence.append('O')
+                elif tmp_tmp_entity_type != tmp_entity_type:
+                    # if the type does not match with the B, skip
+                    tmp_entity, tmp_entity_type, new_tag_sequence = update_collection(
+                        tmp_entity, tmp_entity_type, new_tag_sequence)
+                    new_tag_sequence.append('O')
+                else:
+                    tmp_entity.append(_i)
+            elif _l == 'O':
+                tmp_entity, tmp_entity_type, new_tag_sequence = update_collection(
+                    tmp_entity, tmp_entity_type, new_tag_sequence)
+                new_tag_sequence.append('O')
+            else:
+                raise ValueError('unknown tag: {}'.format(_l))
+        _, _, new_tag_sequence = update_collection(tmp_entity, tmp_entity_type, new_tag_sequence)
+        assert len(new_tag_sequence) == len(tag_sequence), '\nnew: {}\nold: {}'.format(new_tag_sequence, tag_sequence)
+        return new_tag_sequence
+
+    @staticmethod
+    def decode_ner_tags(tag_sequence, input_sequence, custom_dict: Dict = None):
         assert len(tag_sequence) == len(input_sequence)
 
         def update_collection(_tmp_entity, _tmp_entity_type, _out):
             if len(_tmp_entity) != 0 and _tmp_entity_type is not None:
+                if custom_dict is not None and ' '.join(_tmp_entity) in custom_dict:
+                    _tmp_entity_type = custom_dict[' '.join(_tmp_entity)]
                 _out.append({'type': _tmp_entity_type, 'entity': _tmp_entity})
                 _tmp_entity = []
                 _tmp_entity_type = None
@@ -419,14 +657,17 @@ class TransformersNER:
                 tmp_entity = [_i]
             elif _l.startswith('I-'):
                 tmp_tmp_entity_type = '-'.join(_l.split('-')[1:])
-                if len(tmp_entity) == 0 and tmp_entity_type is None:
+                if len(tmp_entity) == 0:
+                    # if 'I' not start with 'B', skip it
                     tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
                 elif tmp_tmp_entity_type != tmp_entity_type:
+                    # if the type does not match with the B, skip
                     tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
                 else:
                     tmp_entity.append(_i)
             elif _l == 'O':
                 tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
+
             else:
                 raise ValueError('unknown tag: {}'.format(_l))
         _, _, out = update_collection(tmp_entity, tmp_entity_type, out)

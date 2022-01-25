@@ -1,14 +1,25 @@
 """ Text searcher for contextualised prediction. """
+import signal
 import logging
 import os
 from datetime import datetime
+from typing import List
 
 import pandas as pd
 from tqdm import tqdm
 
+from whoosh import query
 from whoosh.fields import Schema, TEXT, DATETIME, ID
 from whoosh.index import create_in, open_dir
 from whoosh.qparser import QueryParser
+from whoosh.collectors import TimeLimitCollector, TimeLimit
+
+
+def handler(signum, frame):
+    raise Exception("TIMEOUT")
+
+
+signal.signal(signal.SIGALRM, handler)
 
 
 def instantiate_indexer(index_dir, schema_config):
@@ -70,13 +81,43 @@ class WhooshSearcher:
             writer.cancel()
             raise e
 
-    def search(self, query: str, limit: int = 10, target_field: str = None, return_field: str = None):
+    def search(self, query_string: str, limit: int = 10, target_field: str = None, return_field: List or str = None,
+               timeout: int = None, date_range_start=None, date_range_end=None):
         target_field = self.column_text if target_field is None else target_field
         return_field = self.column_text if return_field is None else return_field
-        q = QueryParser(target_field, self.indexer.schema).parse(str(query))
+        if type(return_field) is str:
+            return_field = [return_field]
+        return_field += ['score']
+        q = QueryParser(target_field, self.indexer.schema).parse(str(query_string))
+        if date_range_start is None and date_range_end is None:
+            q_date_range = None
+        else:
+            assert self.column_datetime is not None
+            q_date_range = query.DateRange(self.column_datetime, start=date_range_start, end=date_range_end)
         with self.indexer.searcher() as searcher:
-            results = searcher.search(q, limit=limit)
-            results = [r[return_field] for r in results]
+            if q_date_range is not None:
+                # Currently, the TimeLimitCollector doesn't work with the DateRange
+                # date range does not work with the collector
+                signal.alarm(timeout)
+                try:
+                    results = searcher.search(q, limit=limit, filter=q_date_range)
+                except Exception as exc:
+                    logging.warning("Search took too long, aborting!: {}".format(query_string))
+                    results = []
+                signal.alarm(0)
+            else:
+                # Get a collector object
+                c = searcher.collector(limit=limit, filter=q_date_range)
+                # Wrap it in a TimeLimitedCollector and set the time limit to 10 seconds
+                tlc = TimeLimitCollector(c, timelimit=timeout)
+                try:
+                    searcher.search_with_collector(q, tlc)
+                except TimeLimit:
+                    logging.warning("Search took too long, aborting!: {}".format(query_string))
+                results = tlc.results()
+
+            results = [{field: r[field] if field != 'score' else r.score for field in return_field}
+                       for n, r in enumerate(results)]
             return results
 
 
