@@ -177,12 +177,18 @@ class TransformersNER:
     def train(self):
         self.model.train()
         if self.adapter:
-            self.model.train_adapter(self.adapter_task_name)
+            if self.parallel:
+                self.model.module.train_adapter(self.adapter_task_name)
+            else:
+                self.model.train_adapter(self.adapter_task_name)
 
     def eval(self):
         self.model.eval()
         if self.adapter:
-            self.model.set_active_adapters(self.adapter_task_name)
+            if self.parallel:
+                self.model.module.set_active_adapters(self.adapter_task_name)
+            else:
+                self.model.set_active_adapters(self.adapter_task_name)
 
     def save(self, save_dir):
 
