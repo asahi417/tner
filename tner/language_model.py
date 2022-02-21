@@ -414,12 +414,16 @@ class TransformersNER:
         # get sentence embeddings
         if cache_embedding_path is not None and os.path.exists(cache_embedding_path):
             with open(cache_embedding_path) as f:
-                tmp = [json.loads(i) for i in f.read().split('\n')]
-                embeddings = [i['embedding'] for i in tmp]
+                embeddings = [[float(ii) for ii in i.split(',')] for i in f.read().split('\n') if len(i) > 0]
         else:
             if self.sentence_embedding_model is None or self.sentence_embedding_model.model != embedding_model:
                 self.sentence_embedding_model = SentenceEmbedding(embedding_model)
-            embeddings = self.sentence_embedding_model.embed(inputs)
+            embeddings = self.sentence_embedding_model.embed(inputs).tolist()
+            if cache_embedding_path is not None:
+                with open(cache_embedding_path, 'w') as f:
+                    for e in embeddings:
+                        f.write(','.join([str(i) for i in e]) + '\n')
+        assert len(embeddings) == len(inputs), str([len(embeddings), len(inputs)])
 
         # contextualization
         if cache_prediction_path_contextualisation is not None \

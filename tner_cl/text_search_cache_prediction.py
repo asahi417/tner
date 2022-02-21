@@ -35,13 +35,9 @@ def main():
     classifier.eval()
 
     # run inference
-    if opt.file.endswith('.csv'):
-        df = pd.read_csv(opt.file, lineterminator='\n')
-        text = df[opt.column_text].tolist()
-        text = [i.split(' ') for i in text]
-    else:
-        _, _, data = decode_file(opt.file)
-        text = data["data"]
+    df = pd.read_csv(opt.file, lineterminator='\n')
+    text = df[opt.column_text].tolist()
+    text = [i.split(' ') for i in text]
     classifier.predict(text, cache_prediction_path=opt.export_file, batch_size=opt.batch_size)
 
 
