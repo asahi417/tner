@@ -29,7 +29,6 @@ def main():
     text = df[opt.column_text].tolist()
     _id = df[opt.column_id].tolist()
     text = [i.split(' ') for i in text]
-    input(len(text))
 
     # setup model
     if opt.adapter:

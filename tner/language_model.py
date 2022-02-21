@@ -670,6 +670,8 @@ class TransformersNER:
             for i in loader:
                 label = i.pop('labels').cpu().tolist()
                 pred, prob = self.encode_to_prediction(i)
+                print(pred)
+                print(prob)
                 assert len(label) == len(pred), '{} != {}'.format(label, pred)
                 input_ids = i.pop('input_ids').cpu().tolist()
                 for _i, _p, _prob, _l in zip(input_ids, pred, prob, label):
