@@ -17,7 +17,7 @@ from allennlp.modules.conditional_random_field import allowed_transitions
 from seqeval.metrics import f1_score, precision_score, recall_score, classification_report
 
 from .tokenizer import TokenizerFixed, Dataset, PAD_TOKEN_LABEL_ID
-from .text_searcher import WhooshSearcher
+from .text_searcher import WhooshSearcher, SentenceEmbedding
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning message
 
@@ -32,6 +32,16 @@ def pickle_save(obj, path: str):
 def pickle_load(path: str):
     with open(path, "rb") as fp:  # Unpickling
         return pickle.load(fp)
+
+
+def euclidean_distance(a, b):
+    return sum(map(lambda x: (x[0] - x[1])**2, zip(a, b))) ** 0.5
+
+
+def cosine_similarity(a, b):
+    norm_a = sum(map(lambda x: x * x, a)) ** 0.5
+    norm_b = sum(map(lambda x: x * x, b)) ** 0.5
+    return sum(map(lambda x: x[0] * x[1], zip(a, b)))/norm_a/norm_b
 
 
 def load_hf(model_name, cache_dir, label2id = None, with_adapter_heads: bool = False):
@@ -83,7 +93,8 @@ class TransformersNER:
                  adapter_reduction_factor: int = None,
                  adapter_language: str = 'en',
                  index_data_path: str = None,
-                 index_prediction_path: str = None):
+                 index_prediction_path: str = None,
+                 index_embedding_path: str = None):
         self.model_name = model
         self.max_length = max_length
         self.crf_layer = None
@@ -157,6 +168,7 @@ class TransformersNER:
             self.tokenizer = TokenizerFixed(self.model_name, cache_dir=cache_dir, id2label=self.id2label)
 
         # setup text search engine
+        self.sentence_embedding_model = None
         self.searcher = None
         self.searcher_prediction = None
         if index_data_path is not None:
@@ -170,9 +182,10 @@ class TransformersNER:
                         tmp = json.loads(i)
                         self.searcher_prediction[str(tmp['id'])] = tmp['predicted_entity']
 
-    def index_document(self, csv_file: str, column_text: str):
+    def index_document(self, csv_file: str, column_text: str, batch_size: int = 16, chunk_size: int = 4):
         assert self.searcher is not None, '`index_path` is None'
-        self.searcher.whoosh_indexing(csv_file=csv_file, column_text=column_text)
+        self.searcher.whoosh_indexing(
+            csv_file=csv_file, column_text=column_text, batch_size=batch_size, chunk_size=chunk_size)
 
     def train(self):
         self.model.train()
@@ -219,17 +232,21 @@ class TransformersNER:
     def encode_to_prediction(self, encode: Dict):
         encode = {k: v.to(self.device) for k, v in encode.items()}
         output = self.model(**encode)
+
+        prob = torch.softmax(output['logits'], dim=-1)
+        prob, ind = torch.max(prob, dim=-1)
+        prob = prob.cpu().detach().float().tolist()
+        ind = ind.cpu().detach().int().tolist()
         if self.crf_layer is not None:
             if self.parallel:
                 best_path = self.crf_layer.module.viterbi_tags(output['logits'])
             else:
                 best_path = self.crf_layer.viterbi_tags(output['logits'])
             pred_results = []
-            for tag_seq, prob in best_path:
+            for tag_seq, _ in best_path:
                 pred_results.append(tag_seq)
-            return pred_results
-        else:
-            return torch.max(output['logits'], dim=-1)[1].cpu().detach().int().tolist()
+            ind = pred_results
+        return ind, prob
 
     def get_data_loader(self,
                         inputs,
@@ -356,15 +373,20 @@ class TransformersNER:
                 num_workers: int = 0,
                 cache_prediction_path: str = None,
                 cache_prediction_path_contextualisation: str = None,
+                cache_embedding_path: str = None,
                 cache_data_path: str = None,
                 max_retrieval_size: int = 10,
                 decode_bio: bool = False,
-                contextualisation_type: str = 'bm25_single_entity',
-                contextualisation_score: str = 'bm25',
                 timeout: int = None,
                 datetime_format: str = '%Y-%m-%d',
                 timedelta_hour_before: float = None,
-                timedelta_hour_after: float = None):
+                timedelta_hour_after: float = None,
+                embedding_model: str = 'sentence-transformers/all-mpnet-base-v1',
+                threshold_prob: float = 0.75,  # discard prediction under the value
+                threshold_similarity: float = 0.75,  # discard prediction under the value
+                retrieval_importance: float = 0.75,  # weight to the retrieved predictions
+                ranking_type: str = 'similarity'  # ranking type 'similarity'/'es_score'/'frequency'
+                ):
 
         if dates is not None:
             assert len(dates) == len(inputs)
@@ -376,27 +398,39 @@ class TransformersNER:
             dates = [None] * len(inputs)
 
         if self.searcher is None:
-            return self.base_predict(inputs, labels, batch_size, num_workers, cache_data_path, cache_prediction_path,
-                                     decode_bio=decode_bio)
+            return self.base_predict(
+                inputs, labels, batch_size, num_workers, cache_data_path, cache_prediction_path, decode_bio=decode_bio)
 
         out = self.base_predict(
-            inputs, labels, batch_size, num_workers, cache_data_path, cache_prediction_path,
-            decode_bio=True)
+            inputs, labels, batch_size, num_workers, cache_data_path, cache_prediction_path, decode_bio=True)
         pred_list, pred_decode = out[0]
+        dummy_label = False
         if len(out) > 1:
             label_list, label_decode = out[1]
         else:
-            label_list = label_decode = None
+            dummy_label = True
+            label_list = label_decode = [None] * len(pred_list)
 
-        # Contextualisation
+        # get sentence embeddings
+        if cache_embedding_path is not None and os.path.exists(cache_embedding_path):
+            with open(cache_embedding_path) as f:
+                tmp = [json.loads(i) for i in f.read().split('\n')]
+                embeddings = [i['embedding'] for i in tmp]
+        else:
+            if self.sentence_embedding_model is None or self.sentence_embedding_model.model != embedding_model:
+                self.sentence_embedding_model = SentenceEmbedding(embedding_model)
+            embeddings = self.sentence_embedding_model.embed(inputs)
+
+        # contextualization
         if cache_prediction_path_contextualisation is not None \
                 and os.path.exists(cache_prediction_path_contextualisation):
             with open(cache_prediction_path_contextualisation) as f:
-                new_pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
+                tmp = [json.loads(i) for i in f.read().split('\n')]
+                new_pred_list = [i['prediction'] for i in tmp]
         else:
             new_pred_list = []
-            for pred_list_sent, pred_decode_sent, input_sent, label_sent, date_sent in tqdm(list(zip(
-                    pred_list, pred_decode, inputs, label_list, dates))):
+            for pred_list_sent, pred_decode_sent, input_sent, embedding_sent, label_sent, date_sent in \
+                    tqdm(list(zip(pred_list, pred_decode, inputs, embeddings, label_list, dates))):
 
                 date_range_start = None
                 date_range_end = None
@@ -408,9 +442,20 @@ class TransformersNER:
                     logging.info('date range: {} -- {}'.format(date_range_start, date_range_end))
 
                 tmp_new_pred_list = self.contextualisation(
-                    pred_list_sent, input_sent, pred_decode_sent, max_retrieval_size, batch_size, num_workers,
-                    contextualisation_type=contextualisation_type, contextualisation_score=contextualisation_score,
-                    timeout=timeout, date_range_start=date_range_start, date_range_end=date_range_end)
+                    pred_list_sent=pred_list_sent,
+                    input_sent=input_sent,
+                    embedding_sent=embedding_sent,
+                    pred_decode_sent=pred_decode_sent,
+                    max_retrieval_size=max_retrieval_size,
+                    batch_size=batch_size,
+                    num_workers=num_workers,
+                    timeout=timeout,
+                    date_range_start=date_range_start,
+                    date_range_end=date_range_end,
+                    threshold_prob=threshold_prob,
+                    threshold_similarity=threshold_similarity,
+                    retrieval_importance=retrieval_importance,
+                    ranking_type=ranking_type)
                 if tmp_new_pred_list is None:
                     new_pred_list.append(pred_list_sent)
                 else:
@@ -427,33 +472,36 @@ class TransformersNER:
                 if cache_prediction_path_contextualisation is not None:
                     os.makedirs(os.path.dirname(cache_prediction_path_contextualisation), exist_ok=True)
                     with open(cache_prediction_path_contextualisation, 'w') as f:
-                        f.write('\n'.join(['>>>'.join(i) for i in new_pred_list]))
-        if decode_bio:
-            new_pred_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(new_pred_list, inputs)]
-            if label_list is not None:
-                return (new_pred_list, new_pred_decode), (label_list, label_decode)
+                        f.write(json.dumps({'prediction': new_pred_list}) + '\n')
+
+        if not decode_bio:
+            if dummy_label:
+                return pred_list,
+            return pred_list, label_list
+        new_pred_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(new_pred_list, inputs)]
+        if dummy_label:
             return (new_pred_list, new_pred_decode),
-        if label_list is not None:
-            return new_pred_list, label_list
-        return new_pred_list,
+        return (new_pred_list, new_pred_decode), (label_list, label_decode)
 
-    def contextualisation(self, pred_list_sent, input_sent, pred_decode_sent, max_retrieval_size,
-                          batch_size, num_workers, contextualisation_type: str, contextualisation_score: str,
-                          timeout: int, date_range_start, date_range_end):
+    def contextualisation(self,
+                          pred_list_sent,
+                          input_sent,
+                          embedding_sent,
+                          pred_decode_sent,
+                          max_retrieval_size,
+                          batch_size,
+                          num_workers,
+                          timeout: int,
+                          date_range_start,
+                          date_range_end,
+                          threshold_prob,
+                          threshold_similarity,
+                          retrieval_importance,
+                          ranking_type: str):
 
-        def _get_score(target_search_result, **kwargs):
-            """ document scoring function """
-            if contextualisation_score == 'bm25':
-                return target_search_result['score']
-            elif contextualisation_score == 'frequency':
-                return 1
-            else:
-                raise ValueError('unknown score: {}'.format(contextualisation_score))
-
-        def _get_context(query, entity_type):
+        def _get_context(query, embedding, probability, entity_type):
             """ get context given a query """
             # query documents
-
             retrieved_text = self.searcher.search(query, limit=max_retrieval_size, return_field=['text', 'id'],
                                                   timeout=timeout, date_range_start=date_range_start,
                                                   date_range_end=date_range_end)
@@ -462,64 +510,116 @@ class TransformersNER:
                 return None
             # get prediction on the retrieved text
             tmp_pred = []
-            tmp_score = []
+            tmp_score = []  # es score
+            tmp_embedding = []
             if self.searcher_prediction is None:
                 to_run_prediction = [i['text'].split(' ') for i in retrieved_text]
-                tmp_score = [_get_score(i) for i in retrieved_text]
+                tmp_score = [i['score'] for i in retrieved_text]
+                tmp_embedding = [i['embedding'] for i in retrieved_text]
                 to_run_prediction_score = []
+                to_run_prediction_embedding = []
             else:
                 to_run_prediction = []
+                to_run_prediction_embedding = []
                 to_run_prediction_score = []
                 for i in retrieved_text:
                     try:
                         tmp_pred.append(self.searcher_prediction[str(i['id'])])
-                        tmp_score.append(_get_score(i))
+                        tmp_score.append(i['score'])
                     except KeyError:
                         to_run_prediction.append(i['text'].split(' '))
-                        to_run_prediction_score.append(_get_score(i))
+                        to_run_prediction_score.append(i['score'])
+                        to_run_prediction_embedding.append(i['embedding'])
 
             if len(to_run_prediction) > 0:
                 logging.info('run prediction over {} docs'.format(len(to_run_prediction)))
-                _, tmp_decode = self.base_predict(to_run_prediction, None, batch_size, num_workers, decode_bio=True)[0]
+                out = self.base_predict(
+                    to_run_prediction, None, batch_size, num_workers, decode_bio=True)[0]
+                _, tmp_decode = out[0]
                 tmp_pred += tmp_decode
                 tmp_score += to_run_prediction_score
+                tmp_embedding += to_run_prediction_embedding
+
             # formatting the result
-            _out = {query: {entity_type: {'count': 1, 'score': 0}}}
-            for _pred, _score in zip(tmp_pred, tmp_score):
+            _out = {}
+            for _pred, _score, _e in zip(tmp_pred, tmp_score, tmp_embedding):
                 for __p in _pred:
+
+                    if __p['probability'] < threshold_prob:
+                        continue
+
+                    sim = cosine_similarity(embedding, __p['embedding'])
+                    if sim < threshold_similarity:
+                        continue
+
+                    _probability = sum(__p['probability'])/len(__p['probability'])
                     _key = ' '.join(__p['entity'])
                     if _key not in _out:
                         _out[_key] = {}
                     if __p['type'] not in _out[_key]:
-                        _out[_key][__p['type']] = {'count': 1, 'score': _score}
+                        _out[_key][__p['type']] = {
+                            'count': 1,
+                            'frequency': 1 * retrieval_importance,
+                            'score': _score * retrieval_importance,
+                            'similarity': sim * retrieval_importance,
+                            'probability': _probability * retrieval_importance
+                        }
                     else:
-                        _out[_key][__p['type']]['score'] += _score
                         _out[_key][__p['type']]['count'] += 1
+                        _out[_key][__p['type']]['frequency'] += 1 * retrieval_importance
+                        _out[_key][__p['type']]['score'] += _score * retrieval_importance
+                        _out[_key][__p['type']]['similarity'] += sim * retrieval_importance
+                        _out[_key][__p['type']]['probability'] += _prob * retrieval_importance
+            if probability > threshold_prob:
+                max_score = max(tmp_score)
+                if query not in _out:
+                    _out[query] = {}
+                if entity_type not in _out[query]:
+                    _out[query][entity_type] = {
+                        'count': 1,
+                        'frequency': 1,
+                        'score': max_score,
+                        'similarity': cosine_similarity(embedding, embedding),
+                        'probability': probability
+                    }
+                else:
+                    _out[query][entity_type]['count'] += 1
+                    _out[query][entity_type]['frequency'] += 1
+                    _out[query][entity_type]['score'] += max_score
+                    _out[query][entity_type]['similarity'] += cosine_similarity(embedding, embedding)
+                    _out[query][entity_type]['probability'] += probability
             # aggregation
             _result = {}
             for k, v in _out.items():
-                count = {k: v['count'] for k, v in v.items()}
-                count_max = max(count.values())
-                count = {k: v for k, v in count.items() if v == count_max}
-                if len(count) == 1:
-                    _out[k] = list(count.keys())[0]
+                if ranking_type == 'similarity':
+                    ranking_score = {k: v['similarity'] / v['count'] for k, v in v.items()}
+                elif ranking_type == 'es_score':
+                    ranking_score = {k: v['score']/v['count'] for k, v in v.items()}
+                elif ranking_type == 'frequency':
+                    ranking_score = {k: v['frequency'] for k, v in v.items()}
+                elif ranking_type == 'probability':
+                    ranking_score = {k: v['probability']/v['count'] for k, v in v.items()}
                 else:
-                    _out[k] = sorted(v.items(), key=lambda kv: kv[1]['score'], reverse=True)[0][0]
+                    raise ValueError('unknown type: {}'.format(ranking_type))
+
+                max_score = max(ranking_score.values())
+                ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
+                if len(ranking_score) == 1:
+                    logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
+                new_entity_type, score = ranking_score[0]
+                _out[k] = new_entity_type
             return _out
 
-        # unique_entities = list(set([' '.join(e['entity']) for e in pred_decode_sent]))
+        context = {}  # {'Gaza': [{'score': 12.369498962574873, 'type': 'location'}]}
+        for _dict, _emb in zip(pred_decode_sent, embedding_sent):
+            _query = ' '.join(_dict['entity'])
+            _prob = sum(_dict['probability'])/len(_dict['probability'])
+            _context = _get_context(_query, _emb, _prob, _dict['type'])
+            if _context is not None and _query in _context:
+                context[_query] = _context[_query]
+        if len(context) == 0:
+            return None
 
-        if contextualisation_type == 'bm25_single_entity':
-            context = {}  # {'Gaza': [{'score': 12.369498962574873, 'type': 'location'}]}
-            for _dict in pred_decode_sent:
-                _query = ' '.join(_dict['entity'])
-                _context = _get_context(_query, _dict['type'])
-                if _context is not None and _query in _context:
-                    context[_query] = _context[_query]
-            if len(context) == 0:
-                return None
-        else:
-            raise ValueError('unknown contextualisation type: {}'.format(contextualisation_type))
         new_pred_list_sent = self.convert_tags_to_bio(pred_list_sent, input_sent, custom_dict=context)
         return new_pred_list_sent
 
@@ -538,7 +638,9 @@ class TransformersNER:
             dummy_label = True
         if cache_prediction_path is not None and os.path.exists(cache_prediction_path):
             with open(cache_prediction_path) as f:
-                pred_list = [[__p for __p in i.split('>>>')] for i in f.read().split('\n')]
+                tmp = [json.loads(i) for i in f.read().split('\n')]
+                pred_list = [i['prediction'] for i in tmp]
+                prob_list = [i['probability'] for i in tmp]
             label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
             inputs_list = inputs
         else:
@@ -552,19 +654,21 @@ class TransformersNER:
                 cache_data_path=cache_data_path)
             label_list = []
             pred_list = []
+            prob_list = []
             ind = 0
 
             inputs_list = []
             for i in loader:
                 label = i.pop('labels').cpu().tolist()
-                pred = self.encode_to_prediction(i)
+                pred, prob = self.encode_to_prediction(i)
                 assert len(label) == len(pred), '{} != {}'.format(label, pred)
                 input_ids = i.pop('input_ids').cpu().tolist()
-                for _i, _p, _l in zip(input_ids, pred, label):
+                for _i, _p, _prob, _l in zip(input_ids, pred, prob, label):
                     assert len(_i) == len(_p) == len(_l)
-                    tmp = [(__p, __l) for __p, __l in zip(_p, _l) if __l != PAD_TOKEN_LABEL_ID]
+                    tmp = [(__p, __l, __prob) for __p, __l, __prob in zip(_p, _l, _prob) if __l != PAD_TOKEN_LABEL_ID]
                     tmp_pred = list(list(zip(*tmp))[0])
                     tmp_label = list(list(zip(*tmp))[1])
+                    tmp_prob = list(list(zip(*tmp))[2])
                     if len(tmp_label) != len(labels[ind]):
                         if len(tmp_label) < len(labels[ind]):
                             logging.info('found sequence possibly more than max_length')
@@ -577,24 +681,24 @@ class TransformersNER:
                     pred_list.append(tmp_pred)
                     label_list.append(labels[ind])
                     inputs_list.append(inputs[ind])
+                    prob_list.append(tmp_prob)
                     ind += 1
             label_list = [[self.id2label[__l] for __l in _l] for _l in label_list]
             pred_list = [[self.id2label[__p] for __p in _p] for _p in pred_list]
             if cache_prediction_path is not None:
                 os.makedirs(os.path.dirname(cache_prediction_path), exist_ok=True)
                 with open(cache_prediction_path, 'w') as f:
-                    f.write('\n'.join(['>>>'.join(i) for i in pred_list]))
+                    f.write(json.dumps({'prediction': pred_list, 'probability': prob_list}) + '\n')
 
         if not decode_bio:
             if dummy_label:
                 return pred_list,
             return pred_list, label_list
-        else:
-            pred_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(pred_list, inputs_list)]
-            label_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(label_list, inputs_list)]
-            if dummy_label:
-                return (pred_list, pred_decode),
-            return (pred_list, pred_decode), (label_list, label_decode)
+        pred_decode = [self.decode_ner_tags(_p, _i, _prob) for _p, _prob, _i in zip(pred_list, prob_list, inputs_list)]
+        label_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(label_list, inputs_list)]
+        if dummy_label:
+            return (pred_list, pred_decode),
+        return (pred_list, pred_decode), (label_list, label_decode)
 
     @staticmethod
     def convert_tags_to_bio(tag_sequence, input_sequence, custom_dict: Dict = None):
@@ -607,6 +711,7 @@ class TransformersNER:
                 _new_tag_sequence += ['B-{}'.format(_tmp_type)] + ['I-{}'.format(_tmp_type)] * (len(_tmp_entity) - 1)
                 _tmp_entity = []
                 _tmp_type = None
+
             return _tmp_entity, _tmp_type, _new_tag_sequence
 
         tmp_entity = []
@@ -641,41 +746,49 @@ class TransformersNER:
         return new_tag_sequence
 
     @staticmethod
-    def decode_ner_tags(tag_sequence, input_sequence, custom_dict: Dict = None):
-        assert len(tag_sequence) == len(input_sequence)
+    def decode_ner_tags(tag_sequence, input_sequence, probability_sequence=None, custom_dict: Dict = None):
 
-        def update_collection(_tmp_entity, _tmp_entity_type, _out):
+        def update_collection(_tmp_entity, _tmp_entity_type, _tmp_prob, _out):
             if len(_tmp_entity) != 0 and _tmp_entity_type is not None:
                 if custom_dict is not None and ' '.join(_tmp_entity) in custom_dict:
                     _tmp_entity_type = custom_dict[' '.join(_tmp_entity)]
-                _out.append({'type': _tmp_entity_type, 'entity': _tmp_entity})
+                if _tmp_prob is None:
+                    _out.append({'type': _tmp_entity_type, 'entity': _tmp_entity})
+                else:
+                    _out.append({'type': _tmp_entity_type, 'entity': _tmp_entity, 'probability': _tmp_prob})
                 _tmp_entity = []
+                _tmp_prob = []
                 _tmp_entity_type = None
-            return _tmp_entity, _tmp_entity_type, _out
+            return _tmp_entity, _tmp_entity_type, _tmp_prob, _out
 
+        probability_sequence = [None] * len(tag_sequence) if probability_sequence is None else probability_sequence
+        assert len(tag_sequence) == len(input_sequence) == len(probability_sequence)
         out = []
         tmp_entity = []
+        tmp_prob = []
         tmp_entity_type = None
-        for _l, _i in zip(tag_sequence, input_sequence):
+        for _l, _i, _prob in zip(tag_sequence, input_sequence, probability_sequence):
             if _l.startswith('B-'):
-                _, _, out = update_collection(tmp_entity, tmp_entity_type, out)
+                _, _, _, out = update_collection(tmp_entity, tmp_entity_type, tmp_prob, out)
                 tmp_entity_type = '-'.join(_l.split('-')[1:])
                 tmp_entity = [_i]
+                tmp_prob = [_prob]
             elif _l.startswith('I-'):
                 tmp_tmp_entity_type = '-'.join(_l.split('-')[1:])
                 if len(tmp_entity) == 0:
                     # if 'I' not start with 'B', skip it
-                    tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
+                    tmp_entity, tmp_entity_type, tmp_prob, out = update_collection(tmp_entity, tmp_entity_type, tmp_prob, out)
                 elif tmp_tmp_entity_type != tmp_entity_type:
                     # if the type does not match with the B, skip
-                    tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
+                    tmp_entity, tmp_entity_type, tmp_prob, out = update_collection(tmp_entity, tmp_entity_type, tmp_prob, out)
                 else:
                     tmp_entity.append(_i)
+                    tmp_prob.append(_prob)
             elif _l == 'O':
-                tmp_entity, tmp_entity_type, out = update_collection(tmp_entity, tmp_entity_type, out)
+                tmp_entity, tmp_entity_type, tmp_prob, out = update_collection(tmp_entity, tmp_entity_type, tmp_prob, out)
 
             else:
                 raise ValueError('unknown tag: {}'.format(_l))
-        _, _, out = update_collection(tmp_entity, tmp_entity_type, out)
+        _, _, _, out = update_collection(tmp_entity, tmp_entity_type, tmp_prob, out)
         return out
 

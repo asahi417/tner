@@ -20,6 +20,7 @@ def arguments(parser):
     parser.add_argument('--datetime-format', help='datetime format', default='%Y-%m-%d', type=str)
     parser.add_argument('--datetime-range-start', help='', default='2021-03-01', type=str)
     parser.add_argument('--datetime-range-end', help='', default='2021-07-01', type=str)
+    parser.add_argument('-q', '--query', help='test query', default=None, type=str)
     parser.add_argument('--interactive-mode', help='', action='store_true')
     return parser
 
@@ -38,25 +39,31 @@ def main():
             column_datetime=opt.column_datetime,
             datetime_format=opt.datetime_format
         )
-    if opt.interactive_mode:
+    if opt.interactive_mode or opt.query is not None:
         datetime_range_start = None
         if opt.datetime_range_start is not None:
             datetime_range_start = datetime.strptime(opt.datetime_range_start, opt.datetime_format)
         datetime_range_end = None
         if opt.datetime_range_end is not None:
             datetime_range_end = datetime.strptime(opt.datetime_range_end, opt.datetime_format)
-        while True:
-            _inp = input('query >>>')
-            if _inp == 'q':
-                break
-            elif _inp == '':
-                continue
-            else:
-                out = searcher.search(_inp, return_field=['id', 'text', 'datetime'],
-                                      date_range_end=datetime_range_end,
-                                      date_range_start=datetime_range_start)
-                print('# {} documents #'.format(len(out)))
-                print('#' * 100)
-                for n, i in enumerate(out):
-                    print(' *** {} *** \n{}'.format(n, i))
+        if opt.query is not None:
+            out = searcher.search(opt.query, return_field=['id', 'text', 'datetime'],
+                                  date_range_end=datetime_range_end,
+                                  date_range_start=datetime_range_start)
+            print(out)
+        if opt.interactive_mode:
+            while True:
+                _inp = input('query >>>')
+                if _inp == 'q':
+                    break
+                elif _inp == '':
+                    continue
+                else:
+                    out = searcher.search(_inp, return_field=['id', 'text', 'datetime'],
+                                          date_range_end=datetime_range_end,
+                                          date_range_start=datetime_range_start)
+                    print('# {} documents #'.format(len(out)))
                     print('#' * 100)
+                    for n, i in enumerate(out):
+                        print(' *** {} *** \n{}'.format(n, i))
+                        print('#' * 100)

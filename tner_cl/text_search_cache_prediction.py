@@ -36,17 +36,20 @@ def main():
     classifier.eval()
 
     # run inference
-    df = pd.read_csv(opt.csv_file, lineterminator='\n', index_col=0)
+    df = pd.read_csv(opt.csv_file, lineterminator='\n')
     text = df[opt.column_text].tolist()
     ids = df[opt.column_id].tolist()
     text = [i.split(' ') for i in text]
-    out = classifier.predict(text, batch_size=opt.batch_size, decode_bio=True)
+    out = classifier.predict(text,
+                             cache_prediction_path=opt.export_file,
+                             batch_size=opt.batch_size,
+                             decode_bio=True)
 
-    # save the result
-    os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
-    with open(opt.export_file, 'w') as f:
-        for _id, _out in zip(ids, out):
-            f.write(json.dumps({'id': _id, 'predicted_entity': _out}) + '\n')
+    # # save the result
+    # os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
+    # with open(opt.export_file, 'w') as f:
+    #     for _id, _out in zip(ids, out):
+    #         f.write(json.dumps({'id': _id, 'predicted_entity': _out}) + '\n')
 
 
 if __name__ == '__main__':

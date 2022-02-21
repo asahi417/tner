@@ -207,3 +207,61 @@ If you use any of these resources, please cite the following [paper](https://acl
     abstract = "Language model (LM) pretraining has led to consistent improvements in many NLP downstream tasks, including named entity recognition (NER). In this paper, we present T-NER (Transformer-based Named Entity Recognition), a Python library for NER LM finetuning. In addition to its practical utility, T-NER facilitates the study and investigation of the cross-domain and cross-lingual generalization ability of LMs finetuned on NER. Our library also provides a web app where users can get model predictions interactively for arbitrary text, which facilitates qualitative model evaluation for non-expert programmers. We show the potential of the library by compiling nine public NER datasets into a unified format and evaluating the cross-domain and cross- lingual performance across the datasets. The results from our initial experiments show that in-domain performance is generally competitive across datasets. However, cross-domain generalization is challenging even with a large pretrained LM, which has nevertheless capacity to learn domain-specific features if fine- tuned on a combined dataset. To facilitate future research, we also release all our LM checkpoints via the Hugging Face model hub.",
 }
 ```
+
+## Use in Transformers
+```python
+from transformers import AutoTokenizer, AutoModelForTokenClassification
+from transformers import pipeline
+
+
+def decode_ner_output(nlp_output, tokenizer):
+    """ Parse BIO to retain full entity. """
+
+    def _decode(_tmp_output):
+        return {'entity': _tmp_output[0]['entity'][2:],
+                'score': [i['score'] for i in _tmp_output],
+                'index': [i['index'] for i in _tmp_output],
+                'word': tokenizer.convert_tokens_to_string([i['word'] for i in _tmp_output]),
+                'start': _tmp_output[0]['start'],
+                'end': _tmp_output[-1]['end']}
+
+    nlp_output = sorted(nlp_output, key=lambda x: x['start'])
+    final_output = []
+    tmp_output = []
+    for single_output in nlp_output:
+        if single_output['entity'].startswith('B-'):
+            if len(tmp_output) > 0:
+                final_output.append(_decode(tmp_output))
+                tmp_output = []
+        tmp_output.append(single_output)
+    if len(tmp_output) > 0:
+        final_output.append(_decode(tmp_output))
+    return final_output
+
+
+# set tokenizer/model
+tokenizer = AutoTokenizer.from_pretrained('./snapchat_ner_roberta_large')
+model = AutoModelForTokenClassification.from_pretrained('./snapchat_ner_roberta_large')
+
+# nlp pipeline
+nlp = pipeline("ner", model=model, tokenizer=tokenizer)
+
+# run example
+example = """I absolutely love the show "Sister Sister" it's a Netflix series ❤️'"""
+raw_output = nlp(example)
+output = decode_ner_output(raw_output, tokenizer)
+print(output)
+
+>>> [{'entity': 'work of art',
+  'score': [0.9839883,0.9969864,0.9981699,0.99844843,0.9986117,0.9982612,0.9982949],
+  'index': [6, 7, 8, 9, 10, 11, 12],
+  'word': ' "Sister Sister"',
+  'start': 27,
+  'end': 42},
+ {'entity': 'corporation',
+  'score': [0.9534091],
+  'index': [18],
+  'word': ' Netflix',
+  'start': 50,
+  'end': 57}]
+```

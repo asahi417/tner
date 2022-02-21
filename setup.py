@@ -42,13 +42,13 @@ setup(
         'toml',
         'pandas',
         'torch==1.10.0',
-        # 'transformers==4.12.5',
         'adapter-transformers==2.2.0',
         'sentencepiece==0.1.96',
         'seqeval==1.2.2',
         'segtok==1.5.10',
         'allennlp==2.8.0',
-        'whoosh'
+        'whoosh',
+        'sentence-transformers'
     ],
     python_requires='>=3.6',
     entry_points={
@@ -59,7 +59,8 @@ setup(
             'tner-predict = tner_cl.predict:main',
             'tner-self-label = tner_cl.self_label:main',
             'tner-text-search = tner_cl.text_search:main',
-            'tner-text-search-cache-prediction = tner_cl.text_search_cache_prediction:main'
+            'tner-text-search-cache-prediction = tner_cl.text_search_cache_prediction:main',
+            'tner-text-search-cache-embedding = tner_cl.text_search_cache_embedding:main'
         ],
     }
 )
