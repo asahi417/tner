@@ -177,10 +177,6 @@ class TransformersNER:
             assert self.searcher is not None
             with open(index_prediction_path) as f:
                 self.searcher_prediction = json.load(f)
-                # for i in f.read().split('\n'):
-                #     if len(i) > 0:
-                #         tmp = json.loads(i)
-                #         self.searcher_prediction[str(tmp['id'])] = tmp['predicted_entity']
 
     def train(self):
         self.model.train()
@@ -776,7 +772,9 @@ class TransformersNER:
             return _tmp_entity, _tmp_entity_type, _tmp_prob, _out
 
         probability_sequence = [None] * len(tag_sequence) if probability_sequence is None else probability_sequence
-        assert len(tag_sequence) == len(input_sequence) == len(probability_sequence)
+        if not len(tag_sequence) == len(input_sequence) == len(probability_sequence):
+            print(tag_sequence, input_sequence, probability_sequence)
+        assert len(tag_sequence) == len(input_sequence) == len(probability_sequence), str([len(tag_sequence), len(input_sequence), len(probability_sequence)])
         out = []
         tmp_entity = []
         tmp_prob = []

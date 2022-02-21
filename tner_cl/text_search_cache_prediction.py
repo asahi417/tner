@@ -24,6 +24,13 @@ def main():
     opt = get_options()
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO,
                         datefmt='%Y-%m-%d %H:%M:%S')
+
+    df = pd.read_csv(opt.file, lineterminator='\n')
+    text = df[opt.column_text].tolist()
+    _id = df[opt.column_id].tolist()
+    text = [i.split(' ') for i in text]
+    input(len(text))
+
     # setup model
     if opt.adapter:
         assert opt.base_model is not None, 'adapter needs base model'
@@ -35,10 +42,6 @@ def main():
     classifier.eval()
 
     # run inference
-    df = pd.read_csv(opt.file, lineterminator='\n')
-    text = df[opt.column_text].tolist()
-    _id = df[opt.column_id].tolist()
-    text = [i.split(' ') for i in text]
     out = classifier.predict(text, batch_size=opt.batch_size, decode_bio=True)
     _, tmp_decode = out[0]
     with open(opt.export_file, 'w') as f:

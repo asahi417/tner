@@ -264,8 +264,8 @@ class Trainer:
         os.makedirs(save_dir, exist_ok=True)
         logging.info('model saving at {}'.format(save_dir))
         self.model.save(save_dir)
-        with open('{}/trainer_config.json'.format(save_dir), 'w') as f:
-            json.dump(self.config, f)
+        # with open('{}/trainer_config.json'.format(save_dir), 'w') as f:
+        #     json.dump(self.config, f)
         # save optimizer
         save_dir_opt = '{}/optimizers/optimizer.{}.pt'.format(self.config.checkpoint_dir, current_epoch + 1)
         os.makedirs(os.path.dirname(save_dir_opt), exist_ok=True)
