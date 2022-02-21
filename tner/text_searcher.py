@@ -1,4 +1,5 @@
 """ Text searcher for contextualised prediction. """
+import json
 import signal
 import logging
 import os
@@ -18,7 +19,7 @@ from sentence_transformers import SentenceTransformer
 
 class SentenceEmbedding:
 
-    def __init__(self, model: str = 'sentence-transformers/all-mpnet-base-v1'):
+    def __init__(self, model: str = None):
         self.model = SentenceTransformer(model)
         self.dim = self.model.get_sentence_embedding_dimension()
 
@@ -37,10 +38,11 @@ class WhooshSearcher:
 
     def __init__(self,
                  index_path: str,
+                 embedding_path: str = None,
                  column_text: str = 'text',
                  column_id: str = 'id',
                  column_datetime: str = 'datetime',
-                 embedding_model: str = 'sentence-transformers/all-mpnet-base-v1'):
+                 embedding_model: str = None):
 
         self.column_id = column_id
         self.column_datetime = column_datetime
@@ -53,12 +55,16 @@ class WhooshSearcher:
         }
         if embedding_model is not None:
             self.embedding_model = SentenceEmbedding(embedding_model)
-            for i in range(self.embedding_model.dim):
-                schema_config['embedding_{}'.format(i)] = NUMERIC(stored=True)
         else:
             self.embedding_model = None
 
         self.indexer = self.instantiate_indexer(index_path, schema_config)
+        self.embedding_path = embedding_path
+        if self.embedding_path is not None and os.path.exists(self.embedding_path):
+            with open(self.embedding_path) as f:
+                self.embedding_cache = json.load(f)
+        else:
+            self.embedding_cache = {}
 
     @staticmethod
     def instantiate_indexer(index_dir, schema_config):
@@ -85,20 +91,23 @@ class WhooshSearcher:
         column_text = column_text if column_text is not None else self.column_text
         column_id = column_id if column_id is not None else self.column_id
         column_datetime = column_datetime if column_datetime is not None else self.column_datetime
-        # df = pd.read_csv(csv_file, lineterminator='\n', index_col=0)
         df = pd.read_csv(csv_file, lineterminator='\n')
 
         # compute embeddings
         if self.embedding_model is not None:
             text = df[column_text].tolist()
-            embedding = self.precompute_embedding(text, export_file='{}.embedding.txt'.format(self.index_path),
-                                                  batch_size=batch_size, chunk_size=chunk_size)
-        else:
-            embedding = None
+            _id = df[column_id].tolist()
+            # filter out existing embeddings
+            text = [t for i, t in zip(_id, text) if i not in self.embedding_cache]
+            _id = [i for i in _id if i not in self.embedding_cache]
+            if len(text) > 0:
+                embedding = self.__precompute_embedding(text, batch_size=batch_size, chunk_size=chunk_size)
+                self.embedding_cache.update({i: _e for i, _e in zip(_id, embedding)})
+                with open(self.embedding_path, 'w') as f:
+                    json.dump(self.embedding_cache, f)
         writer = self.indexer.writer()
         logging.info('indexing data')
         try:
-            chunk_index = 0
             for n, (_, _df) in tqdm(list(enumerate(df.iterrows()))):
                 _dict = _df.to_dict()
                 data = {self.column_text: str(_dict[column_text])}
@@ -106,40 +115,32 @@ class WhooshSearcher:
                     data[self.column_id] = str(_dict[column_id])
                 if column_datetime is not None and self.column_datetime is not None:
                     data[self.column_datetime] = datetime.strptime(_dict[column_datetime], datetime_format),
-                if self.embedding_model is not None and embedding is not None:
-                    for d in range(self.embedding_model.dim):
-                        data['embedding_{}'.format(d)] = embedding[n][d]
                 writer.add_document(**data)
-                chunk_index += 1
-                if chunk_index == chunk_size:
-                    writer.commit()
-                    writer = self.indexer.writer()
-                    chunk_index = 0
-                    print('write')
             writer.commit()
         except Exception as e:
             logging.exception('Error occurred while indexing.')
             writer.cancel()
             raise e
 
-    def precompute_embedding(self, list_text, export_file: str, batch_size: int = 16, chunk_size: int = 4):
-        if not os.path.exists(export_file):
-            bucket = []
-            logging.info('computing sentence embedding')
-            with open(export_file, 'w') as f:
-                for i in tqdm(list_text):
-                    bucket.append(i)
-                    if len(bucket) == chunk_size * batch_size:
-                        embedding = self.embedding_model.embed(bucket)
-                        for v in embedding.tolist():
-                            f.write(','.join([str(_v) for _v in v]) + '\n')
-                        bucket = []
-                if len(bucket) != 0:
+    def __precompute_embedding(self, list_text, batch_size: int = 16, chunk_size: int = 4):
+        tmp_file = '.tmp.embedding.txt'
+        bucket = []
+        logging.info('computing sentence embedding')
+        with open(tmp_file, 'w') as f:
+            for i in tqdm(list_text):
+                bucket.append(i)
+                if len(bucket) == chunk_size * batch_size:
                     embedding = self.embedding_model.embed(bucket)
                     for v in embedding.tolist():
                         f.write(','.join([str(_v) for _v in v]) + '\n')
-        with open(export_file) as f:
+                    bucket = []
+            if len(bucket) != 0:
+                embedding = self.embedding_model.embed(bucket)
+                for v in embedding.tolist():
+                    f.write(','.join([str(_v) for _v in v]) + '\n')
+        with open(tmp_file) as f:
             embeddings = [[float(v) for v in i.split(',')] for i in f.read().split('\n') if len(i) > 0]
+        os.remove(tmp_file)
         return embeddings
 
     def search(self,
@@ -154,9 +155,7 @@ class WhooshSearcher:
         return_field = self.column_text if return_field is None else return_field
         if type(return_field) is str:
             return_field = [return_field]
-        return_field += ['score']
-        if self.embedding_model is not None:
-            return_field += ['embedding_{}'.format(i) for i in range(self.embedding_model.dim)]
+        return_field += ['score', self.column_id]
         q = QueryParser(target_field, self.indexer.schema).parse(str(query_string))
         if date_range_start is None and date_range_end is None:
             q_date_range = None
@@ -187,10 +186,17 @@ class WhooshSearcher:
 
             results = [{field: r[field] if field != 'score' else r.score for field in return_field}
                        for n, r in enumerate(results)]
-            if self.embedding_model is not None:
+            if self.embedding_cache is not None or self.embedding_model is not None:
                 for result in results:
-                    vector = [result.pop('embedding_{}'.format(i)) for i in range(self.embedding_model.dim)]
-                    result['embedding'] = vector
+                    _id = result[self.column_id]
+                    try:
+                        v = self.embedding_cache[_id]
+                    except KeyError:
+                        if self.embedding_model is not None:
+                            v = self.embedding_model.embed(result[self.column_text])
+                        else:
+                            raise ValueError('no embedding found')
+                    result['embedding'] = v
             return results
 
 
