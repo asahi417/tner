@@ -228,6 +228,8 @@ class TransformersNER:
         prob, ind = torch.max(prob, dim=-1)
         prob = prob.cpu().detach().float().tolist()
         ind = ind.cpu().detach().int().tolist()
+        print(len(prob))
+        print(len(ind))
         if self.crf_layer is not None:
             if self.parallel:
                 best_path = self.crf_layer.module.viterbi_tags(output['logits'])
@@ -237,6 +239,7 @@ class TransformersNER:
             for tag_seq, _ in best_path:
                 pred_results.append(tag_seq)
             ind = pred_results
+        print(len(ind))
         return ind, prob
 
     def get_data_loader(self,
