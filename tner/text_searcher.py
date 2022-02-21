@@ -103,6 +103,7 @@ class WhooshSearcher:
             if len(text) > 0:
                 embedding = self.__precompute_embedding(text, batch_size=batch_size, chunk_size=chunk_size)
                 self.embedding_cache.update({i: _e for i, _e in zip(_id, embedding)})
+                os.makedirs(os.path.dirname(self.embedding_path), exist_ok=True)
                 with open(self.embedding_path, 'w') as f:
                     json.dump(self.embedding_cache, f)
         writer = self.indexer.writer()
