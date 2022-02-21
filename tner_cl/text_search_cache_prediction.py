@@ -1,9 +1,9 @@
 """ Cache prediction for contextualized prediction """
 import argparse
+import json
 import logging
 import pandas as pd
 from tner import TransformersNER
-from tner.data import decode_file
 
 
 def get_options():
@@ -37,8 +37,12 @@ def main():
     # run inference
     df = pd.read_csv(opt.file, lineterminator='\n')
     text = df[opt.column_text].tolist()
+    _id = df[opt.column_id].tolist()
     text = [i.split(' ') for i in text]
-    classifier.predict(text, cache_prediction_path=opt.export_file, batch_size=opt.batch_size)
+    out = classifier.predict(text, batch_size=opt.batch_size, decode_bio=True)
+    _, tmp_decode = out[0]
+    with open(opt.export_file, 'w') as f:
+        json.dump({str(_i): o for o, _i in zip(tmp_decode, _id)}, f)
 
 
 if __name__ == '__main__':

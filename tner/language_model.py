@@ -172,15 +172,15 @@ class TransformersNER:
         self.searcher = None
         self.searcher_prediction = None
         if index_data_path is not None:
-            self.searcher = WhooshSearcher(index_path=index_data_path, embedding_path=index_prediction_path)
+            self.searcher = WhooshSearcher(index_path=index_data_path, embedding_path=index_embedding_path)
         if index_prediction_path is not None:
             assert self.searcher is not None
             with open(index_prediction_path) as f:
-                self.searcher_prediction = {}
-                for i in f.read().split('\n'):
-                    if len(i) > 0:
-                        tmp = json.loads(i)
-                        self.searcher_prediction[str(tmp['id'])] = tmp['predicted_entity']
+                self.searcher_prediction = json.load(f)
+                # for i in f.read().split('\n'):
+                #     if len(i) > 0:
+                #         tmp = json.loads(i)
+                #         self.searcher_prediction[str(tmp['id'])] = tmp['predicted_entity']
 
     def train(self):
         self.model.train()
