@@ -21,6 +21,8 @@ def arguments(parser):
     parser.add_argument('--datetime-range-start', help='', default='2021-03-01', type=str)
     parser.add_argument('--datetime-range-end', help='', default='2021-07-01', type=str)
     parser.add_argument('-q', '--query', help='test query', default=None, type=str)
+    parser.add_argument('-b', '--batch-size', help='batch size of embedding', default=128, type=int)
+    parser.add_argument('-c', '--chunk-size', help='batch size of embedding', default=100, type=int)
     parser.add_argument('--interactive-mode', help='', action='store_true')
     return parser
 
@@ -37,7 +39,9 @@ def main():
             column_text=opt.column_text,
             column_id=opt.column_id,
             column_datetime=opt.column_datetime,
-            datetime_format=opt.datetime_format
+            datetime_format=opt.datetime_format,
+            batch_size=opt.batch_size,
+            chunk_size=opt.chunk_size
         )
     if opt.interactive_mode or opt.query is not None:
         datetime_range_start = None
