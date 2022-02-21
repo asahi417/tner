@@ -1,15 +1,14 @@
 """ Cache prediction for contextualized prediction """
 import argparse
-import json
 import logging
-import os
 import pandas as pd
 from tner import TransformersNER
+from tner.data import decode_file
 
 
 def get_options():
     parser = argparse.ArgumentParser(description='Cache prediction for contextualized prediction')
-    parser.add_argument('-f', '--csv-file', help='csv file to index', required=True, type=str)
+    parser.add_argument('-f', '--file', help='csv file to index', required=True, type=str)
     parser.add_argument('-t', '--column-text', help='column of text to index', required=True, type=str)
     parser.add_argument('-i', '--column-id', help='column of text to index', required=True, type=str)
     parser.add_argument('--base-model', help='base model', default=None, type=str)
@@ -36,20 +35,14 @@ def main():
     classifier.eval()
 
     # run inference
-    df = pd.read_csv(opt.csv_file, lineterminator='\n')
-    text = df[opt.column_text].tolist()
-    ids = df[opt.column_id].tolist()
-    text = [i.split(' ') for i in text]
-    out = classifier.predict(text,
-                             cache_prediction_path=opt.export_file,
-                             batch_size=opt.batch_size,
-                             decode_bio=True)
-
-    # # save the result
-    # os.makedirs(os.path.dirname(opt.export_file), exist_ok=True)
-    # with open(opt.export_file, 'w') as f:
-    #     for _id, _out in zip(ids, out):
-    #         f.write(json.dumps({'id': _id, 'predicted_entity': _out}) + '\n')
+    if opt.file.endswith('.csv'):
+        df = pd.read_csv(opt.file, lineterminator='\n')
+        text = df[opt.column_text].tolist()
+        text = [i.split(' ') for i in text]
+    else:
+        _, _, data = decode_file(opt.file)
+        text = data["data"]
+    classifier.predict(text, cache_prediction_path=opt.export_file, batch_size=opt.batch_size)
 
 
 if __name__ == '__main__':

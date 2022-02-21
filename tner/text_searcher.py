@@ -37,7 +37,7 @@ signal.signal(signal.SIGALRM, handler)
 class WhooshSearcher:
 
     def __init__(self,
-                 index_path: str,
+                 index_path: str = None,
                  embedding_path: str = None,
                  column_text: str = 'text',
                  column_id: str = 'id',
@@ -59,6 +59,7 @@ class WhooshSearcher:
             self.embedding_model = None
 
         self.indexer = self.instantiate_indexer(index_path, schema_config)
+
         self.embedding_path = embedding_path
         if self.embedding_path is not None and os.path.exists(self.embedding_path):
             with open(self.embedding_path) as f:

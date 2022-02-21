@@ -85,7 +85,7 @@ SHARED_NER_LABEL = {
     "disease": ["Disease"]
 }
 
-__all__ = ("get_dataset", "VALID_DATASET", "SHARED_NER_LABEL", "CACHE_DIR", "panx_language_list")
+__all__ = ("get_dataset", "VALID_DATASET", "SHARED_NER_LABEL", "CACHE_DIR", "panx_language_list", "decode_file")
 
 
 def open_compressed_file(url, cache_dir):
@@ -392,14 +392,15 @@ def get_dataset_single(data_name: str = None,
 
 
 def decode_file(file_name: str,
-                data_path: str,
-                label_to_id: Dict,
-                fix_label_dict: bool,
+                data_path: str = None,
+                label_to_id: Dict = None,
+                fix_label_dict: bool = False,
                 entity_first: bool = False,
                 to_bio: bool = False,
                 allow_new_entity: bool = False,
                 keep_original_surface: bool = False):
     inputs, labels, seen_entity, dates = [], [], [], []
+    label_to_id = {} if label_to_id is None else label_to_id
     past_mention = 'O'
     if data_path is not None:
         file_name = os.path.join(data_path, file_name)
@@ -479,7 +480,6 @@ def decode_file(file_name: str,
         return label_to_id, unseen_entity_label, {"data": inputs, "label": labels, "date": dates}
     else:
         return label_to_id, unseen_entity_label, {"data": inputs, "label": labels}
-
 
 
 def decode_all_files(files: Dict,

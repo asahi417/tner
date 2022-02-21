@@ -9,7 +9,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 
 
 def arguments(parser):
-    parser.add_argument('-p', '--index-path', help='path to index directory', required=True, type=str)
+    parser.add_argument('-p', '--index-path', help='path to index directory', default=None, type=str)
     parser.add_argument('-e', '--embedding-path', help='path to embedding dictionary', required=True, type=str)
     parser.add_argument('-m', '--embedding-model', help='sentence embedding model',
                         default=None, type=str)
