@@ -172,7 +172,7 @@ class TransformersNER:
         self.searcher = None
         self.searcher_prediction = None
         if index_data_path is not None:
-            self.searcher = WhooshSearcher(index_data_path)
+            self.searcher = WhooshSearcher(index_path=index_data_path, embedding_path=index_prediction_path)
         if index_prediction_path is not None:
             assert self.searcher is not None
             with open(index_prediction_path) as f:
@@ -181,11 +181,6 @@ class TransformersNER:
                     if len(i) > 0:
                         tmp = json.loads(i)
                         self.searcher_prediction[str(tmp['id'])] = tmp['predicted_entity']
-
-    def index_document(self, csv_file: str, column_text: str, batch_size: int = 16, chunk_size: int = 4):
-        assert self.searcher is not None, '`index_path` is None'
-        self.searcher.whoosh_indexing(
-            csv_file=csv_file, column_text=column_text, batch_size=batch_size, chunk_size=chunk_size)
 
     def train(self):
         self.model.train()
@@ -291,26 +286,40 @@ class TransformersNER:
                 cache_data_path: str = None,
                 cache_prediction_path: str = None,
                 cache_prediction_path_contextualisation: str = None,
+                cache_embedding_path: str = None,
                 span_detection_mode: bool = False,
                 entity_list: bool = False,
                 max_retrieval_size: int = 10,
                 timeout: int = None,
                 timedelta_hour_before: float = None,
-                timedelta_hour_after: float = None):
+                timedelta_hour_after: float = None,
+                embedding_model: str = 'sentence-transformers/all-mpnet-base-v1',
+                threshold_prob: float = 0.75,  # discard prediction under the value
+                threshold_similarity: float = 0.75,  # discard prediction under the value
+                retrieval_importance: float = 0.75,  # weight to the retrieved predictions
+                ranking_type: str = 'similarity'  # ranking type 'similarity'/'es_score'/'frequency'
+                ):
         pred_list, label_list = self.predict(
             inputs=inputs,
             labels=labels,
             dates=dates,
             batch_size=batch_size,
             num_workers=num_workers,
-            cache_data_path=cache_data_path,
             cache_prediction_path=cache_prediction_path,
             cache_prediction_path_contextualisation=cache_prediction_path_contextualisation,
+            cache_embedding_path=cache_embedding_path,
+            cache_data_path=cache_data_path,
             max_retrieval_size=max_retrieval_size,
+            decode_bio=False,
             timeout=timeout,
+            datetime_format=datetime_format,
             timedelta_hour_before=timedelta_hour_before,
             timedelta_hour_after=timedelta_hour_after,
-            datetime_format=datetime_format,
+            embedding_model=embedding_model,
+            threshold_prob=threshold_prob,
+            threshold_similarity=threshold_similarity,
+            retrieval_importance=retrieval_importance,
+            ranking_type=ranking_type
         )
 
         if span_detection_mode:
@@ -692,7 +701,8 @@ class TransformersNER:
             if cache_prediction_path is not None:
                 os.makedirs(os.path.dirname(cache_prediction_path), exist_ok=True)
                 with open(cache_prediction_path, 'w') as f:
-                    f.write(json.dumps({'prediction': pred_list, 'probability': prob_list}) + '\n')
+                    for _prob, _pred in zip(pred_list, prob_list):
+                        f.write(json.dumps({'prediction': _pred, 'probability': _prob}) + '\n')
 
         if not decode_bio:
             if dummy_label:

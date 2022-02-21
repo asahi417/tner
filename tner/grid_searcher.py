@@ -39,7 +39,13 @@ def evaluate(model,
              timeout: int = None,
              datetime_format: str = '%Y-%m-%d',
              timedelta_hour_before: float = None,
-             timedelta_hour_after: float = None):
+             timedelta_hour_after: float = None,
+             embedding_model: str = 'sentence-transformers/all-mpnet-base-v1',
+             threshold_prob: float = 0.75,  # discard prediction under the value
+             threshold_similarity: float = 0.75,  # discard prediction under the value
+             retrieval_importance: float = 0.75,  # weight to the retrieved predictions
+             ranking_type: str = 'similarity'  # ranking type 'similarity'/'es_score'/'frequency'
+             ):
     """ Evaluate question-generation model """
     metrics_dict = {}
     path_metric = None
@@ -103,13 +109,19 @@ def evaluate(model,
             cache_data_path=cache_data_path,
             cache_prediction_path=cache_prediction_path,
             cache_prediction_path_contextualisation=contextualisation_cache_prefix,
+            cache_embedding_path=cache_embedding_path,
             span_detection_mode=span_detection_mode,
             entity_list=entity_list,
             max_retrieval_size=max_retrieval_size,
             datetime_format=datetime_format,
             timedelta_hour_before=timedelta_hour_before,
             timedelta_hour_after=timedelta_hour_after,
-            timeout=timeout
+            timeout=timeout,
+            embedding_model=embedding_model,
+            threshold_prob=threshold_prob,
+            threshold_similarity=threshold_similarity,
+            retrieval_importance=retrieval_importance,
+            ranking_type=ranking_type
         )
     if path_metric is not None:
         with open(path_metric, 'w') as f:
