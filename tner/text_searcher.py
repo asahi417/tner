@@ -98,6 +98,7 @@ class WhooshSearcher:
         writer = self.indexer.writer()
         logging.info('indexing data')
         try:
+            chunk_index = 0
             for n, (_, _df) in tqdm(list(enumerate(df.iterrows()))):
                 _dict = _df.to_dict()
                 data = {self.column_text: str(_dict[column_text])}
@@ -109,6 +110,12 @@ class WhooshSearcher:
                     for d in range(self.embedding_model.dim):
                         data['embedding_{}'.format(d)] = embedding[n][d]
                 writer.add_document(**data)
+                chunk_index += 1
+                if chunk_index == chunk_size:
+                    writer.commit()
+                    writer = self.indexer.writer()
+                    chunk_index = 0
+                    print('write')
             writer.commit()
         except Exception as e:
             logging.exception('Error occurred while indexing.')
