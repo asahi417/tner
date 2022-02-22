@@ -533,6 +533,7 @@ class TransformersNER:
                     try:
                         tmp_pred.append(self.searcher_prediction[str(i['id'])])
                         tmp_score.append(i['score'])
+                        tmp_embedding.append(i['embedding'])
                     except KeyError:
                         to_run_prediction.append(i['text'].split(' '))
                         to_run_prediction_score.append(i['score'])
@@ -549,9 +550,8 @@ class TransformersNER:
 
             # formatting the result
             _out = {}
-            print(len(tmp_pred), len(tmp_score), len(tmp_embedding))
+            assert len(tmp_pred) == len(tmp_score) == len(tmp_embedding), str([len(tmp_pred), len(tmp_score), len(tmp_embedding)])
             for _pred, _score, _e in zip(tmp_pred, tmp_score, tmp_embedding):
-                input(_pred)
                 for __p in _pred:
 
                     print('prob', __p['probability'], threshold_prob)
