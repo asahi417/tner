@@ -552,10 +552,12 @@ class TransformersNER:
             for _pred, _score, _e in zip(tmp_pred, tmp_score, tmp_embedding):
                 for __p in _pred:
 
+                    print('prob', __p['probability'], threshold_prob)
                     if __p['probability'] < threshold_prob:
                         continue
 
                     sim = cosine_similarity(embedding_sent, __p['embedding'])
+                    print('sim', sim, threshold_similarity)
                     if sim < threshold_similarity:
                         continue
 
