@@ -553,9 +553,10 @@ class TransformersNER:
             assert len(tmp_pred) == len(tmp_score) == len(tmp_embedding), str([len(tmp_pred), len(tmp_score), len(tmp_embedding)])
             for _pred, _score, _e in zip(tmp_pred, tmp_score, tmp_embedding):
                 for __p in _pred:
+                    __prob = sum(__p['probability'])/len(__p['probability'])
 
-                    print('prob', __p['probability'], threshold_prob)
-                    if __p['probability'] < threshold_prob:
+                    print('prob', __prob, threshold_prob)
+                    if __prob < threshold_prob:
                         continue
 
                     sim = cosine_similarity(embedding_sent, __p['embedding'])
