@@ -452,7 +452,7 @@ class TransformersNER:
                         date_range_start = date_sent - timedelta(hours=timedelta_hour_before)
                     if timedelta_hour_after is not None:
                         date_range_end = date_sent + timedelta(hours=timedelta_hour_after)
-                    logging.info('date range: {} -- {}'.format(date_range_start, date_range_end))
+                    logging.debug('date range: {} -- {}'.format(date_range_start, date_range_end))
 
                 tmp_new_pred_list = self.contextualisation(
                     pred_list_sent=pred_list_sent,
@@ -487,9 +487,9 @@ class TransformersNER:
                             tmp = [i['type'] for i in _true if i['entity'] == x['entity']]
                             outcome = 'non-entity'
                             if len(tmp) != 0:
-                                if tmp[0]['type'] == x['entity']:
+                                if tmp[0] == x['type']:
                                     outcome = 'fail'
-                                elif tmp[0]['type'] == y['entity']:
+                                elif tmp[0] == y['type']:
                                     outcome = 'success'
                                 else:
                                     outcome = 'stay wrong'
@@ -536,7 +536,7 @@ class TransformersNER:
             retrieved_text = self.searcher.search(query, limit=max_retrieval_size, return_field=['text', 'id'],
                                                   timeout=timeout, date_range_start=date_range_start,
                                                   date_range_end=date_range_end)
-            logging.info('query: {}, retrieved text: {}'.format(query, len(retrieved_text)))
+            logging.debug('query: {}, retrieved text: {}'.format(query, len(retrieved_text)))
             if len(retrieved_text) == 0:
                 return None
             # get prediction on the retrieved text
@@ -564,7 +564,7 @@ class TransformersNER:
                         to_run_prediction_embedding.append(i['embedding'])
 
             if len(to_run_prediction) > 0:
-                logging.info('run prediction over {} docs'.format(len(to_run_prediction)))
+                logging.debug('run prediction over {} docs'.format(len(to_run_prediction)))
                 out = self.base_predict(
                     to_run_prediction, None, batch_size, num_workers, decode_bio=True)[0]
                 _, tmp_decode = out[0]
@@ -708,8 +708,8 @@ class TransformersNER:
                     tmp_prob = list(list(zip(*tmp))[2])
                     if len(tmp_label) != len(labels[ind]):
                         if len(tmp_label) < len(labels[ind]):
-                            logging.info('found sequence possibly more than max_length')
-                            logging.info('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
+                            logging.debug('found sequence possibly more than max_length')
+                            logging.debug('{}: \n\t - model loader: {}\n\t - label: {}'.format(ind, tmp_label, labels[ind]))
                             tmp_pred = tmp_pred + [self.label2id['O']] * (len(labels[ind]) - len(tmp_label))
                             tmp_prob = tmp_prob + [0.0] * (len(labels[ind]) - len(tmp_label))
                         else:
