@@ -550,22 +550,20 @@ class TransformersNER:
 
             # formatting the result
             _out = {}
-            assert len(tmp_pred) == len(tmp_score) == len(tmp_embedding), str([len(tmp_pred), len(tmp_score), len(tmp_embedding)])
-            for _pred, _score, _e in zip(tmp_pred, tmp_score, tmp_embedding):
+            assert len(tmp_pred) == len(tmp_score) == len(tmp_embedding) == len(retrieved_text), \
+                str([len(tmp_pred), len(tmp_score), len(tmp_embedding), len(retrieved_text)])
+            print('QUERY', input_sent)
+            for _pred, _score, _e, _r in zip(tmp_pred, tmp_score, tmp_embedding, retrieved_text):
+                sim = cosine_similarity(embedding_sent, _e)
+                print(_r['text'])
+                print('sim', sim, threshold_similarity)
+                input()
+                if sim < threshold_similarity:
+                    continue
+
                 for __p in _pred:
                     _probability = sum(__p['probability']) / len(__p['probability'])
-
-                    sim = cosine_similarity(embedding_sent, _e)
-                    print(query)
-                    print(input_sent)
-                    print(retrieved_text[0]['text'])
-                    print('sim', sim, threshold_similarity)
-                    input()
-
                     if _probability < threshold_prob:
-                        continue
-
-                    if sim < threshold_similarity:
                         continue
 
                     _key = ' '.join(__p['entity'])
