@@ -507,8 +507,8 @@ class TransformersNER:
 
         if not decode_bio:
             if dummy_label:
-                return pred_list,
-            return pred_list, label_list
+                return new_pred_list,
+            return new_pred_list, label_list
         new_pred_decode = [self.decode_ner_tags(_p, _i) for _p, _i in zip(new_pred_list, inputs)]
         if dummy_label:
             return (new_pred_list, new_pred_decode),
