@@ -557,6 +557,7 @@ class TransformersNER:
 
                     sim = cosine_similarity(embedding_sent, _e)
                     print(query)
+                    print(input_sent)
                     print(retrieved_text[0]['text'])
                     print('sim', sim, threshold_similarity)
                     input()
