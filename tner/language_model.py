@@ -434,7 +434,7 @@ class TransformersNER:
         if cache_prediction_path_contextualisation is not None \
                 and os.path.exists(cache_prediction_path_contextualisation):
             with open(cache_prediction_path_contextualisation) as f:
-                tmp = [json.loads(i) for i in f.read().split('\n')]
+                tmp = [json.loads(i) for i in f.read().split('\n') if len(i) > 0]
                 new_pred_list = [i['prediction'] for i in tmp]
         else:
             new_pred_list = []
@@ -645,7 +645,7 @@ class TransformersNER:
             dummy_label = True
         if cache_prediction_path is not None and os.path.exists(cache_prediction_path):
             with open(cache_prediction_path) as f:
-                tmp = [json.loads(i) for i in f.read().split('\n')]
+                tmp = [json.loads(i) for i in f.read().split('\n') if len(i) > 0]
                 pred_list = [i['prediction'] for i in tmp]
                 prob_list = [i['probability'] for i in tmp]
             label_list = [[self.id2label[__l] for __l in _l] for _l in labels]
