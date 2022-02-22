@@ -553,7 +553,6 @@ class TransformersNER:
             assert len(tmp_pred) == len(tmp_score) == len(tmp_embedding), str([len(tmp_pred), len(tmp_score), len(tmp_embedding)])
             for _pred, _score, _e in zip(tmp_pred, tmp_score, tmp_embedding):
                 for __p in _pred:
-                    print(__p.keys())
                     _probability = sum(__p['probability']) / len(__p['probability'])
 
                     print('prob', _probability, threshold_prob)
@@ -762,9 +761,6 @@ class TransformersNER:
 
     @staticmethod
     def decode_ner_tags(tag_sequence, input_sequence, probability_sequence=None, custom_dict: Dict = None):
-        # print(tag_sequence)
-        # print(input_sequence)
-        # print(probability_sequence)
 
         def update_collection(_tmp_entity, _tmp_entity_type, _tmp_prob, _out):
             if len(_tmp_entity) != 0 and _tmp_entity_type is not None:
