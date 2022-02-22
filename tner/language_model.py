@@ -697,7 +697,7 @@ class TransformersNER:
             if cache_prediction_path is not None:
                 os.makedirs(os.path.dirname(cache_prediction_path), exist_ok=True)
                 with open(cache_prediction_path, 'w') as f:
-                    for _pred, _prod in zip(pred_list, prob_list):
+                    for _pred, _prob in zip(pred_list, prob_list):
                         f.write(json.dumps({'prediction': _pred, 'probability': _prob}) + '\n')
 
         if not decode_bio:
