@@ -506,7 +506,7 @@ class TransformersNER:
                           retrieval_importance,
                           ranking_type: str):
 
-        def _get_context(query, embedding, probability, entity_type):
+        def _get_context(query, probability, entity_type):
             """ get context given a query """
             # query documents
             retrieved_text = self.searcher.search(query, limit=max_retrieval_size, return_field=['text', 'id'],
@@ -555,7 +555,7 @@ class TransformersNER:
                     if __p['probability'] < threshold_prob:
                         continue
 
-                    sim = cosine_similarity(embedding, __p['embedding'])
+                    sim = cosine_similarity(embedding_sent, __p['embedding'])
                     if sim < threshold_similarity:
                         continue
 
@@ -586,14 +586,14 @@ class TransformersNER:
                         'count': 1,
                         'frequency': 1,
                         'score': max_score,
-                        'similarity': cosine_similarity(embedding, embedding),
+                        'similarity': cosine_similarity(embedding_sent, embedding_sent),
                         'probability': probability
                     }
                 else:
                     _out[query][entity_type]['count'] += 1
                     _out[query][entity_type]['frequency'] += 1
                     _out[query][entity_type]['score'] += max_score
-                    _out[query][entity_type]['similarity'] += cosine_similarity(embedding, embedding)
+                    _out[query][entity_type]['similarity'] += cosine_similarity(embedding_sent, embedding_sent)
                     _out[query][entity_type]['probability'] += probability
             # aggregation
             _result = {}
@@ -618,11 +618,10 @@ class TransformersNER:
             return _out
 
         context = {}  # {'Gaza': [{'score': 12.369498962574873, 'type': 'location'}]}
-        input(embedding_sent)
-        for _dict, _emb in zip(pred_decode_sent, embedding_sent):
+        for _dict in pred_decode_sent:
             _query = ' '.join(_dict['entity'])
             _prob = sum(_dict['probability'])/len(_dict['probability'])
-            _context = _get_context(_query, _emb, _prob, _dict['type'])
+            _context = _get_context(_query, _prob, _dict['type'])
             if _context is not None and _query in _context:
                 context[_query] = _context[_query]
         if len(context) == 0:
