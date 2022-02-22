@@ -437,8 +437,11 @@ class TransformersNER:
             with open(cache_prediction_path_contextualisation) as f:
                 tmp = [json.loads(i) for i in f.read().split('\n') if len(i) > 0]
                 new_pred_list = [i['prediction'] for i in tmp]
+            with open(cache_prediction_path_contextualisation.replace('.json', '') + '.stats.json') as f:
+                contextualization_result = json.load(f)
         else:
             new_pred_list = []
+            contextualization_result = {'non-entity': 0, 'success': 0, 'stay wrong': 0, 'fail': 0}
             for pred_list_sent, pred_decode_sent, input_sent, embedding_sent, label_sent, date_sent in \
                     tqdm(list(zip(pred_list, pred_decode, inputs, embeddings, label_list, dates))):
 
@@ -473,14 +476,34 @@ class TransformersNER:
 
                     # For DEBUGGING
                     if tmp_new_pred_list != pred_list_sent:
-                        logging.info('Label:{}'.format(self.decode_ner_tags(label_sent, input_sent)))
-                        logging.info('Old  : {}'.format(self.decode_ner_tags(pred_list_sent, input_sent)))
-                        logging.info('New  : {}'.format(self.decode_ner_tags(tmp_new_pred_list, input_sent)))
+                        logging.info('** Prediction Update **')
+                        _true = self.decode_ner_tags(label_sent, input_sent)
+                        _old = self.decode_ner_tags(pred_list_sent, input_sent)
+                        _new = self.decode_ner_tags(tmp_new_pred_list, input_sent)
 
-                if cache_prediction_path_contextualisation is not None:
-                    os.makedirs(os.path.dirname(cache_prediction_path_contextualisation), exist_ok=True)
-                    with open(cache_prediction_path_contextualisation, 'w') as f:
-                        f.write(json.dumps({'prediction': new_pred_list}) + '\n')
+                        for x, y in zip(_old, _new):
+                            if x['type'] == y['type']:
+                                continue
+                            tmp = [i['type'] for i in _true if i['entity'] == x['entity']]
+                            outcome = 'non-entity'
+                            if len(tmp) != 0:
+                                if tmp[0]['type'] == x['entity']:
+                                    outcome = 'fail'
+                                elif tmp[0]['type'] == y['entity']:
+                                    outcome = 'success'
+                                else:
+                                    outcome = 'stay wrong'
+                            logging.info('- entity: {} || {} -> {} || {}'.format(
+                                ' '.join(x['entity']), x['type'], y['type'], outcome))
+                            contextualization_result[outcome] += 1
+            if cache_prediction_path_contextualisation is not None:
+                os.makedirs(os.path.dirname(cache_prediction_path_contextualisation), exist_ok=True)
+                with open(cache_prediction_path_contextualisation, 'w') as f:
+                    for p in new_pred_list:
+                        f.write(json.dumps({'prediction': p}) + '\n')
+                with open(cache_prediction_path_contextualisation.replace('.json', '') + '.stats.json', 'w') as f:
+                    json.dump(contextualization_result, f)
+        logging.info(json.dumps(contextualization_result, indent=4))
 
         if not decode_bio:
             if dummy_label:
