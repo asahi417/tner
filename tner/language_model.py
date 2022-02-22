@@ -644,9 +644,14 @@ class TransformersNER:
                         raise ValueError('unknown type: {}'.format(ranking_type))
                     max_score = max(ranking_score.values())
                     ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
-                    
+
                     if len(ranking_score) != 1:
-                        logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
+                        # similarity gives at least one choice
+                        ranking_score = {k: v['similarity'] / v['count'] for k, v in v.items()}
+                        max_score = max(ranking_score.values())
+                        ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
+                        if len(ranking_score) != 1:
+                            logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
                     new_entity_type = ranking_score[0][0]
                 else:
                     new_entity_type = list(v.keys())[0]
