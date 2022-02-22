@@ -646,8 +646,8 @@ class TransformersNER:
                     ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
 
                     if len(ranking_score) != 1:
-                        # similarity gives at least one choice
-                        ranking_score = {k: v['similarity'] / v['count'] for k, v in v.items()}
+                        # probability gives at least one choice
+                        ranking_score = {k: v['probability'] / v['count'] for k, v in v.items()}
                         max_score = max(ranking_score.values())
                         ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
                         if len(ranking_score) != 1:
