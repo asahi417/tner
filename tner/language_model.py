@@ -472,11 +472,9 @@ class TransformersNER:
 
                     # For DEBUGGING
                     if tmp_new_pred_list != pred_list_sent:
-                        print()
-                        print('Label:', self.decode_ner_tags(label_sent, input_sent))
-                        print('Old:', self.decode_ner_tags(pred_list_sent, input_sent))
-                        print('New:', self.decode_ner_tags(tmp_new_pred_list, input_sent))
-                        print()
+                        logging.info('Label:{}'.format(self.decode_ner_tags(label_sent, input_sent)))
+                        logging.info('Old:'.format(self.decode_ner_tags(pred_list_sent, input_sent)))
+                        logging.info('New:'.format(self.decode_ner_tags(tmp_new_pred_list, input_sent)))
 
                 if cache_prediction_path_contextualisation is not None:
                     os.makedirs(os.path.dirname(cache_prediction_path_contextualisation), exist_ok=True)
@@ -773,8 +771,6 @@ class TransformersNER:
             return _tmp_entity, _tmp_entity_type, _tmp_prob, _out
 
         probability_sequence = [None] * len(tag_sequence) if probability_sequence is None else probability_sequence
-        if not len(tag_sequence) == len(input_sequence) == len(probability_sequence):
-            print(tag_sequence, input_sequence, probability_sequence)
         assert len(tag_sequence) == len(input_sequence) == len(probability_sequence), str([len(tag_sequence), len(input_sequence), len(probability_sequence)])
         out = []
         tmp_entity = []
