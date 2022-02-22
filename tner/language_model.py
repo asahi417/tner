@@ -417,6 +417,7 @@ class TransformersNER:
             label_list = label_decode = [None] * len(pred_list)
 
         # get sentence embeddings
+        input(inputs[0])
         if cache_embedding_path is not None and os.path.exists(cache_embedding_path):
             with open(cache_embedding_path) as f:
                 embeddings = [[float(ii) for ii in i.split(',')] for i in f.read().split('\n') if len(i) > 0]
