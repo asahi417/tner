@@ -35,6 +35,7 @@ def evaluate(model,
              entity_list: bool = False,
              index_data_path: str = None,
              index_prediction_path: str = None,
+             index_embedding_path: str = None,
              max_retrieval_size: int = 10,
              timeout: int = None,
              datetime_format: str = '%Y-%m-%d',
@@ -64,7 +65,8 @@ def evaluate(model,
 
         os.makedirs(export_dir, exist_ok=True)
     lm = get_model_instance(base_model, max_length, model_path=model, adapter=adapter,
-                            index_data_path=index_data_path, index_prediction_path=index_prediction_path)
+                            index_data_path=index_data_path, index_prediction_path=index_prediction_path,
+                            index_embedding_path=index_embedding_path)
     lm.eval()
     dataset_split, _, _, _ = get_dataset(data=data,
                                          custom_data=custom_dataset,
@@ -89,14 +91,17 @@ def evaluate(model,
         if contextualisation_cache_prefix is not None:
             split_alias = '{}/{}'.format(split_alias, contextualisation_cache_prefix)
         cache_prediction_path = None
+        cache_embedding_path = None
         if export_prediction is not None:
             if lower_case:
                 cache_prediction_path = '{}.{}.lower.txt'.format(export_prediction, split)
+                cache_embedding_path = '{}.{}.txt'.format(export_prediction, split)
                 if contextualisation_cache_prefix is not None:
                     contextualisation_cache_prefix = '{}.{}.{}.lower.txt'.format(
                         export_prediction, split, contextualisation_cache_prefix)
             else:
                 cache_prediction_path = '{}.{}.txt'.format(export_prediction, split)
+                cache_embedding_path = '{}.{}.txt'.format(export_prediction, split)
                 if contextualisation_cache_prefix is not None:
                     contextualisation_cache_prefix = '{}.{}.{}.txt'.format(
                         export_prediction, split, contextualisation_cache_prefix)

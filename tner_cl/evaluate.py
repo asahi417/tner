@@ -24,9 +24,15 @@ def get_options():
     parser.add_argument('--timeout', help='', default=None, type=int)
     parser.add_argument('--index-data-path', help='index for retrieval at prediction phase', default=None, type=str)
     parser.add_argument('--index-prediction-path', help='index for retrieval at prediction phase', default=None, type=str)
+    parser.add_argument('--index-embedding-path', help='embedding for retrieval at prediction phase', default=None, type=str)
     parser.add_argument('--contextualisation-cache-prefix', help='index for retrieval at prediction phase', default=None, type=str)
     parser.add_argument('--timedelta-hour-after', help='', default=None, type=float)
     parser.add_argument('--timedelta-hour-before', help='', default=None, type=float)
+    parser.add_argument('--embedding-model', default=None, type=str)
+    parser.add_argument('--threshold-prob', default=0.0, type=float)
+    parser.add_argument('--threshold-similarity', default=0.0, type=float)
+    parser.add_argument('--retrieval-importance', default=1.0, type=float)
+    parser.add_argument('--ranking-type', default='similarity', type=str)
     return parser.parse_args()
 
 
@@ -60,11 +66,17 @@ def main():
         force_update=True,
         index_data_path=opt.index_data_path,
         index_prediction_path=opt.index_prediction_path,
+        index_embedding_path=opt.index_embedding_path,
         max_retrieval_size=opt.max_retrieval_size,
         contextualisation_cache_prefix=opt.contextualisation_cache_prefix,
         timeout=opt.timeout,
         timedelta_hour_after=opt.timedelta_hour_after,
-        timedelta_hour_before=opt.timedelta_hour_before
+        timedelta_hour_before=opt.timedelta_hour_before,
+        embedding_model=opt.embedding_model,
+        threshold_prob=opt.threshold_prob,
+        threshold_similarity=opt.threshold_similarity,
+        retrieval_importance=opt.retrieval_importance,
+        ranking_type=opt.ranking_type,
     )
 
     print(json.dumps(metric, indent=4))

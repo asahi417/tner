@@ -22,7 +22,8 @@ def get_model_instance(
         base_model=None, max_length=None, model_path: str = None,
         label_to_id: Dict = None, adapter_config: Dict = None,
         adapter: bool = False, crf: bool = False,
-        index_data_path: str = None, index_prediction_path: str = None):
+        index_data_path: str = None, index_prediction_path: str = None,
+        index_embedding_path: str = None):
     adapter_config = {} if adapter_config is None else adapter_config
     if adapter:
         assert base_model is not None, 'adapter needs base model'
@@ -33,13 +34,14 @@ def get_model_instance(
         adapter_model = None
     return TransformersNER(
         model=model,
-        crf=crf,
         max_length=max_length,
+        crf=crf,
         adapter=adapter,
         adapter_model=adapter_model,
         label2id=label_to_id,
         index_data_path=index_data_path,
         index_prediction_path=index_prediction_path,
+        index_embedding_path=index_embedding_path,
         **adapter_config
     )
 
