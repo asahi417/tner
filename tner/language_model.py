@@ -618,6 +618,7 @@ class TransformersNER:
             return _out
 
         context = {}  # {'Gaza': [{'score': 12.369498962574873, 'type': 'location'}]}
+        input(embedding_sent)
         for _dict, _emb in zip(pred_decode_sent, embedding_sent):
             _query = ' '.join(_dict['entity'])
             _prob = sum(_dict['probability'])/len(_dict['probability'])
