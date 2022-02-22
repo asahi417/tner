@@ -417,14 +417,14 @@ class TransformersNER:
             label_list = label_decode = [None] * len(pred_list)
 
         # get sentence embeddings
-        input(inputs[0])
         if cache_embedding_path is not None and os.path.exists(cache_embedding_path):
             with open(cache_embedding_path) as f:
                 embeddings = [[float(ii) for ii in i.split(',')] for i in f.read().split('\n') if len(i) > 0]
         else:
             if self.sentence_embedding_model is None or self.sentence_embedding_model.model != embedding_model:
                 self.sentence_embedding_model = SentenceEmbedding(embedding_model)
-            embeddings = self.sentence_embedding_model.embed(inputs).tolist()
+            text_input = [' '.join(i) if type(i) is not str else i for i in inputs]
+            embeddings = self.sentence_embedding_model.embed(text_input).tolist()
             if cache_embedding_path is not None:
                 with open(cache_embedding_path, 'w') as f:
                     for e in embeddings:

@@ -107,6 +107,7 @@ class WhooshSearcher:
                 os.makedirs(os.path.dirname(self.embedding_path), exist_ok=True)
                 with open(self.embedding_path, 'w') as f:
                     json.dump(self.embedding_cache, f)
+        exit()
         writer = self.indexer.writer()
         logging.info('indexing data')
         try:
