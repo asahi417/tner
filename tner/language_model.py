@@ -618,7 +618,7 @@ class TransformersNER:
 
                 max_score = max(ranking_score.values())
                 ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
-                if len(ranking_score) == 1:
+                if len(ranking_score) != 1:
                     logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
                 new_entity_type, score = ranking_score[0]
                 _out[k] = new_entity_type
