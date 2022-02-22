@@ -566,7 +566,7 @@ class TransformersNER:
                     _probability = sum(__p['probability']) / len(__p['probability'])
                     if _probability < threshold_prob:
                         continue
-
+                    print('pass', sim, _probability)
                     _key = ' '.join(__p['entity'])
                     if _key not in _out:
                         _out[_key] = {}
