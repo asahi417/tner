@@ -24,7 +24,7 @@ class SentenceEmbedding:
         self.dim = self.model.get_sentence_embedding_dimension()
 
     def embed(self, list_of_sentence, batch_size: int = 16, show_progress_bar: bool = False):
-        return self.model.encode(list_of_sentence, batch_size=batch_size, show_progress_bar=False)
+        return self.model.encode(list_of_sentence, batch_size=batch_size, show_progress_bar=show_progress_bar)
 
 
 def handler(signum, frame):

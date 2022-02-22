@@ -555,15 +555,17 @@ class TransformersNER:
                 for __p in _pred:
                     _probability = sum(__p['probability']) / len(__p['probability'])
 
-                    print('prob', _probability, threshold_prob)
+                    sim = cosine_similarity(embedding_sent, _e)
+                    print(query)
+                    print(retrieved_text[0]['text'])
+                    print('sim', sim, threshold_similarity)
+                    input()
+
                     if _probability < threshold_prob:
                         continue
 
-                    sim = cosine_similarity(embedding_sent, _e)
-                    print('sim', sim, threshold_similarity)
                     if sim < threshold_similarity:
                         continue
-
 
                     _key = ' '.join(__p['entity'])
                     if _key not in _out:
