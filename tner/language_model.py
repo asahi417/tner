@@ -628,22 +628,43 @@ class TransformersNER:
             # aggregation
             _result = {}
             for k, v in _out.items():
-                if ranking_type == 'similarity':
-                    ranking_score = {k: v['similarity'] / v['count'] for k, v in v.items()}
-                elif ranking_type == 'es_score':
-                    ranking_score = {k: v['score']/v['count'] for k, v in v.items()}
-                elif ranking_type == 'frequency':
-                    ranking_score = {k: v['frequency'] for k, v in v.items()}
-                elif ranking_type == 'probability':
-                    ranking_score = {k: v['probability']/v['count'] for k, v in v.items()}
+                ranking_score = {k: v['frequency'] for k, v in v.items()}
+                max_frequency = max([i['frequency'] for i in v.values()])
+                v = {k: v for k, v in v.items() if v['frequency'] == max_frequency}
+                if len(v) != 1:
+                    if ranking_type == 'similarity':
+                        ranking_score = {k: v['similarity'] / v['count'] for k, v in v.items()}
+                    elif ranking_type == 'es_score':
+                        ranking_score = {k: v['score']/v['count'] for k, v in v.items()}
+                    elif ranking_type == 'frequency':
+                        ranking_score = {k: v['frequency'] for k, v in v.items()}
+                    elif ranking_type == 'probability':
+                        ranking_score = {k: v['probability']/v['count'] for k, v in v.items()}
+                    else:
+                        raise ValueError('unknown type: {}'.format(ranking_type))
+                    max_score = max(ranking_score.values())
+                    ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
+                    if len(ranking_score) != 1:
+                        logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
+                    new_entity_type = ranking_score[0][0]
                 else:
-                    raise ValueError('unknown type: {}'.format(ranking_type))
-
-                max_score = max(ranking_score.values())
-                ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
-                if len(ranking_score) != 1:
-                    logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
-                new_entity_type, score = ranking_score[0]
+                    new_entity_type = list(v.keys())[0]
+                # if ranking_type == 'similarity':
+                #     ranking_score = {k: v['similarity'] / v['count'] for k, v in v.items()}
+                # elif ranking_type == 'es_score':
+                #     ranking_score = {k: v['score']/v['count'] for k, v in v.items()}
+                # elif ranking_type == 'frequency':
+                #     ranking_score = {k: v['frequency'] for k, v in v.items()}
+                # elif ranking_type == 'probability':
+                #     ranking_score = {k: v['probability']/v['count'] for k, v in v.items()}
+                # else:
+                #     raise ValueError('unknown type: {}'.format(ranking_type))
+                #
+                # max_score = max(ranking_score.values())
+                # ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
+                # if len(ranking_score) != 1:
+                #     logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
+                # new_entity_type, score = ranking_score[0]
                 _out[k] = new_entity_type
             return _out
 
