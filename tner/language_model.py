@@ -474,8 +474,8 @@ class TransformersNER:
                     # For DEBUGGING
                     if tmp_new_pred_list != pred_list_sent:
                         logging.info('Label:{}'.format(self.decode_ner_tags(label_sent, input_sent)))
-                        logging.info('Old:'.format(self.decode_ner_tags(pred_list_sent, input_sent)))
-                        logging.info('New:'.format(self.decode_ner_tags(tmp_new_pred_list, input_sent)))
+                        logging.info('Old  : {}'.format(self.decode_ner_tags(pred_list_sent, input_sent)))
+                        logging.info('New  : {}'.format(self.decode_ner_tags(tmp_new_pred_list, input_sent)))
 
                 if cache_prediction_path_contextualisation is not None:
                     os.makedirs(os.path.dirname(cache_prediction_path_contextualisation), exist_ok=True)
@@ -566,7 +566,7 @@ class TransformersNER:
                     _probability = sum(__p['probability']) / len(__p['probability'])
                     if _probability < threshold_prob:
                         continue
-                    print('pass', sim, _probability)
+                    # print('pass', sim, _probability)
                     _key = ' '.join(__p['entity'])
                     if _key not in _out:
                         _out[_key] = {}
