@@ -628,10 +628,12 @@ class TransformersNER:
             # aggregation
             _result = {}
             for k, v in _out.items():
-                ranking_score = {k: v['frequency'] for k, v in v.items()}
                 max_frequency = max([i['frequency'] for i in v.values()])
                 v = {k: v for k, v in v.items() if v['frequency'] == max_frequency}
                 if len(v) != 1:
+                    print(ranking_type)
+                    input('here you are')
+
                     if ranking_type == 'similarity':
                         ranking_score = {k: v['similarity'] / v['count'] for k, v in v.items()}
                     elif ranking_type == 'es_score':
@@ -642,8 +644,10 @@ class TransformersNER:
                         ranking_score = {k: v['probability']/v['count'] for k, v in v.items()}
                     else:
                         raise ValueError('unknown type: {}'.format(ranking_type))
+                    print(ranking_score)
                     max_score = max(ranking_score.values())
                     ranking_score = [(k, v) for k, v in ranking_score.items() if v == max_score]
+                    input(ranking_score)
                     if len(ranking_score) != 1:
                         logging.warning('multiple candidate at ranking: {}'.format(ranking_score))
                     new_entity_type = ranking_score[0][0]
