@@ -10,7 +10,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from whoosh import query
-from whoosh.fields import Schema, TEXT, DATETIME, ID, NUMERIC
+from whoosh.fields import Schema, TEXT, DATETIME, ID
 from whoosh.index import create_in, open_dir
 from whoosh.qparser import QueryParser
 from whoosh.collectors import TimeLimitCollector, TimeLimit

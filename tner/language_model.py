@@ -553,12 +553,12 @@ class TransformersNER:
             _out = {}
             assert len(tmp_pred) == len(tmp_score) == len(tmp_embedding) == len(retrieved_text), \
                 str([len(tmp_pred), len(tmp_score), len(tmp_embedding), len(retrieved_text)])
-            print('QUERY', ' '.join(input_sent))
+            # print('QUERY', ' '.join(input_sent))
             for _pred, _score, _e, _r in zip(tmp_pred, tmp_score, tmp_embedding, retrieved_text):
                 sim = cosine_similarity(embedding_sent, _e)
-                print(_r['text'])
-                print('sim', sim, threshold_similarity)
-                input()
+                # print(_r['text'])
+                # print('sim', sim, threshold_similarity)
+                # input()
                 if sim < threshold_similarity:
                     continue
 
