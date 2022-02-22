@@ -560,7 +560,7 @@ class TransformersNER:
                     if _probability < threshold_prob:
                         continue
 
-                    sim = cosine_similarity(embedding_sent, __p['embedding'])
+                    sim = cosine_similarity(embedding_sent, _e)
                     print('sim', sim, threshold_similarity)
                     if sim < threshold_similarity:
                         continue
