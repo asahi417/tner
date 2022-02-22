@@ -175,6 +175,7 @@ class TransformersNER:
             self.searcher = WhooshSearcher(index_path=index_data_path, embedding_path=index_embedding_path)
         if index_prediction_path is not None:
             assert self.searcher is not None
+            print(index_prediction_path)
             with open(index_prediction_path) as f:
                 self.searcher_prediction = json.load(f)
 
