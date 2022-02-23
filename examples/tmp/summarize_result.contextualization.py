@@ -51,6 +51,6 @@ def main(path):
 
 if __name__ == '__main__':
     for __path in [path_baseline, path_self_train]:
-        a, b = main(path_baseline)
+        a, b = main(__path)
         a.to_csv('{}/eval/summary.stats.csv'.format(__path))
         b.to_csv('{}/eval/summary.csv'.format(__path))
