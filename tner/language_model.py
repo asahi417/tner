@@ -565,10 +565,9 @@ class TransformersNER:
 
             if len(to_run_prediction) > 0:
                 logging.debug('run prediction over {} docs'.format(len(to_run_prediction)))
-                out = self.base_predict(
+                _, tmp_decode = self.base_predict(
                     to_run_prediction, None, batch_size, num_workers, decode_bio=True)[0]
-                input(out)
-                _, tmp_decode = out[0]
+                input()
                 tmp_pred += tmp_decode
                 tmp_score += to_run_prediction_score
                 tmp_embedding += to_run_prediction_embedding
