@@ -567,6 +567,7 @@ class TransformersNER:
                 logging.debug('run prediction over {} docs'.format(len(to_run_prediction)))
                 out = self.base_predict(
                     to_run_prediction, None, batch_size, num_workers, decode_bio=True)[0]
+                input(out)
                 _, tmp_decode = out[0]
                 tmp_pred += tmp_decode
                 tmp_score += to_run_prediction_score
