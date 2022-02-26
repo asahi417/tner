@@ -40,7 +40,8 @@ def main(path):
     metric = json_reader('{}/eval/metric.json'.format(path))
     output = []
     for k, m in metric.items():
-        _tmp = m['per_entity_metric']
+        if 'per_entity_metric' in m:
+            _tmp = m['per_entity_metric']
         _tmp_metric = {'f1': m['micro/f1'] * 100}
         _tmp_metric.update({'f1/{}'.format(k): v['f1'] * 100 for k, v in _tmp.items()})
         _tmp_metric.update(get_info(k))
