@@ -4,7 +4,7 @@ from glob import glob
 import pandas as pd
 
 path_baseline = './tner_output/model/baseline/roberta_large'
-path_self_train = './tner_output/model/self_training/roberta_large_st'
+path_self_train = './tner_output/model/st_extra_large_2020/roberta_large_continuous'
 
 
 def json_reader(path):
@@ -15,13 +15,15 @@ def json_reader(path):
 def get_info(path):
     if path == 'test':
         return {}
-    time_delta, ranking, th_prob, th_sim, imp = path.split('.')[-5:]
+
+    data, top_n, time_delta, ranking, th_prob, th_sim, imp = path.split('.')[-7:]
     return {
         'ranking': ranking,
         'time delta (day)': int(int(time_delta) / 24),
         'threshold (probability)': int(th_prob) * 0.01,
         'threshold (similarity)': int(th_sim) * 0.01,
-        'contextual prediction discount factor': int(imp) * 0.01
+        'contextual prediction discount factor': int(imp) * 0.01,
+        'search_data': data
     }
 
 
@@ -30,6 +32,8 @@ def main(path):
     files = glob('{}/eval/*.stats.json'.format(path))
     data = [json_reader(i) for i in files]
     for stats, _path in zip(data, files):
+        if 'test_2020' in _path:
+            continue
         stats['filename'] = os.path.basename(_path)
         stats.update(get_info(_path.replace('.stats.json', '')))
 
@@ -40,8 +44,12 @@ def main(path):
     metric = json_reader('{}/eval/metric.json'.format(path))
     output = []
     for k, m in metric.items():
-        if 'per_entity_metric' in m:
-            _tmp = m['per_entity_metric']
+        if 'span_detection' in k:
+            continue
+        if 'test_2020' in k:
+            continue
+        # if 'per_entity_metric' in m:
+        _tmp = m['per_entity_metric']
         _tmp_metric = {'f1': m['micro/f1'] * 100}
         _tmp_metric.update({'f1/{}'.format(k): v['f1'] * 100 for k, v in _tmp.items()})
         _tmp_metric.update(get_info(k))
