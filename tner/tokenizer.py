@@ -64,11 +64,7 @@ class TokenizerFixed:
         prefix = sentence_go_around[:list(re.finditer('get', sentence_go_around))[0].span()[0]]
         return prefix if prefix != '' else None
 
-    def encode_plus_en(self,
-                       tokens,
-                       labels: List = None,
-                       max_seq_length: int = 128,
-                       mask_by_padding_token: bool = False):
+    def encode_plus_en(self, tokens, labels: List = None, max_seq_length: int = 128, mask_by_padding_token: bool = False):
         """ encoder for languages which split words by half-space """
         encode = self.tokenizer.encode_plus(
             ' '.join(tokens), max_length=max_seq_length, padding='max_length', truncation=True)
