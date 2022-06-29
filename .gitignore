@@ -15,4 +15,8 @@ vocab
 apex
 cache
 tests/ckpt*
+tner_output
+ner-dataset
+examples/snap
+notes
 

@@ -182,9 +182,11 @@ class TrainTransformersNER:
                 logging.exception("Skip apex: please install apex from https://www.github.com/nvidia/apex to use fp16")
 
         # multi-gpus
+        self.parallel = False
         if self.n_gpu > 1:
             # multi-gpu training (should be after apex fp16 initialization)
             self.model = torch.nn.DataParallel(self.model.cuda())
+            self.parallel = True
             logging.info('using `torch.nn.DataParallel`')
         logging.info('running on %i GPUs' % self.n_gpu)
 
@@ -321,7 +323,10 @@ class TrainTransformersNER:
             logging.info('*** KeyboardInterrupt ***')
 
         logging.info('[training completed, {} sec in total]'.format(time() - start_time))
-        self.model.save_pretrained(self.args.checkpoint_dir)
+        if self.parallel:
+            self.model.module.save_pretrained(self.args.checkpoint_dir)
+        else:
+            self.model.save_pretrained(self.args.checkpoint_dir)
         self.transforms.tokenizer.save_pretrained(self.args.checkpoint_dir)
         writer.close()
         logging.info('ckpt saved at {}'.format(self.args.checkpoint_dir))
@@ -345,7 +350,10 @@ class TrainTransformersNER:
                     torch.nn.utils.clip_grad_norm_(self.master_params(self.optimizer), self.args.max_grad_norm)
             else:
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
+                if self.parallel:
+                    torch.nn.utils.clip_grad_norm_(self.model.module.parameters(), self.args.max_grad_norm)
+                else:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
 
             # optimizer and scheduler step
             self.optimizer.step()
