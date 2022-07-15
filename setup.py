@@ -24,17 +24,21 @@ setup(
         'License :: OSI Approved :: MIT License',   # Again, pick a license
         'Programming Language :: Python :: 3',      #Specify which pyhton versions that you want to support
     ],
+    extras_require={
+        "demo": [
+            'uvicorn==0.11.8',
+            'jinja2==2.11.3',
+            'aiofiles==0.5.0',
+            'fastapi==0.65.2',
+            'matplotlib==3.3.1',
+        ],
+    },
     include_package_data=True,
     test_suite='tests',
     install_requires=[
         'Pillow>=7.1.0',
         'sudachipy',
         'sudachidict_core',
-        'uvicorn==0.11.8',
-        'jinja2==2.11.3',
-        'aiofiles==0.5.0',
-        'fastapi==0.65.2',
-        'matplotlib==3.3.1',
         'toml',
         'tensorboard',
         'torch',
