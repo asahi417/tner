@@ -46,9 +46,9 @@ setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'tner-train = tner_cl.train:main',
-            'tner-test = tner_cl.test:main',
-            'tner-predict = tner_cl.predict:main'
+            'tner-train = tner.tner_cl.train:main',
+            'tner-test = tner.tner_cl.test:main',
+            'tner-predict = tner.tner_cl.predict:main'
         ],
     }
 )
