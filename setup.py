@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 with open('README.md', 'r') as f:
     readme = f.read()
-version = '0.0.8'
+version = '0.0.9'
 setup(
     name='tner',
     packages=find_packages(exclude=["asset", "examples", "static", "templates", "tests"]),
@@ -25,7 +25,7 @@ setup(
         'Programming Language :: Python :: 3',      #Specify which pyhton versions that you want to support
     ],
     extras_require={
-        "demo": [
+        "app": [
             'uvicorn==0.11.8',
             'jinja2==2.11.3',
             'aiofiles==0.5.0',
@@ -52,7 +52,8 @@ setup(
         'console_scripts': [
             'tner-train = tner.tner_cl.train:main',
             'tner-test = tner.tner_cl.test:main',
-            'tner-predict = tner.tner_cl.predict:main'
+            'tner-predict = tner.tner_cl.predict:main',
+            'tner-app = tner.tner_cl.app:main [app]',
         ],
     }
 )
