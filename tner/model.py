@@ -322,16 +322,17 @@ class TrainTransformersNER:
         except KeyboardInterrupt:
             logging.info('*** KeyboardInterrupt ***')
 
-        logging.info('[training completed, {} sec in total]'.format(time() - start_time))
-        if self.parallel:
-            self.model.module.save_pretrained(self.args.checkpoint_dir)
-        else:
-            self.model.save_pretrained(self.args.checkpoint_dir)
+        logging.info(f'[training completed, {time() - start_time} sec in total]')
+        self.model_module.save_pretrained(self.args.checkpoint_dir)
         self.transforms.tokenizer.save_pretrained(self.args.checkpoint_dir)
         writer.close()
         logging.info('ckpt saved at {}'.format(self.args.checkpoint_dir))
         self.args.is_trained = True
         self.__train_called = True
+
+    @property
+    def model_module(self):
+        return self.model.module if self.parallel else self.model
 
     def __epoch_train(self, data_loader, writer):
         """ single epoch training: returning flag which is True if training has been completed """
@@ -350,10 +351,7 @@ class TrainTransformersNER:
                     torch.nn.utils.clip_grad_norm_(self.master_params(self.optimizer), self.args.max_grad_norm)
             else:
                 loss.backward()
-                if self.parallel:
-                    torch.nn.utils.clip_grad_norm_(self.model.module.parameters(), self.args.max_grad_norm)
-                else:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
+                torch.nn.utils.clip_grad_norm_(self.model_module.parameters(), self.args.max_grad_norm)
 
             # optimizer and scheduler step
             self.optimizer.step()
