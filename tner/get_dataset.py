@@ -31,7 +31,7 @@ CACHE_DIR = '{}/.cache/tner'.format(os.path.expanduser('~'))
 
 # Shared label set across different dataset
 SHARED_NER_LABEL = {
-    "location": ["LOCATION", "LOC", "location", "Location"],
+    "location": ["LOCATION", "LOC", "location", "Location"],  # Conll03/Ontonotes5
     "organization": ["ORGANIZATION", "ORG", "organization"],
     "person": ["PERSON", "PSN", "person", "PER"],
     "date": ["DATE", "DAT", 'YEAR', 'Year'],
@@ -56,28 +56,28 @@ SHARED_NER_LABEL = {
     "plot": ['PLOT', 'Plot'],
     "review": ['REVIEW'],
     'character': ['CHARACTER'],
-    "ratings average": ['RATINGS_AVERAGE'],
+    "ratings_average": ['RATINGS_AVERAGE'],
     'trailer': ['TRAILER'],
     'opinion': ['Opinion'],
     'award': ['Award'],
     'origin': ['Origin'],
     'soundtrack': ['Soundtrack'],
     'relationship': ['Relationship'],
-    'character name': ['Character_Name'],
+    'character_name': ['Character_Name'],
     'quote': ['Quote'],
-    "cardinal number": ["CARDINAL"],  # OntoNote 5
-    "ordinal number": ["ORDINAL"],
+    "cardinal_number": ["CARDINAL"],  # OntoNote 5
+    "ordinal_number": ["ORDINAL"],
     "quantity": ['QUANTITY'],
     "law": ['LAW'],
-    "geopolitical area": ['GPE'],
-    "work of art": ["WORK_OF_ART", "creative-work"],
+    "geopolitical_area": ['GPE'],
+    "work_of_art": ["WORK_OF_ART", "creative-work", "creative_work"],
     "facility": ["FAC"],
     "language": ["LANGUAGE"],
     "event": ["EVENT"],
     "dna": ["DNA"],  # bionlp2004
     "protein": ["protein"],
-    "cell type": ["cell_type"],
-    "cell line": ["cell_line"],
+    "cell_type": ["cell_type"],
+    "cell_line": ["cell_line"],
     "rna": ["RNA"],
     "chemical": ["Chemical"],  # bc5cdr
     "disease": ["Disease"]
@@ -251,7 +251,7 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             return _tokens, _tags
 
         def convert_to_iob(path, export):
-            path = '{0}/{1}'.format(data_path, path)
+            path = f'{data_path}/{path}'
             with open(path, 'r') as f:
                 raw = list(filter(lambda _x: len(_x) > 0, f.read().split('\n\n')))
                 token_tag = list(map(lambda _x: __process_single(_x), raw))
@@ -355,25 +355,25 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
             logging.info('found following files: {}'.format(files_info))
             logging.info('note that files should be named as either `valid.txt`, `test.txt`, or `train.txt` ')
 
-    label_to_id = dict() if label_to_id is None else label_to_id
+    label_to_id = {'O': 0} if label_to_id is None else label_to_id
     data_split_all, unseen_entity_set, label_to_id = decode_all_files(
         files_info, data_path, label_to_id=label_to_id, fix_label_dict=fix_label_dict, entity_first=entity_first,
         to_bio=to_bio, allow_new_entity=allow_new_entity)
 
-    if post_process_ja:
-        logging.info('Japanese tokenization post processing')
-        id_to_label = {v: k for k, v in label_to_id.items()}
-        label_fixer = SudachiWrapper()
-        data, label = [], []
-        for k, v in data_split_all.items():
-            for x, y in tqdm(zip(v['data'], v['label'])):
-                y = [id_to_label[_y] for _y in y]
-                _data, _label = label_fixer.fix_ja_labels(inputs=x, labels=y)
-                _label = [label_to_id[_y] for _y in _label]
-                data.append(_data)
-                label.append(_label)
-            v['data'] = data
-            v['label'] = label
+    # if post_process_ja:
+    #     logging.info('Japanese tokenization post processing')
+    #     id_to_label = {v: k for k, v in label_to_id.items()}
+    #     label_fixer = SudachiWrapper()
+    #     data, label = [], []
+    #     for k, v in data_split_all.items():
+    #         for x, y in tqdm(zip(v['data'], v['label'])):
+    #             y = [id_to_label[_y] for _y in y]
+    #             _data, _label = label_fixer.fix_ja_labels(inputs=x, labels=y)
+    #             _label = [label_to_id[_y] for _y in _label]
+    #             data.append(_data)
+    #             label.append(_label)
+    #         v['data'] = data
+    #         v['label'] = label
 
     if lower_case:
         logging.info('convert into lower cased')
@@ -389,7 +389,8 @@ def decode_file(file_name: str,
                 fix_label_dict: bool,
                 entity_first: bool = False,
                 to_bio: bool = False,
-                allow_new_entity: bool = False):
+                allow_new_entity: bool = False,
+                keep_original: bool = False):
     inputs, labels, seen_entity = [], [], []
     past_mention = 'O'
     with open(os.path.join(data_path, file_name), 'r') as f:
@@ -426,14 +427,15 @@ def decode_file(file_name: str,
                     elif to_bio:
                         location = 'B'
 
-                    fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
-                    if len(fixed_mention) == 0 and allow_new_entity:
-                        tag = '-'.join([location, mention])
-                    elif len(fixed_mention) == 0:
-                        tag = 'O'
-                    else:
-                        tag = '-'.join([location, fixed_mention[0]])
-                    past_mention = mention
+                    if not keep_original:
+                        fixed_mention = [k for k, v in SHARED_NER_LABEL.items() if mention in v]
+                        if len(fixed_mention) == 0 and allow_new_entity:
+                            tag = '-'.join([location, mention])
+                        elif len(fixed_mention) == 0:
+                            tag = 'O'
+                        else:
+                            tag = '-'.join([location, fixed_mention[0]])
+                        past_mention = mention
                 else:
                     past_mention = 'O'
 

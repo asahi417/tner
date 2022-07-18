@@ -19,4 +19,7 @@ tner_output
 ner-dataset
 examples/snap
 notes
-
+cner
+datasets
+scripts
+dataset_public_tweet
