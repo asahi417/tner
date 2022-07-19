@@ -142,7 +142,7 @@ Public datasets that can be fetched with TNER are summarized here. Please cite t
 | Japanese WikiNews ([`wiki_news_ja`](https://github.com/Hironsan/IOB2Corpus))                                          | Wikipedia            | Japanese      |           10 |            -/-/1,000 | test set only |
 | MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))                                      | Restaurant review    | English       |            8 |        7,660/-/1,521 | lower-cased |
 | MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))                                         | Movie review         | English       |           12 |        7,816/-/1,953 | lower-cased |
-
+|                         WikiNEuRal ([`wikineural`](https://github.com/Babelscape/wikineural))                         |      Wikipedia       |  9 languages  |      4       |     92,720/11,590/11,597     |                                                |
 
 To take a closer look into each dataset, one may want to use `tner.get_dataset_ner` as in
 ```python
