@@ -333,6 +333,23 @@ def get_dataset_ner_single(data_name: str = 'wnut2017',
         if panx_la == 'ja':
             language = 'ja'
             post_process_ja = True
+    elif 'wikineural' in data_name:
+        available_languages = ['de', 'en', 'es', 'fr', 'it', 'nl', 'pl', 'pt', 'ru']
+        if language not in available_languages:
+            raise ValueError("Language '{}' is not available for this dataset. Available languages: {}".format(language, ', '.join(available_languages)))
+        files_info = {'train': 'train.txt', 'val': 'valid.txt', 'test': 'test.txt'}
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+            for v in files_info:
+                url = 'https://raw.githubusercontent.com/Babelscape/wikineural/master/data/wikineural/{}/{}.conllu'.format(language, v)
+                open_compressed_file(url, data_path)
+                with open('{}/{}.conllu'.format(data_path, v), 'r') as f:
+                    with open('{}/{}'.format(data_path, files_info[v]), 'w') as f_w:
+                        for line in f:
+                            line_split = line.split('\t')
+                            if len(line_split) == 3:
+                                f_w.write("{} {}".format(line_split[1], line_split[2]))
+                            else: f_w.write("\n")
     else:
         # for custom data
         data_path = data_name
