@@ -5,13 +5,13 @@ import json
 import logging
 from time import time
 from typing import List
+
 import transformers
 import torch
 from torch import nn
 from seqeval.metrics import f1_score, precision_score, recall_score, classification_report
 from torch.utils.tensorboard import SummaryWriter
 
-from .get_dataset import get_dataset_ner
 from .checkpoint_versioning import Argument
 from .tokenizer import Transforms, Dataset
 

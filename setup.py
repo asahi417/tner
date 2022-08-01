@@ -45,7 +45,8 @@ setup(
         'transformers',
         'sentencepiece',
         'seqeval',
-        'segtok'
+        'segtok',
+        'datasets'
     ],
     python_requires='>=3.6',
     entry_points={
