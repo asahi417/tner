@@ -22,7 +22,9 @@ class NERTokenizer:
     def __init__(self,
                  tokenizer_name: str,
                  id2label: Dict,
-                 use_auth_token: bool = False):
+                 padding_id: int = None,
+                 use_auth_token: bool = False,
+                 is_xlnet: bool = False):
         """ NER Tokenizer
 
         @param tokenizer_name: the alias of huggingface tokenizer (`tner/roberta-large-tweetner-2021`)
@@ -39,9 +41,11 @@ class NERTokenizer:
             self.tokenizer.pad_token = PAD_TOKEN_LABEL_ID
         self.id2label = id2label
         self.label2id = {v: k for k, v in self.id2label.items()}
-        self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID, "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
+        self.pad_ids = {"labels": PAD_TOKEN_LABEL_ID if padding_id is None else padding_id,
+                        "input_ids": self.tokenizer.pad_token_id, "__default__": 0}
         self.prefix = self.__sp_token_prefix()
         self.sp_token_start, _, self.sp_token_end = self.__additional_special_tokens()
+        self.is_xlnet = is_xlnet
 
     def __sp_token_prefix(self):
         """ return language model-specific prefix token """
@@ -100,12 +104,11 @@ class NERTokenizer:
                 is True, the new label is ["B-LOC", "I-LOC", {PADDING_TOKEN}], otherwise ["B-LOC", "I-LOC", "I-LOC"].
         @return: a dictionary of encoded feature
         """
-        print(tokens)
-        encode = self.tokenizer.encode_plus(
-            ' '.join(tokens), max_length=max_length, padding='max_length', truncation=True)
-        # encode = self.tokenizer.encode_plus(
-        #     ' '.join(tokens), padding='max_length', truncation=True)
-        input(encode)
+        if max_length is None:
+            encode = self.tokenizer.encode_plus(' '.join(tokens))
+        else:
+            encode = self.tokenizer.encode_plus(
+                ' '.join(tokens), max_length=max_length, padding='max_length', truncation=True)
         if labels:
             assert len(tokens) == len(labels)
             fixed_labels = []
@@ -127,7 +130,13 @@ class NERTokenizer:
             tmp_padding = PAD_TOKEN_LABEL_ID if mask_by_padding_token else self.pad_ids['labels']
             fixed_labels = [tmp_padding] * len(self.sp_token_start['input_ids']) + fixed_labels
             fixed_labels = fixed_labels[:min(len(fixed_labels), max_length - len(self.sp_token_end['input_ids']))]
-            fixed_labels = fixed_labels + [tmp_padding] * (max_length - len(fixed_labels))
+
+            if self.is_xlnet:  # XLNet pad before the sentence
+                fixed_labels = [tmp_padding] * (max_length - len(fixed_labels) - len(self.sp_token_end['input_ids'])) + \
+                               fixed_labels + [tmp_padding] * len(self.sp_token_end['input_ids'])
+            else:
+                fixed_labels = fixed_labels + [tmp_padding] * (max_length - len(fixed_labels))
+            assert len(fixed_labels) == len(encode['input_ids'])
             encode['labels'] = fixed_labels
         return encode
 
@@ -144,9 +153,10 @@ class NERTokenizer:
         @param mask_by_padding_token: [optional] see `encode_plus`
         @return: a list of dictionary of encoded feature
         """
-        max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
-        if max_length > 100000000000000001988462:  # XLNet has an issue of this max length declaration
-            max_length = 10
+        if self.is_xlnet and max_length is None:
+            max_length = 512
+        else:
+            max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
         shared_param = {'max_length': max_length, 'mask_by_padding_token': mask_by_padding_token}
         if labels:
             assert len(labels) == len(tokens), f"{len(labels)} != {len(tokens)}"
