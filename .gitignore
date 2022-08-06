@@ -9,6 +9,7 @@ build
 *.egg-info
 dist
 
+tests/test_ckpt*
 data
 ckpt*
 vocab
