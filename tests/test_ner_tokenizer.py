@@ -14,10 +14,8 @@ labels = [
     [1, 2, 0, 1]
 ]
 models = [
-    # "roberta-base", "bert-base-cased", "bert-base-uncased", "xlm-roberta-base", "bert-base-multilingual-cased",
-    # "microsoft/deberta-base", "albert-base-v2",
-    # "gpt2",
-    "xlnet-base-cased"
+    "roberta-base", "bert-base-cased", "bert-base-uncased", "xlm-roberta-base", "bert-base-multilingual-cased",
+    "microsoft/deberta-base", "albert-base-v2", "gpt2", "xlnet-base-cased"
 ]
 
 
@@ -26,9 +24,9 @@ class Test(unittest.TestCase):
 
     def test(self):
         for m in models:
+            tokenizer = NERTokenizer(m, id2label=id2label, is_xlnet="xlnet" in m)
             for mask_by_padding_token in [True, False]:
                 logging.info(f"testing {m}: (mask_by_padding_token: {mask_by_padding_token})")
-                tokenizer = NERTokenizer(m, id2label=id2label)
                 encode = tokenizer.encode_plus_all(
                     tokens=tokens,
                     labels=labels,

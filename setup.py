@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 with open('README.md', 'r') as f:
     readme = f.read()
-version = '0.0.9'
+version = '0.1.0'
 setup(
     name='tner',
     packages=find_packages(exclude=["asset", "examples", "static", "templates", "tests"]),
@@ -51,10 +51,11 @@ setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'tner-train = tner.tner_cl.train:main',
-            'tner-test = tner.tner_cl.test:main',
-            'tner-predict = tner.tner_cl.predict:main',
-            'tner-app = tner.tner_cl.app:main [app]',
+            'tner-train = tner.tner_cl.train:main_trainer',
+            'tner-train-search = tner.tner_cl.train:main_trainer_with_search',
+            # 'tner-test = tner.tner_cl.test:main',
+            # 'tner-predict = tner.tner_cl.predict:main',
+            # 'tner-app = tner.tner_cl.app:main [app]',
         ],
     }
 )
