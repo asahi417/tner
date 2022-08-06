@@ -286,7 +286,7 @@ class TransformersNER:
                  dataset_name: List or str = None,
                  local_dataset: List or Dict = None,
                  batch_size: int = None,
-                 data_split: str = 'test',
+                 dataset_split: str = 'test',
                  cache_dir: str = None,
                  cache_file_feature: str = None,
                  cache_file_prediction: str = None,
@@ -303,7 +303,7 @@ class TransformersNER:
         @param dataset_name: [optional] data name of huggingface dataset (should be sa
         @param cache_dir: [optional] cache directly
         @param batch_size: [optional] batch size
-        @param data_split: [optional] data split of the dataset ('test' as default)
+        @param dataset_split: [optional] data split of the dataset ('test' as default)
         @param cache_file_feature: [optional] save & load precompute data loader
         @param cache_file_prediction: [optional] save & load precompute model prediction
         @param span_detection_mode: [optional] return F1 of entity span detection (ignoring entity type error and cast
@@ -322,10 +322,10 @@ class TransformersNER:
             local_dataset=local_dataset,
             concat_label2id=self.label2id,
             cache_dir=cache_dir)
-        assert data_split in data, f'{data_split} is not in {data.keys()}'
+        assert dataset_split in data, f'{dataset_split} is not in {data.keys()}'
         output = self.predict(
-            inputs=data[data_split]['tokens'],
-            labels=data[data_split]['tags'],
+            inputs=data[dataset_split]['tokens'],
+            labels=data[dataset_split]['tags'],
             batch_size=batch_size,
             cache_file_prediction=cache_file_prediction,
             cache_file_feature=cache_file_feature,

@@ -5,19 +5,18 @@ from pprint import pprint
 
 from tner import TransformersNER
 
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+
 
 def get_options():
     parser = argparse.ArgumentParser(description='command line tool to test finetuned NER model',)
-    parser.add_argument('-c', '--checkpoint', help='checkpoint to load', default=None, type=str)
-    parser.add_argument('--debug', help='show debug log', action='store_true')
+    parser.add_argument('-m', '--model', help='model alias of huggingface or local checkpoint', required=True, type=str)
     return parser.parse_args()
 
 
 def main():
     opt = get_options()
-    level = logging.DEBUG if opt.debug else logging.INFO
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=level, datefmt='%Y-%m-%d %H:%M:%S')
-    classifier = TransformersNER(opt.checkpoint)
+    classifier = TransformersNER(opt.model)
     test_sentences = [
         'I live in United States.',
         'I have an Apple computer.',
@@ -36,6 +35,3 @@ def main():
         else:
             pprint(classifier.predict([_inp]))
 
-
-if __name__ == '__main__':
-    main()

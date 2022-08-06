@@ -4,9 +4,11 @@ import json
 import logging
 from tner import TransformersNER
 
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+
 
 def main():
-    parser = argparse.ArgumentParser(description=' Evaluate NER model ')
+    parser = argparse.ArgumentParser(description="Evaluate NER model")
     parser.add_argument('-m', '--model', help='model alias of huggingface or local checkpoint', required=True, type=str)
     parser.add_argument('-d', '--dataset',
                         help="dataset name (or a list of it) on huggingface tner organization "
@@ -29,9 +31,9 @@ def main():
                              '- NER                  : ["O", "B-PER", "I-PER", "O", "B-LOC", "O", "B-ORG"]'
                              '- Entity-span detection: ["O", "B-ENT", "I-ENT", "O", "B-ENT", "O", "B-ENT"]')
     parser.add_argument('--return-ci', action='store_true', help='return confidence interval by bootstrap')
+    parser.add_argument('-b', '--batch-size', help='batch size', default=32, type=int)
     opt = parser.parse_args()
-    level = logging.DEBUG if opt.debug else logging.INFO
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=level, datefmt='%Y-%m-%d %H:%M:%S')
+
     # train model
     model = TransformersNER(opt.model)
     model.evaluate(
@@ -46,6 +48,3 @@ def main():
         separator=" "
     )
 
-
-if __name__ == '__main__':
-    main()
