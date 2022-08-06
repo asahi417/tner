@@ -29,7 +29,9 @@ class NERTokenizer:
 
         @param tokenizer_name: the alias of huggingface tokenizer (`tner/roberta-large-tweetner-2021`)
         @param id2label: dictionary of id to label (`{"0": "O", "1": "B-ORG", ...}`)
+        @param padding_id: [optional] id of padding tokne
         @param use_auth_token: [optional] Huggingface transformers argument of use_auth_token
+        @param is_xlnet: [optional] XLNet's tokenizer
         """
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(
@@ -54,7 +56,8 @@ class NERTokenizer:
         return prefix if prefix != '' else None
 
     def __additional_special_tokens(self):
-        """ return language model-specific special token for beginning/separate/ending. {'input_ids': [0], 'attention_mask': [1]} """
+        """ return language model-specific special token for beginning/separate/ending.
+        {'input_ids': [0], 'attention_mask': [1]} """
         encode_first = self.tokenizer.encode_plus('sent1', 'sent2')
         # group by block boolean
         sp_token_mask = [i in self.tokenizer.all_special_ids for i in encode_first['input_ids']]
@@ -91,7 +94,8 @@ class NERTokenizer:
                     tokens: List,
                     labels: List = None,
                     max_length: int = None,
-                    mask_by_padding_token: bool = False):
+                    mask_by_padding_token: bool = False,
+                    separator: str = ' '):
         """ return encoded feature given half-space-split tokens
 
         @param tokens: an input sentence tokenized by half-space, ["I", "live", "in", "London"]
@@ -102,20 +106,22 @@ class NERTokenizer:
             (ii) Intermediate sub-token: For example, we have tokens in a sentence ["New", "York"] with labels
                 ["B-LOC", "I-LOC"], which language model tokenizes into ["New", "Yor", "k"]. If mask_by_padding_token
                 is True, the new label is ["B-LOC", "I-LOC", {PADDING_TOKEN}], otherwise ["B-LOC", "I-LOC", "I-LOC"].
+        @param separator: [optional] token separator (eg. '' for Japanese and Chinese)
         @return: a dictionary of encoded feature
         """
         if max_length is None:
-            encode = self.tokenizer.encode_plus(' '.join(tokens))
+            encode = self.tokenizer.encode_plus(separator.join(tokens))
         else:
             encode = self.tokenizer.encode_plus(
-                ' '.join(tokens), max_length=max_length, padding='max_length', truncation=True)
+                separator.join(tokens), max_length=max_length, padding='max_length', truncation=True
+            )
         if labels:
             assert len(tokens) == len(labels)
             fixed_labels = []
             for n, (label, word) in enumerate(zip(labels, tokens)):
                 fixed_labels.append(label)
                 if n != 0 and self.prefix is None:
-                    sub_length = len(self.tokenizer.tokenize(' ' + word))
+                    sub_length = len(self.tokenizer.tokenize(separator + word))
                 else:
                     sub_length = len(self.tokenizer.tokenize(word))
                 if sub_length > 1:
@@ -126,7 +132,7 @@ class NERTokenizer:
                             fixed_labels += [self.label2id['O']] * (sub_length - 1)
                         else:
                             entity = '-'.join(self.id2label[label].split('-')[1:])
-                            fixed_labels += [self.label2id['I-{}'.format(entity)]] * (sub_length - 1)
+                            fixed_labels += [self.label2id[f'I-{entity}']] * (sub_length - 1)
             tmp_padding = PAD_TOKEN_LABEL_ID if mask_by_padding_token else self.pad_ids['labels']
             fixed_labels = [tmp_padding] * len(self.sp_token_start['input_ids']) + fixed_labels
             fixed_labels = fixed_labels[:min(len(fixed_labels), max_length - len(self.sp_token_end['input_ids']))]
@@ -144,7 +150,8 @@ class NERTokenizer:
                         tokens: List,
                         labels: List = None,
                         max_length: int = None,
-                        mask_by_padding_token: bool = False):
+                        mask_by_padding_token: bool = False,
+                        separator: str = ' '):
         """ batch processing of `self.encode_plus`
 
         @param tokens: a list of input sentences tokenized by half-space, [["I", "live", ...], ["You", "live", ...]]
@@ -155,13 +162,15 @@ class NERTokenizer:
             (ii) Intermediate sub-token: For example, we have tokens in a sentence ["New", "York"] with labels
                 ["B-LOC", "I-LOC"], which language model tokenizes into ["New", "Yor", "k"]. If mask_by_padding_token
                 is True, the new label is ["B-LOC", "I-LOC", {PADDING_TOKEN}], otherwise ["B-LOC", "I-LOC", "I-LOC"].
+        @param separator: [optional] token separator (eg. '' for Japanese and Chinese)
         @return: a list of dictionary of encoded feature
         """
         if self.is_xlnet and max_length is None:
             max_length = 512
         else:
             max_length = self.tokenizer.max_len_single_sentence if max_length is None else max_length
-        shared_param = {'max_length': max_length, 'mask_by_padding_token': mask_by_padding_token}
+        shared_param = {'max_length': max_length, 'mask_by_padding_token': mask_by_padding_token,
+                        'separator': separator}
         if labels:
             assert len(labels) == len(tokens), f"{len(labels)} != {len(tokens)}"
             return [self.encode_plus(*i, **shared_param) for i in zip(tokens, labels)]
