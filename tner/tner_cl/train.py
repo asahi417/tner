@@ -113,6 +113,8 @@ def main_trainer_with_search():
     parser = arguments(parser)
     parser = arguments_trainer_with_search(parser)
     opt = parser.parse_args()
+    print(opt.lr_warmup_step_ratio)
+    input()
     # train model
     trainer = GridSearcher(
         checkpoint_dir=opt.checkpoint_dir,
