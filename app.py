@@ -34,7 +34,7 @@ def main():
         data_json = await request.json()
         input_text = data_json['input_text']
         max_len = int(data_json['max_len'])
-        ner_result = model.predict([input_text], max_seq_length=max_len)[0]
+        ner_result = model.predict([input_text])[0]
         ner_result['html'] = generate_html(ner_result)
         return ner_result
 

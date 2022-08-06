@@ -31,21 +31,20 @@ setup(
             'aiofiles==0.5.0',
             'fastapi==0.65.2',
             'matplotlib==3.3.1',
+            'Pillow>=7.1.0',
         ],
+        "japanese": [
+            'sudachipy',
+            'sudachidict_core',
+        ]
     },
     include_package_data=True,
     test_suite='tests',
     install_requires=[
-        'Pillow>=7.1.0',
-        'sudachipy',
-        'sudachidict_core',
-        'toml',
-        'tensorboard',
         'torch',
         'transformers',
         'sentencepiece',
         'seqeval',
-        'segtok',
         'datasets'
     ],
     python_requires='>=3.6',
@@ -53,9 +52,8 @@ setup(
         'console_scripts': [
             'tner-train = tner.tner_cl.train:main_trainer',
             'tner-train-search = tner.tner_cl.train:main_trainer_with_search',
-            # 'tner-test = tner.tner_cl.test:main',
-            # 'tner-predict = tner.tner_cl.predict:main',
-            # 'tner-app = tner.tner_cl.app:main [app]',
+            'tner-evaluate = tner.tner_cl.evaluate:main',
+            'tner-predict = tner.tner_cl.predict:main'
         ],
     }
 )
