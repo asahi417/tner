@@ -1,10 +1,10 @@
-""" Fetch/format NER dataset """
+""" NER dataset """
 import os
 import logging
 import requests
 import json
 import hashlib
-from typing import Dict
+from typing import Dict, List
 from itertools import chain
 from os.path import join as pj
 
@@ -25,13 +25,18 @@ __all__ = (
 
 
 def get_shared_label(cache_dir: str = None):
-    """ universal label set to unify the NER labels """
+    """ universal label set to unify the NER datasets
+
+    @param cache_dir: cache directly
+    @return: a dictionary mapping from label to id
+    """
     cache_dir = CACHE_DIR if cache_dir is None else cache_dir
     os.makedirs(cache_dir, exist_ok=True)
     url = f"https://raw.githubusercontent.com/asahi417/tner/master/unified_label2id.json"
     path = pj(cache_dir, "unified_label2id.json")
     if os.path.exists(path):
-        checksum = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        with open(path, 'rb') as f:
+            checksum = hashlib.md5(f.read()).hexdigest()
         if CHECKSUM_SHARED_LABEL == checksum:
             with open(path) as f:
                 label2id = json.load(f)
@@ -50,7 +55,12 @@ def get_shared_label(cache_dir: str = None):
 
 
 def get_hf_label2id(dataset, cache_dir: str = None):
-    """ Get `label2id` from TNER huggingface dataset https://huggingface.co/tner """
+    """ get `label2id` from TNER huggingface dataset https://huggingface.co/tner
+
+    @param dataset: dataset name
+    @param cache_dir: [optional] huggingface cache directly
+    @return: a dictionary mapping from label to id
+    """
     cache_dir = CACHE_DIR if cache_dir is None else cache_dir
     url = f"https://huggingface.co/datasets/{dataset}/raw/main/dataset/label.json"
     path = pj(cache_dir, f"{dataset}.label2id.json")
@@ -66,10 +76,18 @@ def get_hf_label2id(dataset, cache_dir: str = None):
     return label2id
 
 
-def get_hf_dataset(dataset: str = 'tner/conll2003', data_type: str = None, cache_dir: str = None):
-    """ load dataset from TNER huggingface dataset https://huggingface.co/tner """
-    if data_type is not None:
-        data = load_dataset(dataset, data_type)
+def get_hf_dataset(dataset: str = 'tner/conll2003', dataset_name: str = None, cache_dir: str = None):
+    """ load dataset from TNER huggingface dataset https://huggingface.co/tner
+
+    @param dataset: dataset alias on huggingface dataset hub
+    @param dataset_name: [optional] dataset name to specify
+    @param cache_dir: [optional] huggingface cache directly
+    @return: (data, label2id)
+        - data: a dictionary of {"tokens": [list of tokens], "tags": [list of tags]}
+        - label2id: a dictionary mapping from label to id
+    """
+    if dataset_name is not None:
+        data = load_dataset(dataset, dataset_name)
     else:
         data = load_dataset(dataset)
     label2id = get_hf_label2id(dataset, cache_dir)
@@ -78,7 +96,14 @@ def get_hf_dataset(dataset: str = 'tner/conll2003', data_type: str = None, cache
 
 
 def load_coll_format_file(data_path: str, label2id: Dict = None):
-    """ load dataset from local IOB format file """
+    """ load dataset from local IOB format file
+
+    @param data_path: path to iob file
+    @param label2id: [optional] dictionary of label2id (generate from dataset as default )
+    @return: (data, label2id)
+        - data: a dictionary of {"tokens": [list of tokens], "tags": [list of tags]}
+        - label2id: a dictionary mapping from label to id
+    """
     inputs, labels, seen_entity = [], [], []
     with open(data_path, 'r') as f:
         sentence, entity = [], []
@@ -122,51 +147,72 @@ def load_coll_format_file(data_path: str, label2id: Dict = None):
         assert all(i in label2id for i in all_labels), \
             f"label2id is not covering all the entity \n \t- {label2id} \n \t- {all_labels}"
     labels = [[label2id[__l] for __l in _l] for _l in labels]
-    return {"tokens": inputs, "tags": labels}, label2id
-
-
-def get_conll_format_dataset(path_to_dataset: Dict, label2id: Dict = None):
-    """ load dataset from local IOB files"""
-    full_data = {}
-    for file_name, file_path in path_to_dataset.items():
-        assert os.path.exists(file_path), file_path
-        data, label2id = load_coll_format_file(file_path, label2id)
-        full_data[file_name] = data
-    return full_data, label2id
-
-
-def get_dataset(dataset: str = None,
-                data_path: Dict = None,
-                label2id: Dict = None,
-                data_type: str = None,
-                cache_dir: str = None):
-    """ get NER dataset
-    What should we do when we receive custom label2id for huggingface dataset?
-    - normalize it by the SHARED_LABELS (in the first place, how we maintain this?)
-    - put it on the github and maintain via the hash score of it? (sort of versioning)
-    """
-    if dataset is not None:
-        if data_path is not None:
-            logging.warning(f"data_path ({data_path}) is provided but ignored as dataset ({dataset}) is prioritized")
-        data, label2id = get_hf_dataset(dataset, data_type=data_type, cache_dir=cache_dir)
-    else:
-        assert data_path is not None, "need either of `dataset` or `data_path`"
-        data, label2id = get_conll_format_dataset(data_path, label2id=label2id)
+    data = {"tokens": inputs, "tags": labels}
     return data, label2id
 
 
-def concat_dataset(list_of_data, cache_dir: str = None):
-    """
-    list_of_data = [(data_A, label2id_A), (data_B, label2id_B), ... ]
-    """
+def get_conll_format_dataset(local_dataset: Dict):
+    """ load dataset from local IOB files
 
+    @param local_dataset: a dictionary of paths to local BIO files eg.
+        {"train": "examples/local_dataset_sample/train.txt", "test": "examples/local_dataset_sample/test.txt"}
+    @return: (data, label2id)
+        - data: a dictionary of {"train": {"tokens": [list of tokens], "tags": [list of tags]}}
+        - label2id: a dictionary mapping from label to id
+    """
+    data = {}
+    label2id = None
+    for file_name in sorted(local_dataset.keys()):
+        file_path = local_dataset[file_name]
+        assert os.path.exists(file_path), file_path
+        _data, label2id = load_coll_format_file(file_path, label2id)
+        data[file_name] = _data
+    return data, label2id
+
+
+def get_dataset_single(dataset: str = None,
+                       local_dataset: Dict = None,
+                       dataset_name: str = None,
+                       cache_dir: str = None):
+    """ get NER dataset
+
+    @param dataset: dataset name on huggingface tner organization (https://huggingface.co/datasets?search=tner)
+    @param local_dataset: a dictionary of paths to local BIO files eg.
+        {"train": "examples/local_dataset_sample/train.txt", "test": "examples/local_dataset_sample/test.txt"}
+    @param dataset_name: [optional] data name of huggingface dataset
+    @param cache_dir: [optional] cache directly
+    @return: (data, label2id)
+        - data: a dictionary of {"train": {"tokens": [list of tokens], "tags": [list of tags]}}
+        - label2id: a dictionary mapping from label to id
+    """
+    if dataset is not None:
+        if local_dataset is not None:
+            logging.warning(f"local_dataset ({local_dataset}) is provided but ignored as dataset ({dataset}) is given")
+        data, label2id = get_hf_dataset(dataset, dataset_name=dataset_name, cache_dir=cache_dir)
+
+    else:
+        assert local_dataset is not None, "need either of `dataset` or `local_dataset`"
+        data, label2id = get_conll_format_dataset(local_dataset)
+    return data, label2id
+
+
+def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
+    """ concat multiple NER dataset with a unified label set
+
+    @param list_of_data: a list of output from `get_dataset` eg. [(data_A, label2id_A), (data_B, label2id_B), ... ]
+    @param cache_dir: [optional] cache directly
+    @param label2id: [optional] define label2id map
+    @return: (data, label2id)
+        - data: a dictionary of {"train": {"tokens": [list of tokens], "tags": [list of tags]}}
+        - label2id: a dictionary mapping from label to id
+    """
     # unify label2id
     unified_label_set = get_shared_label(cache_dir)
     all_labels = []
     normalized_entities = {}
-    for _, label2id in list_of_data:
-        all_labels += list(label2id.keys())
-        entities = set(i.rsplit('-', 1)[-1] for i in label2id.keys() if i != 'O')
+    for _, _label2id in list_of_data:
+        all_labels += list(_label2id.keys())
+        entities = set(i.rsplit('-', 1)[-1] for i in _label2id.keys() if i != 'O')
 
         for entity in entities:
             normalized_entity = [k for k, v in unified_label_set.items() if entity in v]
@@ -179,14 +225,19 @@ def concat_dataset(list_of_data, cache_dir: str = None):
                 normalized_entities[entity] = normalized_entity[0]
     all_labels = sorted([i for i in set(all_labels) if i != "O"])
     normalized_labels = [f"{i.rsplit('-', 1)[0]}-{normalized_entities[i.rsplit('-', 1)[1]]}" for i in all_labels]
-    normalized_label2id = {k: n for n, k in enumerate(sorted(normalized_labels))}
-    normalized_label2id.update({"O": len(normalized_label2id)})
+    if label2id is not None:
+        assert all(i in label2id.keys() for i in normalized_labels),\
+            f"missing entity in label2id {label2id.keys()}: {normalized_labels}"
+        normalized_label2id = label2id
+    else:
+        normalized_label2id = {k: n for n, k in enumerate(sorted(normalized_labels))}
+        normalized_label2id.update({"O": len(normalized_label2id)})
 
     # update labels & concat data
     concat_tokens = {}
     concat_tags = {}
-    for data, label2id in list_of_data:
-        id2label = {v: k for k, v in label2id.items()}
+    for data, _label2id in list_of_data:
+        id2label = {v: k for k, v in _label2id.items()}
         for _split in data.keys():
             if _split not in concat_tokens:
                 concat_tokens[_split] = []
@@ -209,3 +260,62 @@ def concat_dataset(list_of_data, cache_dir: str = None):
         assert all(len(a) == len(b) for a, b in zip(concat_tags[s], concat_tokens[s]))
     data = {s: {"tokens": concat_tokens[s], "tags": concat_tags[s]} for s in concat_tags.keys()}
     return data, normalized_label2id
+
+
+def get_dataset(dataset: List or str = None,
+                local_dataset: List or Dict = None,
+                dataset_name: List or str = None,
+                concat_label2id: Dict = None,
+                cache_dir: str = None):
+    """ get NER datasets (concat mutiple datasets)
+
+    @param dataset: dataset name (or a list of it) on huggingface tner organization (https://huggingface.co/datasets?search=tner)
+            (eg. "tner/conll2003", ["tner/conll2003", "tner/ontonotes5"]]
+    @param local_dataset: a dictionary (or a list) of paths to local BIO files eg.
+            {"train": "examples/local_dataset_sample/train.txt", "test": "examples/local_dataset_sample/test.txt"}
+    @param dataset_name: [optional] data name of huggingface dataset (should be same length as the `dataset`)
+    @param concat_label2id: [optional] define label2id map for multiple dataset concatenation (nothing to do with single data)
+    @param cache_dir: [optional] cache directly
+    @return: (data, label2id)
+        - data: a dictionary of {"train": {"tokens": [list of tokens], "tags": [list of tags]}}
+        - label2id: a dictionary mapping from label to id
+    """
+    assert dataset is not None or local_dataset is not None, "`datasets` or `local_datasets` should be provided"
+    dataset_list = []
+    # load huggingface dataset
+    if dataset is not None:
+        if type(dataset) is str:
+            assert dataset_name is None or type(dataset_name) is str, \
+                f"`dataset_name` should be string but given {dataset_name}"
+            data, label2id = get_dataset_single(dataset=dataset, dataset_name=dataset_name, cache_dir=cache_dir)
+            dataset_list.append((data, label2id))
+        else:
+            assert dataset_name is None or (
+                    type(dataset_name) is list and
+                    len(dataset) == len(dataset_name)), \
+                f"dataset_name not matched: {dataset} vs {dataset_name}"
+            for n, d in enumerate(dataset):
+                data, label2id = get_dataset_single(
+                    dataset=d,
+                    dataset_name=dataset_name[n] if dataset_name is not None else None,
+                    cache_dir=cache_dir
+                )
+                dataset_list.append((data, label2id))
+    # load custom dataset
+    if local_dataset is not None:
+        if type(local_dataset) is dict:
+            data, label2id = get_dataset_single(local_dataset=local_dataset, cache_dir=cache_dir)
+            dataset_list.append((data, label2id))
+        else:
+            for d in local_dataset:
+                data, label2id = get_dataset_single(local_dataset=d, cache_dir=cache_dir)
+                dataset_list.append((data, label2id))
+    # concat datasets
+    if len(dataset_list) > 1:
+        logging.info(f'concat {len(dataset_list)} datasets')
+        data, label2id = concat_dataset(dataset_list, label2id=concat_label2id, cache_dir=cache_dir)
+    else:
+        if concat_label2id is not None:
+            logging.warning(f'concat_label2id is specified {concat_label2id} but not changed as is only one dataset')
+        data, label2id = dataset_list[0]
+    return data, label2id
