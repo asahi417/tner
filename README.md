@@ -3,15 +3,18 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/tner.svg)](https://pypi.python.org/pypi/tner/)
 [![PyPI status](https://img.shields.io/pypi/status/tner.svg)](https://pypi.python.org/pypi/tner/)
 
-# T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition  
+
 <p align="center">
-  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="600">
+  <img src="https://github.com/asahi417/tner/blob/master/asset/tner_logo_horizontal.png" width="400">
 </p>
 
+# WARNING: README will be updated soon according to recent updates
+
+# T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition  
 
 ***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER) implemented in pytorch, available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models and test on cross-domain and multilingual datasets. T-NER currently integrates 9 publicly available NER datasets and enables an easy integration of custom datasets.
-All models finetuned with T-NER can be deploy on our web app for visualization.
+All models finetuned with T-NER can be deployed on our web app for visualization.
 
 ***Paper Accepted:*** Our paper demonstrating T-NER has been accepted to EACL 2021 🎉 [paper link](https://www.aclweb.org/anthology/2021.eacl-demos.7/).
 
@@ -46,6 +49,11 @@ pip install git+https://github.com/asahi417/tner
 ```
 
 ## Web App
+
+<p align="center">
+  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="500">
+</p>
+
 To start the web app, first clone the repository
 ```shell script
 git clone https://github.com/asahi417/tner
