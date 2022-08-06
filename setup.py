@@ -53,7 +53,8 @@ setup(
             'tner-train = tner.tner_cl.train:main_trainer',
             'tner-train-search = tner.tner_cl.train:main_trainer_with_search',
             'tner-evaluate = tner.tner_cl.evaluate:main',
-            'tner-predict = tner.tner_cl.predict:main'
+            'tner-predict = tner.tner_cl.predict:main',
+            'tner-push-to-hub = tner.tner_cl.push_to_hub:main'
         ],
     }
 )
