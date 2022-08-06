@@ -17,6 +17,7 @@ apex
 cache
 tests/ckpt*
 tner_output
+tner_ckpt
 ner-dataset
 examples/snap
 notes
@@ -24,3 +25,4 @@ cner
 datasets
 scripts
 dataset_public_tweet
+examples/model_finetuning

@@ -560,7 +560,7 @@ class GridSearcher:
                 local_dataset=self.static_config['local_dataset'],
                 dataset_name=self.static_config['dataset_name'],
                 batch_size=self.batch_size_eval,
-                data_split=self.eval_config['dataset_split_valid'],
+                dataset_split=self.eval_config['dataset_split_valid'],
                 cache_file_feature=cache_file_feature,
                 cache_file_prediction=cache_file_prediction
             )

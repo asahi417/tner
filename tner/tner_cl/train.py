@@ -25,9 +25,8 @@ def arguments(parser):
     parser.add_argument('-m', '--model', help='model name of underlying language model (huggingface model)',
                         default='roberta-base', type=str)
     parser.add_argument('-b', '--batch-size', help='batch size', default=32, type=int)
-    parser.add_argument('-e', '--epoch', help='the number of epoch', default=10, type=int)
-    parser.add_argument('--max-length', default=128, type=int,
-                        help='max length of language model')
+    parser.add_argument('-e', '--epoch', help='the number of epoch', default=15, type=int)
+    parser.add_argument('--max-length', default=128, type=int, help='max length of language model')
     parser.add_argument('--use-auth-token', help='show debug log', action='store_true')
     return parser
 
@@ -87,19 +86,25 @@ def arguments_trainer_with_search(parser):
                         default='train', type=str)
     parser.add_argument('--dataset-split-valid', help="dataset split to be used for validation ('valid' as default)",
                         default='valid', type=str)
-    parser.add_argument('--lr', help='learning rate', default=1e-5, type=float, nargs='+')
+    parser.add_argument('--lr', help='learning rate', default=[1e-4, 1e-5], type=float, nargs='+')
     parser.add_argument('--random-seed', help='random seed', default=1234, type=int, nargs='+')
-    parser.add_argument('-g', "--gradient-accumulation-steps", default=4, type=int,
+    parser.add_argument('-g', "--gradient-accumulation-steps", default=[2, 4], type=int,
                         help="the number of gradient accumulation", nargs='+')
-    parser.add_argument('--weight-decay', help='coefficient of weight decay', default=1e-7, type=float, nargs='+')
+    parser.add_argument('--weight-decay', help='coefficient of weight decay (set 0 for None)',
+                        default=[None, 1e-7], type=float, nargs='+')
     parser.add_argument('--lr-warmup-step-ratio',
-                        help="linear warmup ratio of learning rate. eg) if it's 0.3, the learning rate will warmup "
-                             "linearly till 30%% of the total step (no decay after all)",
+                        help="linear warmup ratio of learning rate (no decay)."
+                             "eg) if it's 0.3, the learning rate will warmup "
+                             "linearly till 30%% of the total step (set 0 for None)",
                         default=0.1, type=float, nargs='+')
-    parser.add_argument("--max-grad-norm", default=None, type=float, help="norm for gradient clipping", nargs='+')
+    parser.add_argument("--max-grad-norm", default=[None, 10], type=float,
+                        help="norm for gradient clipping (set 0 for None)", nargs='+')
     parser.add_argument('--crf', help='use CRF on top of output embedding (0 or 1)', default=True,
                         type=lambda x: bool(int(x)), nargs='+')
     parser.add_argument('--optimizer-on-cpu', help='put optimizer on CPU to save memory of GPU', action='store_true')
+    parser.add_argument('--n-max-config', default=3, help="the number of configs to run 2nd phase search", type=int)
+    parser.add_argument('--epoch-partial', default=5, help="the number of epoch for 1st phase search", type=int)
+    parser.add_argument('--max-length-eval', default=128, type=int, help='max length of language model at evaluation')
     return parser
 
 
@@ -113,6 +118,9 @@ def main_trainer_with_search():
         checkpoint_dir=opt.checkpoint_dir,
         dataset=opt.dataset,
         local_dataset=opt.local_dataset,
+        n_max_config=opt.n_max_config,
+        epoch_partial=opt.epoch_partial,
+        max_length_eval=opt.max_length_eval,
         dataset_split_train=opt.dataset_split_train,
         dataset_split_valid=opt.dataset_split_valid,
         model=opt.model,
@@ -123,9 +131,9 @@ def main_trainer_with_search():
         lr=opt.lr,
         random_seed=opt.random_seed,
         gradient_accumulation_steps=opt.gradient_accumulation_steps,
-        weight_decay=opt.weight_decay,
-        lr_warmup_step_ratio=opt.lr_warmup_step_ratio,
-        max_grad_norm=opt.max_grad_norm,
+        weight_decay=[i if i != 0 else None for i in opt.weight_decay],
+        lr_warmup_step_ratio=[i if i != 0 else None for i in opt.lr_warmup_step_ratio],
+        max_grad_norm=[i if i != 0 else None for i in opt.max_grad_norm],
         use_auth_token=opt.use_auth_token
     )
     trainer.train(optimizer_on_cpu=opt.optimizer_on_cpu)
