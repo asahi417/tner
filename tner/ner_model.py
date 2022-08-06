@@ -145,7 +145,8 @@ class TransformersNER:
                         shuffle: bool = False,
                         drop_last: bool = False,
                         mask_by_padding_token: bool = False,
-                        cache_file_feature: str = None):
+                        cache_file_feature: str = None,
+                        separator: str = ' '):
         """ get data loader (`torch.utils.data.DataLoader`) for model output
 
         @param inputs: a list of tokenized sentences ([["I", "live",...], ["You", "live", ...]])
@@ -159,6 +160,7 @@ class TransformersNER:
                 ["B-LOC", "I-LOC"], which language model tokenizes into ["New", "Yor", "k"]. If mask_by_padding_token
                 is True, the new label is ["B-LOC", "I-LOC", {PADDING_TOKEN}], otherwise ["B-LOC", "I-LOC", "I-LOC"].
         @param cache_file_feature: [optional] save & load precompute data loader
+        @param separator: [optional] token separator (eg. '' for Japanese and Chinese)
         @return: `torch.utils.data.DataLoader` object or list if `return_list = True`
         """
         if cache_file_feature is not None and os.path.exists(cache_file_feature):
@@ -166,7 +168,11 @@ class TransformersNER:
             out = pickle_load(cache_file_feature)
         else:
             out = self.tokenizer.encode_plus_all(
-                tokens=inputs, labels=labels, max_length=self.max_length, mask_by_padding_token=mask_by_padding_token
+                tokens=inputs,
+                labels=labels,
+                max_length=self.max_length,
+                mask_by_padding_token=mask_by_padding_token,
+                separator=separator
             )
             # remove overflow text
             logging.info(f'encode all the data: {len(out)}')
@@ -185,7 +191,8 @@ class TransformersNER:
                 labels: List = None,
                 batch_size: int = None,
                 cache_file_feature: str = None,
-                cache_file_prediction: str = None):
+                cache_file_prediction: str = None,
+                separator: str = ' '):
         """ get model prediction
 
         @param inputs: a list of tokenized sentences ([["I", "live",...], ["You", "live", ...]])
@@ -193,6 +200,7 @@ class TransformersNER:
         @param batch_size: [optional] batch size
         @param cache_file_feature: [optional] save & load precompute data loader
         @param cache_file_prediction: [optional] save & load precompute model prediction
+        @param separator: [optional] token separator (eg. '' for Japanese and Chinese)
         @return: a dictionary containing
             {'prediction': a sequence of predictions for each input,
              'probability': a sequence of probability for each input,
@@ -215,11 +223,14 @@ class TransformersNER:
             inputs_list = inputs
         else:
             self.model.eval()
-            loader = self.get_data_loader(inputs,
-                                          labels=labels,
-                                          batch_size=batch_size,
-                                          mask_by_padding_token=True,
-                                          cache_file_feature=cache_file_feature)
+            loader = self.get_data_loader(
+                inputs,
+                labels=labels,
+                batch_size=batch_size,
+                mask_by_padding_token=True,
+                cache_file_feature=cache_file_feature,
+                separator=separator
+            )
             label_list = []
             pred_list = []
             prob_list = []
@@ -281,7 +292,8 @@ class TransformersNER:
                  cache_file_prediction: str = None,
                  span_detection_mode: bool = False,
                  return_ci: bool = False,
-                 unification_by_shared_label: bool = True):
+                 unification_by_shared_label: bool = True,
+                 separator: str = ' '):
         """ evaluate model on the dataset
 
         @param dataset: dataset name (or a list of it) on huggingface tner organization (https://huggingface.co/datasets?search=tner)
@@ -300,6 +312,7 @@ class TransformersNER:
             - Entity-span detection: ["O", "B-ENT", "I-ENT", "O", "B-ENT", "O", "B-ENT"]
         @param return_ci: [optional] return confidence interval by bootstrap
         @param unification_by_shared_label: [optional] map entities into a shared form
+        @param separator: [optional] token separator (eg. '' for Japanese and Chinese)
         @return: a dictionary containing span f1 scores
         """
         self.eval()
@@ -315,7 +328,8 @@ class TransformersNER:
             labels=data[data_split]['tags'],
             batch_size=batch_size,
             cache_file_prediction=cache_file_prediction,
-            cache_file_feature=cache_file_feature
+            cache_file_feature=cache_file_feature,
+            separator=separator
         )
         return span_f1(output['prediction'], output['label'], self.label2id, span_detection_mode, return_ci=return_ci,
                        unification_by_shared_label=unification_by_shared_label)
