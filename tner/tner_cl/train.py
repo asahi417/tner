@@ -87,7 +87,7 @@ def arguments_trainer_with_search(parser):
     parser.add_argument('--dataset-split-valid', help="dataset split to be used for validation ('valid' as default)",
                         default='valid', type=str)
     parser.add_argument('--lr', help='learning rate', default=[1e-4, 1e-5], type=float, nargs='+')
-    parser.add_argument('--random-seed', help='random seed', default=1234, type=int, nargs='+')
+    parser.add_argument('--random-seed', help='random seed', default=[1234], type=int, nargs='+')
     parser.add_argument('-g', "--gradient-accumulation-steps", default=[2, 4], type=int,
                         help="the number of gradient accumulation", nargs='+')
     parser.add_argument('--weight-decay', help='coefficient of weight decay (set 0 for None)',
@@ -96,10 +96,10 @@ def arguments_trainer_with_search(parser):
                         help="linear warmup ratio of learning rate (no decay)."
                              "eg) if it's 0.3, the learning rate will warmup "
                              "linearly till 30%% of the total step (set 0 for None)",
-                        default=0.1, type=float, nargs='+')
+                        default=[0.1], type=float, nargs='+')
     parser.add_argument("--max-grad-norm", default=[None, 10], type=float,
                         help="norm for gradient clipping (set 0 for None)", nargs='+')
-    parser.add_argument('--crf', help='use CRF on top of output embedding (0 or 1)', default=True,
+    parser.add_argument('--crf', help='use CRF on top of output embedding (0 or 1)', default=[True, False],
                         type=lambda x: bool(int(x)), nargs='+')
     parser.add_argument('--optimizer-on-cpu', help='put optimizer on CPU to save memory of GPU', action='store_true')
     parser.add_argument('--n-max-config', default=3, help="the number of configs to run 2nd phase search", type=int)
@@ -113,8 +113,6 @@ def main_trainer_with_search():
     parser = arguments(parser)
     parser = arguments_trainer_with_search(parser)
     opt = parser.parse_args()
-    print(opt.lr_warmup_step_ratio)
-    input()
     # train model
     trainer = GridSearcher(
         checkpoint_dir=opt.checkpoint_dir,
