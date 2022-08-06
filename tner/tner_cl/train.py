@@ -35,7 +35,7 @@ def arguments_trainer(parser):
     parser.add_argument('--dataset-split', help="dataset split to be used ('train' as default)",
                         default='train', type=str)
     parser.add_argument('--lr', help='learning rate', default=1e-5, type=float)
-    parser.add_argument('--random-seed', help='random seed', default=1234, type=int)
+    parser.add_argument('--random-seed', help='random seed', default=42, type=int)
     parser.add_argument('-g', "--gradient-accumulation-steps", default=4, type=int,
                         help="the number of gradient accumulation")
     parser.add_argument('--weight-decay', help='coefficient of weight decay', default=1e-7, type=float)
@@ -87,7 +87,7 @@ def arguments_trainer_with_search(parser):
     parser.add_argument('--dataset-split-valid', help="dataset split to be used for validation ('valid' as default)",
                         default='valid', type=str)
     parser.add_argument('--lr', help='learning rate', default=[1e-4, 1e-5], type=float, nargs='+')
-    parser.add_argument('--random-seed', help='random seed', default=[1234], type=int, nargs='+')
+    parser.add_argument('--random-seed', help='random seed', default=[42], type=int, nargs='+')
     parser.add_argument('-g', "--gradient-accumulation-steps", default=[2, 4], type=int,
                         help="the number of gradient accumulation", nargs='+')
     parser.add_argument('--weight-decay', help='coefficient of weight decay (set 0 for None)',
