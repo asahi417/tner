@@ -150,7 +150,11 @@ class NERTokenizer:
         @param tokens: a list of input sentences tokenized by half-space, [["I", "live", ...], ["You", "live", ...]]
         @param labels: [optional]
         @param max_length: [optional] max length of language model input
-        @param mask_by_padding_token: [optional] see `encode_plus`
+        @param [optional] mask_by_padding_token: Padding sequence has two cases:
+            (i) Padding upto max_length: if True, padding such tokens by {PADDING_TOKEN}, else by "O"
+            (ii) Intermediate sub-token: For example, we have tokens in a sentence ["New", "York"] with labels
+                ["B-LOC", "I-LOC"], which language model tokenizes into ["New", "Yor", "k"]. If mask_by_padding_token
+                is True, the new label is ["B-LOC", "I-LOC", {PADDING_TOKEN}], otherwise ["B-LOC", "I-LOC", "I-LOC"].
         @return: a list of dictionary of encoded feature
         """
         if self.is_xlnet and max_length is None:
