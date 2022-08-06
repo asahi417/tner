@@ -12,7 +12,7 @@ POS_MAPPER = {
 }
 
 
-class SudachiWrapper:
+class TokenizerJA:
     """ Sudachi tokenizer
 
      Usage
@@ -72,3 +72,4 @@ class SudachiWrapper:
                             new_labels_fixed.append('B-{}'.format(mention))
         assert len(tokens) == len(new_labels_fixed)
         return tokens, new_labels_fixed
+
