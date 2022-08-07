@@ -16,6 +16,9 @@ It has an easy interface to finetune models and test on cross-domain and multili
 All models finetuned with T-NER can be deployed on our web app for visualization.
 [Our paper demonstrating T-NER](https://www.aclweb.org/anthology/2021.eacl-demos.7/) has been accepted to EACL 2021.
 
+### Quick Tour
+TBA
+
 ## Table of Contents  
 1. **[Setup](#setup)**
 2. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
@@ -37,6 +40,8 @@ To install dependencies to run the web app, add option at installation.
 ```shell script
 pip install tner[app]
 ```
+
+
 
 ## Web App
 
@@ -61,6 +66,8 @@ You can specify model to deploy by an environment variable `NER_MODEL`, which is
 
 
 ## Model Finetuning
+
+
 <p align="center">
   <img src="https://github.com/asahi417/tner/blob/master/asset/parameter_search.png" width="800">
 </p>

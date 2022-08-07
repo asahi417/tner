@@ -2,6 +2,8 @@
 import argparse
 import json
 import logging
+import os
+
 from tner import TransformersNER
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -10,6 +12,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 def main():
     parser = argparse.ArgumentParser(description="Evaluate NER model")
     parser.add_argument('-m', '--model', help='model alias of huggingface or local checkpoint', required=True, type=str)
+    parser.add_argument('-e', '--export', help='file to export the result', required=True, type=str)
     parser.add_argument('-d', '--dataset',
                         help="dataset name (or a list of it) on huggingface tner organization "
                              "eg. 'tner/conll2003' ['tner/conll2003', 'tner/ontonotes5']] "
@@ -36,7 +39,7 @@ def main():
 
     # train model
     model = TransformersNER(opt.model)
-    model.evaluate(
+    metric = model.evaluate(
         dataset=opt.dataset,
         dataset_name=opt.dataset_name,
         local_dataset=opt.local_dataset,
@@ -47,4 +50,7 @@ def main():
         unification_by_shared_label=True,
         separator=" "
     )
-
+    logging.info(json.dumps(metric, indent=4))
+    os.makedirs(opt.export_dir, exist_ok=True)
+    with open(opt.export, 'w') as f:
+        json.dump(metric, f)
