@@ -4,48 +4,38 @@
 [![PyPI status](https://img.shields.io/pypi/status/tner.svg)](https://pypi.python.org/pypi/tner/)
 
 
-<p align="center">
-  <img src="https://github.com/asahi417/tner/blob/master/asset/tner_logo_horizontal.png" width="400">
+<p align="left">
+  <img src="https://github.com/asahi417/tner/blob/master/asset/tner_logo_horizontal.png" width="350">
 </p>
 
-# WARNING: README will be updated soon according to recent updates
 
 # T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition  
 
 ***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER) implemented in pytorch, available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models and test on cross-domain and multilingual datasets. T-NER currently integrates 9 publicly available NER datasets and enables an easy integration of custom datasets.
 All models finetuned with T-NER can be deployed on our web app for visualization.
+[Our paper demonstrating T-NER](https://www.aclweb.org/anthology/2021.eacl-demos.7/) has been accepted to EACL 2021.
 
-***Paper Accepted:*** Our paper demonstrating T-NER has been accepted to EACL 2021 🎉 [paper link](https://www.aclweb.org/anthology/2021.eacl-demos.7/).
-
-***PreTrained Models:*** We release 46 XLM-RoBERTa models finetuned on NER on the HuggingFace transformers model hub, [see here for more details and model cards](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md).
-
-### Table of Contents  
-1. **[Setup](#get-started)**
-2. **[Web API](#web-app)**
-3. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
-4. **[Model Finetuning](#model-finetuning)**
+## Table of Contents  
+1. **[Setup](#setup)**
+2. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
+3. **[Model Finetuning](#model-finetuning)**
 5. **[Model Evaluation](#model-evaluation)**
 6. **[Model Inference](#model-inference)** 
 7. **[Datasets](#datasets)**
+2. **[Web API](#web-app)**
 8. **[Reference](#reference-paper)**
+9. **[Colab Examples](#google-colab-examples)**
 
-### Google Colab Examples
-| Description               | Link  |
-|---------------------------|-------|
-| Model Finetuning          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing) |
-| Model Evaluation          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing) |
-| Model Prediction          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing) |
-| Multilingual NER Workflow | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Mq0UisC2dwlVMP9ar2Cf6h5b1T-7Tdwb?usp=sharing) |
 
-## Get Started
-Install pip package
+## Setup
+Install pip package.
 ```shell script
 pip install tner
 ```
-or directly from the repository for the latest version.
+To install dependencies to run the web app, add option at installation.
 ```shell script
-pip install git+https://github.com/asahi417/tner
+pip install tner[app]
 ```
 
 ## Web App
@@ -71,10 +61,14 @@ You can specify model to deploy by an environment variable `NER_MODEL`, which is
 
 
 ## Model Finetuning
+<p align="center">
+  <img src="https://github.com/asahi417/tner/blob/master/asset/parameter_search.png" width="800">
+</p>
+
 Language model finetuning on NER can be done with a few lines:
 ```python
 import tner
-trainer = tner.TrainTransformersNER(checkpoint_dir='./ckpt_tner', dataset="data-name", transformers_model="transformers-model")
+trainer = tner.Trainer(checkpoint_dir='./ckpt_tner', dataset="data-name", model="transformers-model")
 trainer.train()
 ```
 where `transformers_model` is a pre-trained model name from [transformers model hub](https://huggingface.co/models) and
@@ -197,6 +191,13 @@ first word of the second entity will be tagged B-XXX in order to show that it st
 The custom dataset should have `train.txt` and `valid.txt` files in a same folder. 
 Please take a look [sample custom data](https://github.com/asahi417/tner/tree/master/examples/custom_dataset_sample).
 
+## Google Colab Examples
+| Description               | Link  |
+|---------------------------|-------|
+| Model Finetuning          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing) |
+| Model Evaluation          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing) |
+| Model Prediction          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing) |
+| Multilingual NER Workflow | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Mq0UisC2dwlVMP9ar2Cf6h5b1T-7Tdwb?usp=sharing) |
 
 ## Reference paper
 If you use any of these resources, please cite the following [paper](https://aclanthology.org/2021.eacl-demos.7/):

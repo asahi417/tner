@@ -100,7 +100,8 @@ class Trainer:
                     use_auth_token=use_auth_token
                 )
                 self.current_epoch = e
-                assert self.current_epoch <= self.config['epoch'], f'model training is over {self.checkpoint_dir}'
+                assert self.current_epoch <= config['epoch'],\
+                    f'model training is over {self.checkpoint_dir}: {self.current_epoch} == {config["epoch"]}'
                 logging.warning(f'config is overwritten by {model_path}')
                 self.config = config
             except Exception:
