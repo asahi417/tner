@@ -51,6 +51,6 @@ def main():
         separator=" "
     )
     logging.info(json.dumps(metric, indent=4))
-    os.makedirs(opt.export_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(opt.export), exist_ok=True)
     with open(opt.export, 'w') as f:
         json.dump(metric, f)
