@@ -84,8 +84,8 @@ def main_trainer():
 def arguments_trainer_with_search(parser):
     parser.add_argument('--dataset-split-train', help="dataset split to be used for training ('train' as default)",
                         default='train', type=str)
-    parser.add_argument('--dataset-split-valid', help="dataset split to be used for validation ('valid' as default)",
-                        default='valid', type=str)
+    parser.add_argument('--dataset-split-valid', help="dataset split to be used for validation ('validation' as default)",
+                        default='validation', type=str)
     parser.add_argument('--lr', help='learning rate', default=[1e-4, 1e-5], type=float, nargs='+')
     parser.add_argument('--random-seed', help='random seed', default=[42], type=int, nargs='+')
     parser.add_argument('-g', "--gradient-accumulation-steps", default=[2, 4], type=int,
