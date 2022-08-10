@@ -27,7 +27,8 @@ def arguments(parser):
     parser.add_argument('-b', '--batch-size', help='batch size', default=32, type=int)
     parser.add_argument('-e', '--epoch', help='the number of epoch', default=15, type=int)
     parser.add_argument('--max-length', default=128, type=int, help='max length of language model')
-    parser.add_argument('--use-auth-token', help='show debug log', action='store_true')
+    parser.add_argument('--use-auth-token', help='Huggingface transformers argument of `use_auth_token`',
+                        action='store_true')
     return parser
 
 

@@ -18,6 +18,8 @@ def main():
     parser.add_argument('-m', '--model-checkpoint', required=True, type=str)
     parser.add_argument('-a', '--model-alias', required=True, type=str)
     parser.add_argument('-o', '--organization', default=None, type=str)
+    parser.add_argument('--use-auth-token', help='Huggingface transformers argument of `use_auth_token`',
+                        action='store_true')
     opt = parser.parse_args()
 
     assert os.path.exists(pj(opt.model_checkpoint, "pytorch_model.bin")), pj(opt.model_checkpoint, "pytorch_model.bin")
@@ -27,16 +29,18 @@ def main():
         model_ = model.model.module
     else:
         model_ = model.model
-    repo_id = f"{opt.organization}/{opt.model_alias}"
-    if opt.organization is None:
-        model_.push_to_hub(repo_id=repo_id)
-        model_.config.push_to_hub(repo_id=repo_id)
-        model.tokenizer.tokenizer.push_to_hub(repo_id=repo_id)
-    else:
-        model_.push_to_hub(repo_id=repo_id)
-        model_.config.push_to_hub(repo_id=repo_id)
-        model.tokenizer.tokenizer.push_to_hub(repo_id=repo_id)
 
+    args = {
+        "repo_path_or_name": opt.model_alias,
+        "use_auth_token": opt.use_auth_token
+    }
+    if opt.organization is not None:
+        args['organization'] = opt.organization
+
+    model_.push_to_hub(**args)
+    model_.config.push_to_hub(**args)
+    model.tokenizer.tokenizer.push_to_hub(**args)
+    
     # config
     with open(pj(opt.model_checkpoint, "trainer_config.json")) as f:
         trainer_config = json.load(f)
