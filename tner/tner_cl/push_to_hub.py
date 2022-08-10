@@ -30,17 +30,14 @@ def main():
     else:
         model_ = model.model
 
-    args = {
-        "repo_path_or_name": opt.model_alias,
-        "use_auth_token": opt.use_auth_token
-    }
+    args = {"use_auth_token": opt.use_auth_token}
     if opt.organization is not None:
         args['organization'] = opt.organization
 
-    model_.push_to_hub(**args)
-    model_.config.push_to_hub(**args)
-    model.tokenizer.tokenizer.push_to_hub(**args)
-    
+    model_.push_to_hub(opt.model_alias, **args)
+    model_.config.push_to_hub(opt.model_alias, **args)
+    model.tokenizer.tokenizer.push_to_hub(opt.model_alias, **args)
+
     # config
     with open(pj(opt.model_checkpoint, "trainer_config.json")) as f:
         trainer_config = json.load(f)
