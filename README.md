@@ -389,7 +389,6 @@ tner-evaluate -m "tner/roberta-large-wnut2017" -e "metric.json" -d "tner/conll20
 
 
 ## Google Colab Examples
-Need to be updated
 
 | Description               | Link  |
 |---------------------------|-------|
