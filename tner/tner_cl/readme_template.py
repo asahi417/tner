@@ -130,7 +130,7 @@ Install the library via pip
 pip install tner
 ```
 and activate model as below.
-```
+```python
 from tner import TransformersNER
 model = TransformersNER("{model_name}")
 model.predict("Jacob Collier is a Grammy awarded English artist from London".split(" "))
