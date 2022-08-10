@@ -28,6 +28,8 @@ All the models and datasets are shared via [T-NER HuggingFace group](https://hug
    2.1 **[HuggingFace Dataset](#huggingface-dataset)**
    2.2 **[Custom Dataset](#custom-dataset)**
 3. **[Model](#model)**
+4. **[Fine-Tuning Language Model on NER](#fine-tuning-language-model-on-ner)**
+   
 3. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
 3. **[Model Finetuning](#model-finetuning)**
 5. **[Model Evaluation](#model-evaluation)**
@@ -89,8 +91,13 @@ with a dictionary to map a label to its index (`label2id`) as below.
 A variety of public NER datasets are shared on our [HuggingFace group](https://huggingface.co/tner), which can be used as below. 
 ```python
 from tner import get_dataset
-data, label2id = get_dataset("tner/wnut2017")
+data, label2id = get_dataset(dataset="tner/wnut2017")
 ```
+User can specify multiple datasets to get a concatenated dataset.
+```python
+data, label2id = get_dataset(dataset=["tner/conll2003", "tner/ontonotes5"])
+```
+In concatenated datasets, we use the [unified label set](./unified_label2id.json) to unify the entity label.
 The idea is to share all the available NER datasets on the HuggingFace in a unified format, so let us know if you want any NER datasets to be added there!  
 
 ### Custom Dataset
@@ -123,9 +130,16 @@ data, label2id = get_dataset(local_dataset={
     "test": "examples/local_dataset_sample/test.txt"
 })
 ```
+Same as the HuggingFace dataset, one can concatenate dataset.
+```python
+data, label2id = get_dataset(local_dataset=[
+   {"train": "...", "valid": "...", "test": "..."},
+   {"train": "...", "valid": "...", "test": "..."}
+   ]
+)
+```
 
 ## Model
-### HuggingFace Models
 
 | Model (link)                                                                                      | Data                                                                | Language Model                                                                    |
 |:--------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------|:----------------------------------------------------------------------------------|
@@ -144,54 +158,121 @@ data, label2id = get_dataset(local_dataset={
 | [`tner/roberta-large-ontonotes5`](https://huggingface.co/tner/roberta-large-ontonotes5)           | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
 | [`tner/deberta-v3-large-ontonotes5`](https://huggingface.co/tner/deberta-v3-large-ontonotes5)     | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
 
-T-NER currently has shared more than 100 NER models on [HuggingFace group](https://huggingface.co/tner) (see above table for examples) and all the models can be used with `tner` as below.
+T-NER currently has shared more than 100 NER models on [HuggingFace group](https://huggingface.co/tner), as shown in the above table, which reports the major models only and see [MODEL_CARD](MODEL_CARD.md) for full model lists. 
+All the models can be used with `tner` as below.
 ```python
 from tner import TransformersNER
 model = TransformersNER("tner/roberta-large-wnut2017")  # provide model alias on huggingface
-model.predict(['I live in United States, but Microsoft asks me to move to Japan.'.split(" ")])
+model.predict(["Jacob Collier is a Grammy awarded English artist from London"])
 ```
-These models can be used through the transformers library by 
-```python
-from transformers import AutoTokenizer, AutoModelForTokenClassification
-tokenizer = AutoTokenizer.from_pretrained("tner/roberta-large-wnut2017")
-model = AutoModelForTokenClassification.from_pretrained("tner/roberta-large-wnut2017")
-```
-but, since transformers do not support CRF layer, it is recommended to use the model via `T-NER` library.
 
-### Model Fine-tuning
+## Fine-Tuning Language Model on NER
 
 <p align="center">
   <img src="https://github.com/asahi417/tner/blob/master/asset/parameter_search.png" width="800">
 </p>
 
-Language model finetuning on NER can be done with a few lines:
+T-NER provides an easy API to run language model fine-tuning on NER with an efficient parameter-search as described above.
+It consists of 2 stages: (i) fine-tuning with every possible configurations for a small epoch and 
+compute evaluation metric (micro F1 as default) on the validation set for all the models, and (ii) pick up top-`K` models to continue fine-tuning till `L` epoch.
+The best model in the second stage will continue fine-tuning till the validation metric get decreased.
+
+This fine-tuning with two-stage parameter search can be achieved in a few lines with `tner`.
 ```python
-import tner
-trainer = tner.Trainer(checkpoint_dir='./ckpt_tner', dataset="data-name", model="transformers-model")
-trainer.train()
+from tner import GridSearcher
+searcher = GridSearcher(
+   checkpoint_dir='./ckpt_tner',
+   dataset="tner/wnut2017",  # either of `dataset` (huggingface dataset) or `local_dataset` (custom dataset) should be given
+   model="roberta-large",  # language model to fine-tune
+   epoch=10,  # the total epoch (`L` in the figure)
+   epoch_partial=5,  # the number of epoch at 1st stage (`M` in the figure)
+   n_max_config=3,  # the number of models to pass to 2nd stage (`K` in the figure)
+   batch_size=16,
+   gradient_accumulation_steps=[4, 8],
+   crf=[True, False],
+   lr=[1e-4, 1e-5],
+   weight_decay=[None, 1e-7],
+   random_seed=[42, 442],
+   lr_warmup_step_ratio=[None, 0.1],
+   max_grad_norm=[None, 10]  
+)
+searcher.train()
 ```
-where `transformers_model` is a pre-trained model name from [transformers model hub](https://huggingface.co/models) and
-`dataset` is a dataset alias or path to custom dataset explained [dataset section](#datasets).
-[Model files](https://huggingface.co/transformers/model_sharing.html#check-the-directory-before-pushing-to-the-model-hub) will be generated at `checkpoint_dir`, and it can be uploaded to transformers model hub without any changes.
+Following parameters are tunable at the moment.
+- gradient_accumulation_steps: the number of gradient accumulation
+- crf: use CRF on top of output embedding
+- lr: learning rate
+- weight_decay: coefficient for weight decay
+- random_seed: random seed
+- lr_warmup_step_ratio: linear warmup ratio of learning rate, eg) if it's 0.3, the learning rate will warmup linearly till 30% of the total step (no decay after all)
+- max_grad_norm: norm for gradient clipping
 
-To show validation accuracy at the end of each epoch,
-```python
-trainer.train(monitor_validation=True)
+See [source](https://github.com/asahi417/tner/blob/master/tner/ner_trainer.py#L275) for more information about each argument.
+
+### command-line tool
+Following command-line tool is available for fine-tuning.
+```shell
+tner-train-search [-h] -c CHECKPOINT_DIR [-d DATASET [DATASET ...]] [-l LOCAL_DATASET [LOCAL_DATASET ...]]
+                         [--dataset-name DATASET_NAME [DATASET_NAME ...]] [-m MODEL] [-b BATCH_SIZE] [-e EPOCH] [--max-length MAX_LENGTH] [--use-auth-token]
+                         [--dataset-split-train DATASET_SPLIT_TRAIN] [--dataset-split-valid DATASET_SPLIT_VALID] [--lr LR [LR ...]]
+                         [--random-seed RANDOM_SEED [RANDOM_SEED ...]] [-g GRADIENT_ACCUMULATION_STEPS [GRADIENT_ACCUMULATION_STEPS ...]]
+                         [--weight-decay WEIGHT_DECAY [WEIGHT_DECAY ...]] [--lr-warmup-step-ratio LR_WARMUP_STEP_RATIO [LR_WARMUP_STEP_RATIO ...]]
+                         [--max-grad-norm MAX_GRAD_NORM [MAX_GRAD_NORM ...]] [--crf CRF [CRF ...]] [--optimizer-on-cpu] [--n-max-config N_MAX_CONFIG]
+                         [--epoch-partial EPOCH_PARTIAL] [--max-length-eval MAX_LENGTH_EVAL]
+
+Fine-tune transformers on NER dataset with Robust Parameter Search
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CHECKPOINT_DIR, --checkpoint-dir CHECKPOINT_DIR
+                        checkpoint directory
+  -d DATASET [DATASET ...], --dataset DATASET [DATASET ...]
+                        dataset name (or a list of it) on huggingface tner organization eg. 'tner/conll2003' ['tner/conll2003', 'tner/ontonotes5']] see
+                        https://huggingface.co/datasets?search=tner for full dataset list
+  -l LOCAL_DATASET [LOCAL_DATASET ...], --local-dataset LOCAL_DATASET [LOCAL_DATASET ...]
+                        a dictionary (or a list) of paths to local BIO files eg.{"train": "examples/local_dataset_sample/train.txt", "test":
+                        "examples/local_dataset_sample/test.txt"}
+  --dataset-name DATASET_NAME [DATASET_NAME ...]
+                        [optional] data name of huggingface dataset (should be same length as the `dataset`)
+  -m MODEL, --model MODEL
+                        model name of underlying language model (huggingface model)
+  -b BATCH_SIZE, --batch-size BATCH_SIZE
+                        batch size
+  -e EPOCH, --epoch EPOCH
+                        the number of epoch
+  --max-length MAX_LENGTH
+                        max length of language model
+  --use-auth-token      Huggingface transformers argument of `use_auth_token`
+  --dataset-split-train DATASET_SPLIT_TRAIN
+                        dataset split to be used for training ('train' as default)
+  --dataset-split-valid DATASET_SPLIT_VALID
+                        dataset split to be used for validation ('validation' as default)
+  --lr LR [LR ...]      learning rate
+  --random-seed RANDOM_SEED [RANDOM_SEED ...]
+                        random seed
+  -g GRADIENT_ACCUMULATION_STEPS [GRADIENT_ACCUMULATION_STEPS ...], --gradient-accumulation-steps GRADIENT_ACCUMULATION_STEPS [GRADIENT_ACCUMULATION_STEPS ...]
+                        the number of gradient accumulation
+  --weight-decay WEIGHT_DECAY [WEIGHT_DECAY ...]
+                        coefficient of weight decay (set 0 for None)
+  --lr-warmup-step-ratio LR_WARMUP_STEP_RATIO [LR_WARMUP_STEP_RATIO ...]
+                        linear warmup ratio of learning rate (no decay).eg) if it's 0.3, the learning rate will warmup linearly till 30% of the total step
+                        (set 0 for None)
+  --max-grad-norm MAX_GRAD_NORM [MAX_GRAD_NORM ...]
+                        norm for gradient clipping (set 0 for None)
+  --crf CRF [CRF ...]   use CRF on top of output embedding (0 or 1)
+  --optimizer-on-cpu    put optimizer on CPU to save memory of GPU
+  --n-max-config N_MAX_CONFIG
+                        the number of configs to run 2nd phase search
+  --epoch-partial EPOCH_PARTIAL
+                        the number of epoch for 1st phase search
+  --max-length-eval MAX_LENGTH_EVAL
+                        max length of language model at evaluation
 ```
-and to tune training parameters such as batch size, epoch, learning rate, please take a look [the argument description](https://github.com/asahi417/tner/blob/master/tner/model.py#L47).
-
-***Train on multiple datasets:*** Model can be trained on a concatenation of multiple datasets by providing a list of dataset names.
-```python
-trainer = tner.TrainTransformersNER(checkpoint_dir='./ckpt_merged', dataset=["ontonotes5", "conll2003"], transformers_model="xlm-roberta-base")
+- Example
+```shell
+tner-train-search -m "roberta-large" -c "ckpt" -d "tner/wnut2017" -e 15 --epoch-partial 5 --n-max-config 3 -b 64 -g 1 2 --lr 1e-6 1e-5 --crf 0 1 --max-grad-norm 0 10 --weight-decay 0 1e-7
 ```
-[Custom datasets](#custom-dataset) can be also added to it, e.g. `dataset=["ontonotes5", "./examples/custom_data_sample"]`.
-
-***Command line tool:*** Finetune models with the command line (CL).
-```shell script
-tner-train [-h] [-c CHECKPOINT_DIR] [-d DATA] [-t TRANSFORMER] [-b BATCH_SIZE] [--max-grad-norm MAX_GRAD_NORM] [--max-seq-length MAX_SEQ_LENGTH] [--random-seed RANDOM_SEED] [--lr LR] [--total-step TOTAL_STEP] [--warmup-step WARMUP_STEP] [--weight-decay WEIGHT_DECAY] [--fp16] [--monitor-validation] [--lower-case]
-```
-
-
+## Model Evaluation
 ## Web App
 
 <p align="center">

@@ -333,7 +333,7 @@ class GridSearcher:
         @param weight_decay: coefficient for weight decay
         @param random_seed: random seed
         @param lr_warmup_step_ratio: linear warmup ratio of learning rate
-            eg) if it's 0.3, the learning rate will warmup liearly till 30% of the total step (no decay after all)
+            eg) if it's 0.3, the learning rate will warmup linearly till 30% of the total step (no decay after all)
         @param max_grad_norm: norm for gradient clipping
         @param validation_metric: metric to be used for validation
         @param use_auth_token: [optional] Huggingface transformers argument of `use_auth_token`
