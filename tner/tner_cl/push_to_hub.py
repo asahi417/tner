@@ -27,15 +27,15 @@ def main():
         model_ = model.model.module
     else:
         model_ = model.model
-
+    repo_id = f"{opt.organization}/{opt.model_alias}"
     if opt.organization is None:
-        model_.push_to_hub(opt.model_alias)
-        model_.config.push_to_hub(opt.model_alias)
-        model.tokenizer.tokenizer.push_to_hub(opt.model_alias)
+        model_.push_to_hub(repo_id=repo_id)
+        model_.config.push_to_hub(repo_id=repo_id)
+        model.tokenizer.tokenizer.push_to_hub(repo_id=repo_id)
     else:
-        model_.push_to_hub(opt.model_alias, organization=opt.organization)
-        model_.config.push_to_hub(opt.model_alias, organization=opt.organization)
-        model.tokenizer.tokenizer.push_to_hub(opt.model_alias, organization=opt.organization)
+        model_.push_to_hub(repo_id=repo_id)
+        model_.config.push_to_hub(repo_id=repo_id)
+        model.tokenizer.tokenizer.push_to_hub(repo_id=repo_id)
 
     # config
     with open(pj(opt.model_checkpoint, "trainer_config.json")) as f:
