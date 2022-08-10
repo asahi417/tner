@@ -85,7 +85,7 @@ User can specify multiple datasets to get a concatenated dataset.
 ```python
 data, label2id = get_dataset(dataset=["tner/conll2003", "tner/ontonotes5"])
 ```
-In concatenated datasets, we use the [unified label set](./unified_label2id.json) to unify the entity label.
+In concatenated datasets, we use the [unified label set](https://raw.githubusercontent.com/asahi417/tner/master/unified_label2id.json) to unify the entity label.
 The idea is to share all the available NER datasets on the HuggingFace in a unified format, so let us know if you want any NER datasets to be added there!  
 
 ### Custom Dataset
