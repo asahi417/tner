@@ -22,30 +22,22 @@ All the models and datasets are shared via [T-NER HuggingFace group](https://hug
 - HuggingFace: [https://huggingface.co/tner](https://huggingface.co/tner)
 - PyPI: [https://pypi.org/project/tner](https://pypi.org/project/tner)
 
+Install `tner` via pip to get started!
+```shell
+pip install tner
+```
+
 ## Table of Contents  
-1. **[Setup](#setup)**
-2. **[Dataset](#dataset)**  
-   2.1 **[Preset Dataset](#preset-dataset)**  
-   2.2 **[Custom Dataset](#custom-dataset)**
-3. **[Model](#model)**
-4. **[Fine-Tuning Language Model on NER](#fine-tuning-language-model-on-ner)**
-3. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
+1. **[Dataset](#dataset)**  
+   1.1 **[Preset Dataset](#preset-dataset)**  
+   1.2 **[Custom Dataset](#custom-dataset)**
+2. **[Model](#model)**
+3. **[Fine-Tuning Language Model on NER](#fine-tuning-language-model-on-ner)**
 3. **[Model Finetuning](#model-finetuning)**
 5. **[Model Evaluation](#model-evaluation)**
 2. **[Web API](#web-app)**
-8. **[Reference](#reference-paper)**
 9. **[Colab Examples](#google-colab-examples)**
-
-
-## Setup
-Install pip package.
-```shell script
-pip install tner
-```
-To install dependencies to run the web app, add option at installation.
-```shell script
-pip install tner[app]
-```
+8. **[Reference](#reference)**
 
 ## Dataset
 An NER dataset contains a sequence of tokens and tags for each split (usually `train`/`validation`/`test`),
@@ -241,13 +233,13 @@ searcher = GridSearcher(
 searcher.train()
 ```
 Following parameters are tunable at the moment.
-- gradient_accumulation_steps: the number of gradient accumulation
-- crf: use CRF on top of output embedding
-- lr: learning rate
-- weight_decay: coefficient for weight decay
-- random_seed: random seed
-- lr_warmup_step_ratio: linear warmup ratio of learning rate, eg) if it's 0.3, the learning rate will warmup linearly till 30% of the total step (no decay after all)
-- max_grad_norm: norm for gradient clipping
+- `gradient_accumulation_steps`: the number of gradient accumulation
+- `crf`: use CRF on top of output embedding
+- `lr`: learning rate
+- `weight_decay`: coefficient for weight decay
+- `random_seed`: random seed
+- `lr_warmup_step_ratio`: linear warmup ratio of learning rate, eg) if it's 0.3, the learning rate will warmup linearly till 30% of the total step (no decay after all)
+- `max_grad_norm`: norm for gradient clipping
 
 See [source](https://github.com/asahi417/tner/blob/master/tner/ner_trainer.py#L275) for more information about each argument.
 
@@ -316,27 +308,31 @@ tner-train-search -m "roberta-large" -c "ckpt" -d "tner/wnut2017" -e 15 --epoch-
 ```
 
 ## Model Evaluation
+
 ## Web App
 
 <p align="center">
   <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="500">
 </p>
 
-To start the web app, first clone the repository
+To install dependencies to run the web app, add option at installation.
+```shell script
+pip install tner[app]
+```
+Then, clone the repository
 ```shell script
 git clone https://github.com/asahi417/tner
 cd tner
 ```
-then launch the server by
+and launch the server.
 ```shell script
 uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
 ```
-and open your browser http://0.0.0.0:8000 once ready.
-You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
+Open your browser [http://0.0.0.0:8000](http://0.0.0.0:8000) once ready.
+You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `tner/roberta-large-wnut2017` as a default. 
 `NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
 
 ***Acknowledgement*** The App interface is heavily inspired by [this repository](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
-
 
 
 ## Model Evaluation
@@ -383,7 +379,7 @@ tner-predict [-h] [-c CHECKPOINT]
 | Model Prediction          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing) |
 | Multilingual NER Workflow | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Mq0UisC2dwlVMP9ar2Cf6h5b1T-7Tdwb?usp=sharing) |
 
-## Reference paper
+## Reference
 If you use any of these resources, please cite the following [paper](https://aclanthology.org/2021.eacl-demos.7/):
 ```
 @inproceedings{ushio-camacho-collados-2021-ner,

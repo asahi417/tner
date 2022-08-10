@@ -146,7 +146,8 @@ class TransformersNER:
                         drop_last: bool = False,
                         mask_by_padding_token: bool = False,
                         cache_file_feature: str = None,
-                        separator: str = ' '):
+                        separator: str = ' ',
+                        max_length: int = None):
         """ get data loader (`torch.utils.data.DataLoader`) for model output
 
         @param inputs: a list of tokenized sentences ([["I", "live",...], ["You", "live", ...]])
@@ -161,6 +162,7 @@ class TransformersNER:
                 is True, the new label is ["B-LOC", "I-LOC", {PADDING_TOKEN}], otherwise ["B-LOC", "I-LOC", "I-LOC"].
         @param cache_file_feature: [optional] save & load precompute data loader
         @param separator: [optional] token separator (eg. '' for Japanese and Chinese)
+        @param max_length: [optional] max length of language model input
         @return: `torch.utils.data.DataLoader` object or list if `return_list = True`
         """
         if cache_file_feature is not None and os.path.exists(cache_file_feature):
@@ -170,7 +172,7 @@ class TransformersNER:
             out = self.tokenizer.encode_plus_all(
                 tokens=inputs,
                 labels=labels,
-                max_length=self.max_length,
+                max_length=self.max_length if max_length is None else max_length,
                 mask_by_padding_token=mask_by_padding_token,
                 separator=separator
             )
@@ -192,6 +194,7 @@ class TransformersNER:
                 batch_size: int = None,
                 cache_file_feature: str = None,
                 cache_file_prediction: str = None,
+                max_length: int = None,
                 separator: str = ' '):
         """ get model prediction
 
@@ -199,7 +202,8 @@ class TransformersNER:
         @param labels: [optional] a list of label sequences
         @param batch_size: [optional] batch size
         @param cache_file_feature: [optional] save & load precompute data loader
-        @param cache_file_prediction: [optional] save & load precompute model prediction
+        @param cache_file_prediction: [optional] save & load precompute model predicti
+        @param max_length: [optional] max length of language model inputon
         @param separator: [optional] token separator (eg. '' for Japanese and Chinese)
         @return: a dictionary containing
             {'prediction': a sequence of predictions for each input,
@@ -207,7 +211,7 @@ class TransformersNER:
              'input': a list of input (tokenized if it's not),
              'entity_prediction': a list of entities for each input}
         """
-        # split by halfspace if its string
+        # split by a half-space if its string
         assert all(type(i) in [list, str] for i in inputs), f'invalid input type {inputs}'
         inputs = [i.split(' ') if type(i) is str else i for i in inputs]
         dummy_label = False
@@ -229,6 +233,7 @@ class TransformersNER:
                 batch_size=batch_size,
                 mask_by_padding_token=True,
                 cache_file_feature=cache_file_feature,
+                max_length=max_length,
                 separator=separator
             )
             label_list = []
