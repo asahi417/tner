@@ -25,5 +25,4 @@ cner
 datasets
 scripts
 dataset_public_tweet
-examples/model_finetuning
 dataset

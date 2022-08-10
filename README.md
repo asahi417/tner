@@ -33,11 +33,10 @@ pip install tner
    1.2 **[Custom Dataset](#custom-dataset)**
 2. **[Model](#model)**
 3. **[Fine-Tuning Language Model on NER](#fine-tuning-language-model-on-ner)**
-3. **[Model Finetuning](#model-finetuning)**
-5. **[Model Evaluation](#model-evaluation)**
-2. **[Web API](#web-app)**
-9. **[Colab Examples](#google-colab-examples)**
-8. **[Reference](#reference)**
+4. **[Evaluating NER Model](#evaluating-ner-model)**
+5. **[Web API](#web-app)**
+6. **[Colab Examples](#google-colab-examples)**
+7. **[Reference](#reference)**
 
 ## Dataset
 An NER dataset contains a sequence of tokens and tags for each split (usually `train`/`validation`/`test`),
@@ -180,7 +179,8 @@ print(output)
     ]]
 }
 ```
-Finally, a path to a local model checkpoint can be specified instead of model alias (`TransformersNER("path-to-checkpoint")`).
+A local model checkpoint can be specified instead of model alias `TransformersNER("path-to-checkpoint")`.
+Script to re-produce those released models is [here](https://github.com/asahi417/tner/blob/master/examples/model_finetuning/single_dataset.sh). 
 
 ### command-line tool
 Following command-line tool is available for model prediction.
@@ -199,6 +199,31 @@ optional arguments:
 ```shell
 tner-predict -m "tner/roberta-large-wnut2017"
 ```
+
+## Web App
+
+<p align="center">
+  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="500">
+</p>
+
+To install dependencies to run the web app, add option at installation.
+```shell script
+pip install tner[app]
+```
+Then, clone the repository
+```shell script
+git clone https://github.com/asahi417/tner
+cd tner
+```
+and launch the server.
+```shell script
+uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
+```
+Open your browser [http://0.0.0.0:8000](http://0.0.0.0:8000) once ready.
+You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `tner/roberta-large-wnut2017` as a default. 
+`NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
+
+***Acknowledgement*** The App interface is heavily inspired by [this repository](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
 
 ## Fine-Tuning Language Model on NER
 
@@ -307,71 +332,65 @@ optional arguments:
 tner-train-search -m "roberta-large" -c "ckpt" -d "tner/wnut2017" -e 15 --epoch-partial 5 --n-max-config 3 -b 64 -g 1 2 --lr 1e-6 1e-5 --crf 0 1 --max-grad-norm 0 10 --weight-decay 0 1e-7
 ```
 
-## Model Evaluation
-
-## Web App
-
-<p align="center">
-  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="500">
-</p>
-
-To install dependencies to run the web app, add option at installation.
-```shell script
-pip install tner[app]
-```
-Then, clone the repository
-```shell script
-git clone https://github.com/asahi417/tner
-cd tner
-```
-and launch the server.
-```shell script
-uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
-```
-Open your browser [http://0.0.0.0:8000](http://0.0.0.0:8000) once ready.
-You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `tner/roberta-large-wnut2017` as a default. 
-`NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
-
-***Acknowledgement*** The App interface is heavily inspired by [this repository](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
-
-
-## Model Evaluation
-Evaluation of NER models is easily done for in/out of domain settings.
+## Evaluating NER Model
+Evaluation of NER models is done by `model.evaluate` function that takes `dataset` or `local_dataset` as the dataset to evaluate on.
 ```python
-import tner
-trainer = tner.TrainTransformersNER(checkpoint_dir='path-to-checkpoint', transformers_model="language-model-name")
-trainer.test(test_dataset='data-name')
+from tner import TransformersNER
+model = TransformersNER("tner/roberta-large-wnut2017")  # provide model alias on huggingface
+# huggingface dataset
+metric = model.evaluate(datasets='tner/wnut2017', dataset_split='test')
+# local dataset
+metric = model.evaluate(local_dataset={"test": "examples/local_dataset_sample/test.txt"}, dataset_split='test')
 ```
+An example of the output object `metric` can be found [here](https://huggingface.co/tner/deberta-v3-large-wnut2017/raw/main/eval/metric.json).
 
-***Entity span prediction:***  For better understanding of out-of-domain accuracy, we provide the entity span prediction
-pipeline, which ignores the entity type and compute metrics only on the IOB entity position.
+### entity span prediction
+For better understanding of out-of-domain accuracy, we provide the entity span prediction
+pipeline, which ignores the entity type and compute metrics only on the IOB entity position (binary sequence labeling).
 ```python
-trainer.test(test_dataset='data-name', entity_span_prediction=True)
+metric = model.evaluate(datasets='tner/wnut2017', dataset_split='test', span_detection_mode=True)
 ```
 
-***Command line tool:*** Model evaluation with CL.
+### Command line tool
+Following command-line tool is available for model prediction.
 ```shell script
-tner-test [-h] -c CHECKPOINT_DIR [--lower-case] [--test-data TEST_DATA] [--test-lower-case] [--test-entity-span]
+tner-evaluate [-h] -m MODEL -e EXPORT [-d DATASET [DATASET ...]] [-l LOCAL_DATASET [LOCAL_DATASET ...]]
+                     [--dataset-name DATASET_NAME [DATASET_NAME ...]] [--dataset-split DATASET_SPLIT] [--span-detection-mode] [--return-ci] [-b BATCH_SIZE]
+
+Evaluate NER model
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m MODEL, --model MODEL
+                        model alias of huggingface or local checkpoint
+  -e EXPORT, --export EXPORT
+                        file to export the result
+  -d DATASET [DATASET ...], --dataset DATASET [DATASET ...]
+                        dataset name (or a list of it) on huggingface tner organization eg. 'tner/conll2003' ['tner/conll2003', 'tner/ontonotes5']] see
+                        https://huggingface.co/datasets?search=tner for full dataset list
+  -l LOCAL_DATASET [LOCAL_DATASET ...], --local-dataset LOCAL_DATASET [LOCAL_DATASET ...]
+                        a dictionary (or a list) of paths to local BIO files eg.{"train": "examples/local_dataset_sample/train.txt", "test":
+                        "examples/local_dataset_sample/test.txt"}
+  --dataset-name DATASET_NAME [DATASET_NAME ...]
+                        [optional] data name of huggingface dataset (should be same length as the `dataset`)
+  --dataset-split DATASET_SPLIT
+                        dataset split to be used for test ('test' as default)
+  --span-detection-mode
+                        return F1 of entity span detection (ignoring entity type error and cast as binary sequence classification as below)- NER : ["O",
+                        "B-PER", "I-PER", "O", "B-LOC", "O", "B-ORG"]- Entity-span detection: ["O", "B-ENT", "I-ENT", "O", "B-ENT", "O", "B-ENT"]
+  --return-ci           return confidence interval by bootstrap
+  -b BATCH_SIZE, --batch-size BATCH_SIZE
+                        batch size
+```
+- Example
+```shell
+tner-evaluate -m "tner/roberta-large-wnut2017" -e "metric.json" -d "tner/conll2003" -b "32"
 ```
 
-## Model Inference
-If you just want a prediction from a finetuned NER model, here is the best option for you.
-```python
-import tner
-classifier = tner.TransformersNER('transformers-model')
-test_sentences = [
-    'I live in United States, but Microsoft asks me to move to Japan.',
-    'I have an Apple computer.',
-    'I like to eat an apple.'
-]
-classifier.predict(test_sentences)
-```
-***Command line tool:*** Model inference with CL.
-```shell script
-tner-predict [-h] [-c CHECKPOINT]
-```
 
 ## Google Colab Examples
+Need to be updated
+
 | Description               | Link  |
 |---------------------------|-------|
 | Model Finetuning          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing) |
