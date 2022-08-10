@@ -15,13 +15,20 @@
 It has an easy interface to finetune models and test on cross-domain and multilingual datasets. T-NER currently integrates 9 publicly available NER datasets and enables an easy integration of custom datasets.
 All models finetuned with T-NER can be deployed on our web app for visualization.
 [Our paper demonstrating T-NER](https://www.aclweb.org/anthology/2021.eacl-demos.7/) has been accepted to EACL 2021.
+All the models and datasets are shared via [T-NER HuggingFace group](https://huggingface.co/tner).
 
-### Quick Tour
-TBA
+- GitHub: [https://github.com/asahi417/tner](https://github.com/asahi417/tner)
+- Paper: [https://aclanthology.org/2021.eacl-demos.7/](https://aclanthology.org/2021.eacl-demos.7/)
+- HuggingFace: [https://huggingface.co/tner](https://huggingface.co/tner)
+- Pypi: [https://pypi.org/project/tner](https://pypi.org/project/tner)
 
 ## Table of Contents  
 1. **[Setup](#setup)**
-2. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
+2. **[Dataset](#dataset)**
+   2.1 **[HuggingFace Dataset](#huggingface-dataset)**
+   2.2 **[Custom Dataset](#custom-dataset)**
+3. **[Model](#model)**
+3. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
 3. **[Model Finetuning](#model-finetuning)**
 5. **[Model Evaluation](#model-evaluation)**
 6. **[Model Inference](#model-inference)** 
@@ -41,32 +48,117 @@ To install dependencies to run the web app, add option at installation.
 pip install tner[app]
 ```
 
-
-
-## Web App
-
-<p align="center">
-  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="500">
-</p>
-
-To start the web app, first clone the repository
-```shell script
-git clone https://github.com/asahi417/tner
-cd tner
+## Dataset
+An NER dataset contains a sequence of tokens and tags for each split (usually `train`/`validation`/`test`),
+```python
+{
+    'train': {
+        'tokens': [
+            ['@paulwalk', 'It', "'s", 'the', 'view', 'from', 'where', 'I', "'m", 'living', 'for', 'two', 'weeks', '.', 'Empire', 'State', 'Building', '=', 'ESB', '.', 'Pretty', 'bad', 'storm', 'here', 'last', 'evening', '.'],
+            ['From', 'Green', 'Newsfeed', ':', 'AHFA', 'extends', 'deadline', 'for', 'Sage', 'Award', 'to', 'Nov', '.', '5', 'http://tinyurl.com/24agj38'], ...
+        ],
+        'tags': [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ...
+        ]
+    },
+    'validation': ...,
+    'test': ...,
+}
 ```
-then launch the server by
-```shell script
-uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
+with a dictionary to map a label to its index (`label2id`) as below.
+```python
+{"O": 0, "B-ORG": 1, "B-MISC": 2, "B-PER": 3, "I-PER": 4, "B-LOC": 5, "I-ORG": 6, "I-MISC": 7, "I-LOC": 8}
 ```
-and open your browser http://0.0.0.0:8000 once ready.
-You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
-`NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
 
-***Acknowledgement*** The App interface is heavily inspired by [this repository](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
+### HuggingFace Dataset
 
+| Dataset           | Alias (link)                                                                      | Domain                                  | Size (train/valid/test) | Language | Entity Size |
+|-------------------|-----------------------------------------------------------------------------------|-----------------------------------------|-------------------------|----------|-------------|
+| Ontonotes5        | [`tner/ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)              | News, Blog, Dialogue                    | 59,924/8,528/8,262      | en       | 18          |
+| CoNLL2003         | [`tner/conll2003`](https://huggingface.co/datasets/tner/conll2003)                | News                                    | 14,041/3,250/3,453      | en       | 4           |
+| WNUT2017          | [`tner/wnut2017`](https://huggingface.co/datasets/tner/wnut2017)                  | Twitter, Reddit, StackExchange, YouTube | 2,395/1,009/1,287       | en       | 6           |
+| BioNLP2004        | [`tner/bionlp2004`](https://huggingface.co/datasets/tner/bionlp2004)              | Biochemical                             | 16,619/1,927/3,856      | en       | 5           |
+| BioCreative V CDR | [`tner/bc5cdr`](https://huggingface.co/datasets/tner/bc5cdr)                      | Biomedical                              | 5,228/5,330/5,865       | en       | 2           |
+| FIN               | [`tner/fin`](https://huggingface.co/datasets/tner/fin)                            | Financial News                          | 1,014/303/150           | en       | 4           |
+| BTC               | [`tner/btc`](https://huggingface.co/datasets/tner/btc)                            | Twitter                                 | 1,014/303/150           | en       | 3           |
+| Tweebank NER      | [`tner/tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner)          | Twitter                                 | 1,639/710/1,201         | en       | 4           |
+| MIT Movie         | [`tner/mit_movie_trivia` ](https://huggingface.co/datasets/tner/mit_movie_trivia) | Movie Review                            | 6,816/1,000/1,953       | en       | 12          |
+| MIT Restaurant    | [`tner/mit_restaurant`](https://huggingface.co/datasets/tner/mit_restaurant)      | Restaurant Review                       | 6,900/760/1,521         | en       | 8           |
 
-## Model Finetuning
+A variety of public NER datasets are shared on our [HuggingFace group](https://huggingface.co/tner), which can be used as below. 
+```python
+from tner import get_dataset
+data, label2id = get_dataset("tner/wnut2017")
+```
+The idea is to share all the available NER datasets on the HuggingFace in a unified format, so let us know if you want any NER datasets to be added there!  
 
+### Custom Dataset
+To go beyond the public datasets, users can use their own datasets by formatting them into
+the IOB format described in [CoNLL 2003 NER shared task paper](https://www.aclweb.org/anthology/W03-0419.pdf),
+where all data files contain one word per line with empty lines representing sentence boundaries.
+At the end of each line there is a tag which states whether the current word is inside a named entity or not.
+The tag also encodes the type of named entity. Here is an example sentence:
+```
+EU B-ORG
+rejects O
+German B-MISC
+call O
+to O
+boycott O
+British B-MISC
+lamb O
+. O
+```
+Words tagged with O are outside of named entities and the I-XXX tag is used for words inside a
+named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
+first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
+Please take a look [sample custom data](https://github.com/asahi417/tner/tree/master/examples/local_dataset_sample).
+Those custom files can be loaded in a same way as HuggingFace dataset as below.
+```python
+from tner import get_dataset
+data, label2id = get_dataset(local_dataset={
+    "train": "examples/local_dataset_sample/train.txt",
+    "valid": "examples/local_dataset_sample/train.txt",
+    "test": "examples/local_dataset_sample/test.txt"
+})
+```
+
+## Model
+### HuggingFace Models
+
+| Model (link)                                                                                      | Data                                                                | Language Model                                                                    |
+|:--------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------|:----------------------------------------------------------------------------------|
+| [`tner/roberta-large-wnut2017`](https://huggingface.co/tner/roberta-large-wnut2017)               | [`wnut2017`](https://huggingface.co/datasets/tner/wnut2017)         | [`roberta-large`](https://huggingface.co/roberta-large)                           |
+| [`tner/deberta-v3-large-wnut2017`](https://huggingface.co/tner/deberta-v3-large-wnut2017)         | [`wnut2017`](https://huggingface.co/datasets/tner/wnut2017)         | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
+| [`tner/roberta-large-conll2003`](https://huggingface.co/tner/roberta-large-conll2003)             | [`conll2003`](https://huggingface.co/datasets/tner/conll2003)       | [`roberta-large`](https://huggingface.co/roberta-large)                           |
+| [`tner/deberta-v3-large-conll2003`](https://huggingface.co/tner/deberta-v3-large-conll2003)       | [`conll2003`](https://huggingface.co/datasets/tner/conll2003)       | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
+| [`tner/roberta-large-bc5cdr`](https://huggingface.co/tner/roberta-large-bc5cdr)                   | [`bc5cdr`](https://huggingface.co/datasets/tner/bc5cdr)             | [`roberta-large`](https://huggingface.co/roberta-large)                           |
+| [`tner/deberta-v3-large-bc5cdr`](https://huggingface.co/tner/deberta-v3-large-bc5cdr)             | [`bc5cdr`](https://huggingface.co/datasets/tner/bc5cdr)             | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
+| [`tner/roberta-large-tweebank_ner`](https://huggingface.co/tner/roberta-large-tweebank_ner)       | [`tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner) | [`roberta-large`](https://huggingface.co/roberta-large)                           |
+| [`tner/deberta-v3-large-tweebank_ner`](https://huggingface.co/tner/deberta-v3-large-tweebank_ner) | [`tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner) | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
+| [`tner/roberta-large-btc`](https://huggingface.co/tner/roberta-large-btc)                         | [`btc`](https://huggingface.co/datasets/tner/btc)                   | [`roberta-large`](https://huggingface.co/roberta-large)                           |
+| [`tner/deberta-v3-large-btc`](https://huggingface.co/tner/deberta-v3-large-btc)                   | [`btc`](https://huggingface.co/datasets/tner/btc)                   | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
+| [`tner/roberta-large-bionlp2004`](https://huggingface.co/tner/roberta-large-bionlp2004)           | [`bionlp2004`](https://huggingface.co/datasets/tner/bionlp2004)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
+| [`tner/deberta-v3-large-bionlp2004`](https://huggingface.co/tner/deberta-v3-large-bionlp2004)     | [`bionlp2004`](https://huggingface.co/datasets/tner/bionlp2004)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
+| [`tner/roberta-large-ontonotes5`](https://huggingface.co/tner/roberta-large-ontonotes5)           | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
+| [`tner/deberta-v3-large-ontonotes5`](https://huggingface.co/tner/deberta-v3-large-ontonotes5)     | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
+
+T-NER currently has shared more than 100 NER models on [HuggingFace group](https://huggingface.co/tner) (see above table for examples) and all the models can be used with `tner` as below.
+```python
+from tner import TransformersNER
+model = TransformersNER("tner/roberta-large-wnut2017")  # provide model alias on huggingface
+model.predict(['I live in United States, but Microsoft asks me to move to Japan.'.split(" ")])
+```
+These models can be used through the transformers library by 
+```python
+from transformers import AutoTokenizer, AutoModelForTokenClassification
+tokenizer = AutoTokenizer.from_pretrained("tner/roberta-large-wnut2017")
+model = AutoModelForTokenClassification.from_pretrained("tner/roberta-large-wnut2017")
+```
+but, since transformers do not support CRF layer, it is recommended to use the model via `T-NER` library.
+
+### Model Fine-tuning
 
 <p align="center">
   <img src="https://github.com/asahi417/tner/blob/master/asset/parameter_search.png" width="800">
@@ -98,6 +190,30 @@ trainer = tner.TrainTransformersNER(checkpoint_dir='./ckpt_merged', dataset=["on
 ```shell script
 tner-train [-h] [-c CHECKPOINT_DIR] [-d DATA] [-t TRANSFORMER] [-b BATCH_SIZE] [--max-grad-norm MAX_GRAD_NORM] [--max-seq-length MAX_SEQ_LENGTH] [--random-seed RANDOM_SEED] [--lr LR] [--total-step TOTAL_STEP] [--warmup-step WARMUP_STEP] [--weight-decay WEIGHT_DECAY] [--fp16] [--monitor-validation] [--lower-case]
 ```
+
+
+## Web App
+
+<p align="center">
+  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="500">
+</p>
+
+To start the web app, first clone the repository
+```shell script
+git clone https://github.com/asahi417/tner
+cd tner
+```
+then launch the server by
+```shell script
+uvicorn app:app --reload --log-level debug --host 0.0.0.0 --port 8000
+```
+and open your browser http://0.0.0.0:8000 once ready.
+You can specify model to deploy by an environment variable `NER_MODEL`, which is set as `asahi417/tner-xlm-roberta-large-ontonotes5` as a defalt. 
+`NER_MODEL` can be either path to your local model checkpoint directory or model name on transformers model hub.
+
+***Acknowledgement*** The App interface is heavily inspired by [this repository](https://github.com/renatoviolin/Multiple-Choice-Question-Generation-T5-and-Text2Text).
+
+
 
 ## Model Evaluation
 Evaluation of NER models is easily done for in/out of domain settings.
@@ -134,69 +250,6 @@ classifier.predict(test_sentences)
 ```shell script
 tner-predict [-h] [-c CHECKPOINT]
 ```
-
-## Datasets
-Public datasets that can be fetched with TNER are summarized here. Please cite the corresponding reference if using one of these datasets.
-
-|                                   Name (`alias`)                                                                      |         Genre        |    Language   | Entity types | Data size (train/valid/test) | Note |
-|:---------------------------------------------------------------------------------------------------------------------:|:--------------------:|:-------------:|:------------:|:--------------------:|:-----------:|
-| OntoNotes 5 ([`ontonotes5`](https://www.aclweb.org/anthology/N06-2015.pdf))                                           | News, Blog, Dialogue | English       |           18 |   59,924/8,582/8,262 |  | 
-| CoNLL 2003 ([`conll2003`](https://www.aclweb.org/anthology/W03-0419.pdf))                                             | News                 | English       |            4 |   14,041/3,250/3,453 |  |
-| WNUT 2017 ([`wnut2017`](https://noisy-text.github.io/2017/pdf/WNUT18.pdf))                                            | SNS                  | English       |            6 |    1,000/1,008/1,287 |  |
-| FIN ([`fin`](https://www.aclweb.org/anthology/U15-1010.pdf))                                                          | Finance              | English       |            4 |          1,164/-/303 |  |
-| BioNLP 2004 ([`bionlp2004`](https://www.aclweb.org/anthology/W04-1213.pdf))                                           | Chemical             | English       |            5 |       18,546/-/3,856 |  |
-| BioCreative V CDR ([`bc5cdr`](https://biocreative.bioinformatics.udel.edu/media/store/files/2015/BC5CDRoverview.pdf)) | Medical              | English       |            2 |    5,228/5,330/5,865 | split into sentences to reduce sequence length |
-| WikiAnn ([`panx_dataset/en`, `panx_dataset/ja`, etc](https://www.aclweb.org/anthology/P17-1178.pdf))                  | Wikipedia            | 282 languages |            3 | 20,000/10,000/10,000 |  |
-| Japanese Wikipedia ([`wiki_ja`](https://github.com/Hironsan/IOB2Corpus))                                              | Wikipedia            | Japanese      |            8 |              -/-/500 | test set only |
-| Japanese WikiNews ([`wiki_news_ja`](https://github.com/Hironsan/IOB2Corpus))                                          | Wikipedia            | Japanese      |           10 |            -/-/1,000 | test set only |
-| MIT Restaurant ([`mit_restaurant`](https://groups.csail.mit.edu/sls/downloads/))                                      | Restaurant review    | English       |            8 |        7,660/-/1,521 | lower-cased |
-| MIT Movie ([`mit_movie_trivia`](https://groups.csail.mit.edu/sls/downloads/))                                         | Movie review         | English       |           12 |        7,816/-/1,953 | lower-cased |
-|                         WikiNEuRal ([`wikineural`](https://github.com/Babelscape/wikineural))                         |      Wikipedia       |  9 languages  |      4       |     92,720/11,590/11,597     |                                                |
-
-To take a closer look into each dataset, one may want to use `tner.get_dataset_ner` as in
-```python
-import tner
-data, label_to_id, language, unseen_entity_set = tner.get_dataset_ner('data-name')
-```
-where `data` consists of the following structured format.
-```
-{
-    'train': {
-        'data': [
-            ['@paulwalk', 'It', "'s", 'the', 'view', 'from', 'where', 'I', "'m", 'living', 'for', 'two', 'weeks', '.', 'Empire', 'State', 'Building', '=', 'ESB', '.', 'Pretty', 'bad', 'storm', 'here', 'last', 'evening', '.'],
-            ['From', 'Green', 'Newsfeed', ':', 'AHFA', 'extends', 'deadline', 'for', 'Sage', 'Award', 'to', 'Nov', '.', '5', 'http://tinyurl.com/24agj38'], ...
-        ],
-        'label': [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ...
-        ]
-    },
-    'valid': ...
-}
-```
-
-### Custom Dataset
-To go beyond the public datasets, users can use their own datasets by formatting them into
-the IOB format described in [CoNLL 2003 NER shared task paper](https://www.aclweb.org/anthology/W03-0419.pdf),
-where all data files contain one word per line with empty lines representing sentence boundaries.
-At the end of each line there is a tag which states whether the current word is inside a named entity or not.
-The tag also encodes the type of named entity. Here is an example sentence:
-```
-EU B-ORG
-rejects O
-German B-MISC
-call O
-to O
-boycott O
-British B-MISC
-lamb O
-. O
-```
-Words tagged with O are outside of named entities and the I-XXX tag is used for words inside a
-named entity of type XXX. Whenever two entities of type XXX are immediately next to each other, the
-first word of the second entity will be tagged B-XXX in order to show that it starts another entity.
-The custom dataset should have `train.txt` and `valid.txt` files in a same folder. 
-Please take a look [sample custom data](https://github.com/asahi417/tner/tree/master/examples/custom_dataset_sample).
 
 ## Google Colab Examples
 | Description               | Link  |

@@ -118,14 +118,7 @@ Full evaluation can be found at [metric file of NER](https://huggingface.co/{mod
 and [metric file of entity span](https://huggingface.co/{model_name}/raw/main/eval/metric_span.json).
 
 ### Usage
-This model can be used through the transformers library by 
-```python
-from transformers import AutoTokenizer, AutoModelForTokenClassification
-tokenizer = AutoTokenizer.from_pretrained("{model_name}")
-model = AutoModelForTokenClassification.from_pretrained("{model_name}")
-```
-but, since transformers do not support CRF layer, it is recommended to use the model via `T-NER` library. 
-Install the library via pip   
+This model can be used through the [tner library](https://github.com/asahi417/tner). Install the library via pip   
 ```shell
 pip install tner
 ```
@@ -133,8 +126,9 @@ and activate model as below.
 ```python
 from tner import TransformersNER
 model = TransformersNER("{model_name}")
-model.predict("Jacob Collier is a Grammy awarded English artist from London".split(" "))
+model.predict(["Jacob Collier is a Grammy awarded English artist from London"])
 ```
+It can be used via transformers library but it is not recommended as CRF layer is not supported at the moment.
 
 ### Training hyperparameters
 
