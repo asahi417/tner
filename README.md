@@ -20,21 +20,18 @@ All the models and datasets are shared via [T-NER HuggingFace group](https://hug
 - GitHub: [https://github.com/asahi417/tner](https://github.com/asahi417/tner)
 - Paper: [https://aclanthology.org/2021.eacl-demos.7/](https://aclanthology.org/2021.eacl-demos.7/)
 - HuggingFace: [https://huggingface.co/tner](https://huggingface.co/tner)
-- Pypi: [https://pypi.org/project/tner](https://pypi.org/project/tner)
+- PyPI: [https://pypi.org/project/tner](https://pypi.org/project/tner)
 
 ## Table of Contents  
 1. **[Setup](#setup)**
-2. **[Dataset](#dataset)**
-   2.1 **[HuggingFace Dataset](#huggingface-dataset)**
+2. **[Dataset](#dataset)**  
+   2.1 **[Preset Dataset](#preset-dataset)**  
    2.2 **[Custom Dataset](#custom-dataset)**
 3. **[Model](#model)**
 4. **[Fine-Tuning Language Model on NER](#fine-tuning-language-model-on-ner)**
-   
 3. **[Pretrained Models](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)**
 3. **[Model Finetuning](#model-finetuning)**
 5. **[Model Evaluation](#model-evaluation)**
-6. **[Model Inference](#model-inference)** 
-7. **[Datasets](#datasets)**
 2. **[Web API](#web-app)**
 8. **[Reference](#reference-paper)**
 9. **[Colab Examples](#google-colab-examples)**
@@ -73,7 +70,7 @@ with a dictionary to map a label to its index (`label2id`) as below.
 {"O": 0, "B-ORG": 1, "B-MISC": 2, "B-PER": 3, "I-PER": 4, "B-LOC": 5, "I-ORG": 6, "I-MISC": 7, "I-LOC": 8}
 ```
 
-### HuggingFace Dataset
+### Preset Dataset
 
 | Dataset           | Alias (link)                                                                      | Domain                                  | Size (train/valid/test) | Language | Entity Size |
 |-------------------|-----------------------------------------------------------------------------------|-----------------------------------------|-------------------------|----------|-------------|
@@ -88,7 +85,7 @@ with a dictionary to map a label to its index (`label2id`) as below.
 | MIT Movie         | [`tner/mit_movie_trivia` ](https://huggingface.co/datasets/tner/mit_movie_trivia) | Movie Review                            | 6,816/1,000/1,953       | en       | 12          |
 | MIT Restaurant    | [`tner/mit_restaurant`](https://huggingface.co/datasets/tner/mit_restaurant)      | Restaurant Review                       | 6,900/760/1,521         | en       | 8           |
 
-A variety of public NER datasets are shared on our [HuggingFace group](https://huggingface.co/tner), which can be used as below. 
+A variety of public NER datasets are available on our [HuggingFace group](https://huggingface.co/tner), which can be used as below. 
 ```python
 from tner import get_dataset
 data, label2id = get_dataset(dataset="tner/wnut2017")
@@ -158,12 +155,57 @@ data, label2id = get_dataset(local_dataset=[
 | [`tner/roberta-large-ontonotes5`](https://huggingface.co/tner/roberta-large-ontonotes5)           | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
 | [`tner/deberta-v3-large-ontonotes5`](https://huggingface.co/tner/deberta-v3-large-ontonotes5)     | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
 
-T-NER currently has shared more than 100 NER models on [HuggingFace group](https://huggingface.co/tner), as shown in the above table, which reports the major models only and see [MODEL_CARD](MODEL_CARD.md) for full model lists. 
+T-NER currently has shared more than 100 NER models on [HuggingFace group](https://huggingface.co/tner), as shown in the above table, which reports the major models only and see [MODEL_CARD](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md) for full model lists. 
 All the models can be used with `tner` as below.
 ```python
 from tner import TransformersNER
 model = TransformersNER("tner/roberta-large-wnut2017")  # provide model alias on huggingface
-model.predict(["Jacob Collier is a Grammy awarded English artist from London"])
+output = model.predict(["Jacob Collier is a Grammy awarded English artist from London"])  # give a list of sentences (or tokenized sentence) 
+print(output)
+{
+   'prediction': [['B-person', 'I-person', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'B-location']],
+   'probability': [[0.9967652559280396, 0.9994561076164246, 0.9986955523490906, 0.9947081804275513, 0.6129112243652344, 0.9984312653541565, 0.9868122935295105, 0.9983410835266113, 0.9995284080505371, 0.9838910698890686]],
+   'input': [['Jacob', 'Collier', 'is', 'a', 'Grammy', 'awarded', 'English', 'artist', 'from', 'London']],
+   'entity_prediction': [[
+       {'type': 'person', 'entity': ['Jacob', 'Collier'], 'position': [0, 1], 'probability': [0.9967652559280396, 0.9994561076164246]},
+       {'type': 'location', 'entity': ['London'], 'position': [9], 'probability': [0.9838910698890686]}
+    ]]
+}
+```
+The [`model.predict`](https://github.com/asahi417/tner/blob/master/tner/ner_model.py#L189) takes a list of sentences and batch size `batch_size` optionally, and tokenizes the sentence by a half-space or 
+the symbol specified by `separator`, which is returned as `input` in its output object. Optionally, user can tokenize the 
+inputs beforehand with any tokenizer (spacy, nltk, etc) and the prediction will follow the tokenization.
+```python
+output = model.predict([["Jacob Collier", "is", "a", "Grammy awarded", "English artist", "from", "London"]])
+print(output)
+{
+    'prediction': [['B-person', 'O', 'O', 'O', 'O', 'O', 'B-location']],
+    'probability': [[0.9967652559280396, 0.9986955523490906, 0.9947081804275513, 0.6129112243652344, 0.9868122935295105, 0.9995284080505371, 0.9838910698890686]],
+    'input': [['Jacob Collier', 'is', 'a', 'Grammy awarded', 'English artist', 'from', 'London']],
+    'entity_prediction': [[
+        {'type': 'person', 'entity': ['Jacob Collier'], 'position': [0], 'probability': [0.9967652559280396]},
+        {'type': 'location', 'entity': ['London'], 'position': [6], 'probability': [0.9838910698890686]}
+    ]]
+}
+```
+Finally, a path to a local model checkpoint can be specified instead of model alias (`TransformersNER("path-to-checkpoint")`).
+
+### command-line tool
+Following command-line tool is available for model prediction.
+```shell
+tner-predict [-h] -m MODEL
+
+command line tool to test finetuned NER model
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m MODEL, --model MODEL
+                        model alias of huggingface or local checkpoint
+```
+
+- Example
+```shell
+tner-predict -m "tner/roberta-large-wnut2017"
 ```
 
 ## Fine-Tuning Language Model on NER
@@ -272,6 +314,7 @@ optional arguments:
 ```shell
 tner-train-search -m "roberta-large" -c "ckpt" -d "tner/wnut2017" -e 15 --epoch-partial 5 --n-max-config 3 -b 64 -g 1 2 --lr 1e-6 1e-5 --crf 0 1 --max-grad-norm 0 10 --weight-decay 0 1e-7
 ```
+
 ## Model Evaluation
 ## Web App
 
