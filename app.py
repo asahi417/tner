@@ -11,7 +11,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-NER_MODEL = os.getenv('NER_MODEL', 'tner/roberta-large-conll2003')
+NER_MODEL = os.getenv('NER_MODEL', 'tner/roberta-large-wnut2017')
 DEBUG = False
 DUMMY = {
    'prediction': [['B-person', 'I-person', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'B-location']],
