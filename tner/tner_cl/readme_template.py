@@ -117,6 +117,24 @@ For F1 scores, the confidence interval is obtained by bootstrap as below:
 Full evaluation can be found at [metric file of NER](https://huggingface.co/{model_name}/raw/main/eval/metric.json) 
 and [metric file of entity span](https://huggingface.co/{model_name}/raw/main/eval/metric_span.json).
 
+### Usage
+This model can be used through the transformers library by 
+```python
+from transformers import AutoTokenizer, AutoModelForTokenClassification
+tokenizer = AutoTokenizer.from_pretrained("{model_name}")
+model = AutoModelForTokenClassification.from_pretrained("{model_name}")
+```
+but, since transformers do not support CRF layer, it is recommended to use the model via `T-NER` library. 
+Install the library via pip   
+```shell
+pip install tner
+```
+and activate model as below.
+```
+from tner import TransformersNER
+model = TransformersNER("{model_name}")
+model.predict("Jacob Collier is a Grammy awarded English artist from London".split(" "))
+```
 
 ### Training hyperparameters
 

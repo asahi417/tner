@@ -20,7 +20,7 @@ def main():
     parser.add_argument('-o', '--organization', default=None, type=str)
     opt = parser.parse_args()
 
-    assert os.path.exists(pj(opt.model_checkpoint, "pytorch_model.bin"))
+    assert os.path.exists(pj(opt.model_checkpoint, "pytorch_model.bin")), pj(opt.model_checkpoint, "pytorch_model.bin")
     logging.info(f"Upload {opt.model_checkpoint} to {opt.organization}/{opt.model_alias}")
     model = TransformersNER(opt.model_checkpoint)
     if model.parallel:
