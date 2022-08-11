@@ -12,7 +12,8 @@
 # T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition  
 
 ***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER) implemented in pytorch, available via [pip](https://pypi.org/project/tner/). 
-It has an easy interface to finetune models and test on cross-domain and multilingual datasets. T-NER currently integrates 9 publicly available NER datasets and enables an easy integration of custom datasets.
+It has an easy interface to finetune models and test on cross-domain and multilingual datasets.
+T-NER currently integrates high coverage of publicly available NER datasets and enables an easy integration of custom datasets.
 All models finetuned with T-NER can be deployed on our web app for visualization.
 [Our paper demonstrating T-NER](https://www.aclweb.org/anthology/2021.eacl-demos.7/) has been accepted to EACL 2021.
 All the models and datasets are shared via [T-NER HuggingFace group](https://huggingface.co/tner).
