@@ -107,6 +107,10 @@ class Trainer:
             except Exception:
                 logging.exception(f'error at loading checkpoint {model_path}')
 
+        logging.info('hyperparameters')
+        for k, v in self.config.items():
+            logging.info(f'\t * {k}: {v}')
+
         # load dataset
         data, label2id = get_dataset(
             dataset=self.config['dataset'],
@@ -135,10 +139,6 @@ class Trainer:
             os.makedirs(self.checkpoint_dir, exist_ok=True)
             with open(pj(self.checkpoint_dir, config_file), 'w') as f:
                 json.dump(self.config, f)
-
-        logging.info('hyperparameters')
-        for k, v in self.config.items():
-            logging.info(f'\t * {k}: {v}')
 
         random.seed(self.config['random_seed'])
         torch.manual_seed(self.config['random_seed'])
