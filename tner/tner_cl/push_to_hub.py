@@ -6,10 +6,11 @@ import logging
 import shutil
 from distutils.dir_util import copy_tree
 from os.path import join as pj
+from huggingface_hub import create_repo
+
 from tner import TransformersNER
 from tner.tner_cl.readme_template import get_readme
 
-from huggingface_hub import create_repo
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
