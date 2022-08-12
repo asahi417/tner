@@ -89,9 +89,7 @@ def span_f1(pred_list: List,
     @param unification_by_shared_label: [optional] map entities into a shared form
     @return: a dictionary containing span f1 scores
     """
-    print(label_list)
     target_names = sorted(list(set([k.replace('B-', '') for k in list(chain(*label_list)) if k.startswith('B-')])))
-    input(target_names)
     if unification_by_shared_label:
         unified_label_set = get_shared_label()
         logging.info(f'map entity into shared label set {unified_label_set}')
