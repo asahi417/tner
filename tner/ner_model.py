@@ -336,7 +336,7 @@ class TransformersNER:
             cache_file_feature=cache_file_feature,
             separator=separator
         )
-        return span_f1(output['prediction'], output['label'], self.label2id, span_detection_mode, return_ci=return_ci,
+        return span_f1(output['prediction'], output['label'], span_detection_mode, return_ci=return_ci,
                        unification_by_shared_label=unification_by_shared_label)
 
     def save(self, save_dir: str):

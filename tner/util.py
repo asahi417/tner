@@ -74,7 +74,6 @@ def get_random_string(length: int = 6, exclude: List = None):
 
 def span_f1(pred_list: List,
             label_list: List,
-            label2id: Dict,
             span_detection_mode: bool = False,
             return_ci: bool = False,
             unification_by_shared_label: bool = True):
@@ -82,16 +81,17 @@ def span_f1(pred_list: List,
 
     @param pred_list: a list of predicted tag sequences
     @param label_list: a list of gold tag sequences
-    @param label2id: a dictionary of label2id
-            @param span_detection_mode: [optional] return F1 of entity span detection (ignoring entity type error and cast
-            as binary sequence classification as below)
-            - NER                  : ["O", "B-PER", "I-PER", "O", "B-LOC", "O", "B-ORG"]
-            - Entity-span detection: ["O", "B-ENT", "I-ENT", "O", "B-ENT", "O", "B-ENT"]
     @param return_ci: [optional] return confidence interval by bootstrap
+    @param span_detection_mode: [optional] return F1 of entity span detection (ignoring entity type error and cast
+        as binary sequence classification as below)
+        - NER                  : ["O", "B-PER", "I-PER", "O", "B-LOC", "O", "B-ORG"]
+        - Entity-span detection: ["O", "B-ENT", "I-ENT", "O", "B-ENT", "O", "B-ENT"]
     @param unification_by_shared_label: [optional] map entities into a shared form
     @return: a dictionary containing span f1 scores
     """
-
+    print(label_list)
+    target_names = sorted(list(set([k.replace('B-', '') for k in list(chain(*label_list)) if k.startswith('B-')])))
+    input(target_names)
     if unification_by_shared_label:
         unified_label_set = get_shared_label()
         logging.info(f'map entity into shared label set {unified_label_set}')
@@ -140,7 +140,7 @@ def span_f1(pred_list: List,
         "macro/recall": recall_score(label_list, pred_list, average='macro'),
         "macro/precision": precision_score(label_list, pred_list, average='macro'),
     }
-    target_names = sorted(list(set([k.replace('B-', '') for k in list(chain(*label_list)) if k.startswith('B-')])))
+
     if not span_detection_mode:
         metric["per_entity_metric"] = {}
         for t in target_names:

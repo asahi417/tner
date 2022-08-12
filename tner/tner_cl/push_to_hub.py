@@ -16,14 +16,11 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 
 def main():
     parser = argparse.ArgumentParser(description='Push to Model hub')
-    # parser.add_argument('-m', '--model-checkpoint', required=True, type=str)
-    # parser.add_argument('-a', '--model-alias', required=True, type=str)
-    # parser.add_argument('-o', '--organization', default='tner', type=str)
+    parser.add_argument('-m', '--model-checkpoint', required=True, type=str)
+    parser.add_argument('-a', '--model-alias', required=True, type=str)
+    parser.add_argument('-o', '--organization', required=True, type=str)
     parser.add_argument('--use-auth-token', help='Huggingface transformers argument of `use_auth_token`',
                         action='store_true')
-    parser.add_argument('-m', '--model-checkpoint', default='tner_ckpt/bionlp2004_roberta_large/best_model', type=str)
-    parser.add_argument('-a', '--model-alias', default='roberta-large-bionlp2004', type=str)
-    parser.add_argument('-o', '--organization', default='tner', type=str)
     opt = parser.parse_args()
 
     assert os.path.exists(pj(opt.model_checkpoint, "pytorch_model.bin")), pj(opt.model_checkpoint, "pytorch_model.bin")
