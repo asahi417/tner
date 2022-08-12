@@ -9,31 +9,35 @@ from os.path import join as pj
 from tner import TransformersNER
 from tner.tner_cl.readme_template import get_readme
 
+from huggingface_hub import create_repo
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 
 def main():
     parser = argparse.ArgumentParser(description='Push to Model hub')
-    parser.add_argument('-m', '--model-checkpoint', required=True, type=str)
-    parser.add_argument('-a', '--model-alias', required=True, type=str)
-    parser.add_argument('-o', '--organization', default=None, type=str)
+    # parser.add_argument('-m', '--model-checkpoint', required=True, type=str)
+    # parser.add_argument('-a', '--model-alias', required=True, type=str)
+    # parser.add_argument('-o', '--organization', default='tner', type=str)
     parser.add_argument('--use-auth-token', help='Huggingface transformers argument of `use_auth_token`',
                         action='store_true')
+    parser.add_argument('-m', '--model-checkpoint', default='tner_ckpt/bionlp2004_roberta_large/best_model', type=str)
+    parser.add_argument('-a', '--model-alias', default='roberta-large-bionlp2004', type=str)
+    parser.add_argument('-o', '--organization', default='tner', type=str)
     opt = parser.parse_args()
 
     assert os.path.exists(pj(opt.model_checkpoint, "pytorch_model.bin")), pj(opt.model_checkpoint, "pytorch_model.bin")
     logging.info(f"Upload {opt.model_checkpoint} to {opt.organization}/{opt.model_alias}")
+
+    url = create_repo(f"{opt.organization}/{opt.model_alias}", exist_ok=True)
+
     model = TransformersNER(opt.model_checkpoint)
     if model.parallel:
         model_ = model.model.module
     else:
         model_ = model.model
 
-    args = {"use_auth_token": opt.use_auth_token}
-    if opt.organization is not None:
-        args['organization'] = opt.organization
-
+    args = {"use_auth_token": opt.use_auth_token, "repo_url": url, "organization": opt.organization}
     model_.push_to_hub(opt.model_alias, **args)
     model_.config.push_to_hub(opt.model_alias, **args)
     model.tokenizer.tokenizer.push_to_hub(opt.model_alias, **args)
