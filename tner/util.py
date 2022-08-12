@@ -89,7 +89,6 @@ def span_f1(pred_list: List,
     @param unification_by_shared_label: [optional] map entities into a shared form
     @return: a dictionary containing span f1 scores
     """
-    target_names = sorted(list(set([k.replace('B-', '') for k in list(chain(*label_list)) if k.startswith('B-')])))
     if unification_by_shared_label:
         unified_label_set = get_shared_label()
         logging.info(f'map entity into shared label set {unified_label_set}')
@@ -138,15 +137,13 @@ def span_f1(pred_list: List,
         "macro/recall": recall_score(label_list, pred_list, average='macro'),
         "macro/precision": precision_score(label_list, pred_list, average='macro'),
     }
+    target_names = sorted(list(set([k.replace('B-', '') for k in list(chain(*label_list)) if k.startswith('B-')])))
 
     if not span_detection_mode:
         metric["per_entity_metric"] = {}
         for t in target_names:
             _label_list = [[_i if _i.endswith(t) else 'O' for _i in i] for i in label_list]
             _pred_list = [[_i if _i.endswith(t) else 'O' for _i in i] for i in pred_list]
-            # if unification_by_shared_label:
-            #     _label_list = [[convert_to_shared_entity(_i) for _i in i] for i in _label_list]
-            #     _pred_list = [[convert_to_shared_entity(_i) for _i in i] for i in _pred_list]
             m, ci = span_f1_single(_label_list, _pred_list, return_ci=return_ci)
             metric["per_entity_metric"][t] = {
                 "f1": m,
