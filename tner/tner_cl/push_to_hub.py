@@ -27,7 +27,7 @@ def main():
     assert os.path.exists(pj(opt.model_checkpoint, "pytorch_model.bin")), pj(opt.model_checkpoint, "pytorch_model.bin")
     logging.info(f"Upload {opt.model_checkpoint} to {opt.organization}/{opt.model_alias}")
 
-    url = create_repo(f"{opt.organization}/{opt.model_alias}", exist_ok=True)
+    url = create_repo(opt.model_alias, organization=opt.organization, exist_ok=True)
 
     model = TransformersNER(opt.model_checkpoint)
     if model.parallel:
