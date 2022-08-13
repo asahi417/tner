@@ -22,6 +22,7 @@ All the models and datasets are shared via [T-NER HuggingFace group](https://hug
 - Paper: [https://aclanthology.org/2021.eacl-demos.7/](https://aclanthology.org/2021.eacl-demos.7/)
 - HuggingFace: [https://huggingface.co/tner](https://huggingface.co/tner)
 - PyPI: [https://pypi.org/project/tner](https://pypi.org/project/tner)
+- ***NEW*** Online DEMO: [https://huggingface.co/spaces/tner/NER](https://huggingface.co/spaces/tner/NER)
 
 Install `tner` via pip to get started!
 ```shell
