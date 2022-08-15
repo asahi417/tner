@@ -4,6 +4,7 @@ import logging
 import requests
 import json
 import hashlib
+from unicodedata import normalize
 from typing import Dict, List
 from itertools import chain
 from os.path import join as pj
@@ -108,8 +109,8 @@ def load_conll_format_file(data_path: str, label2id: Dict = None):
     inputs, labels, seen_entity = [], [], []
     with open(data_path, 'r') as f:
         sentence, entity = [], []
-        for n, line in enumerate(f):
-            line = line.strip()
+        for n, line_raw in enumerate(f):
+            line = normalize('NFKD', line_raw).strip()
             if len(line) == 0 or line.startswith("-DOCSTART-"):
                 if len(sentence) != 0:
                     assert len(sentence) == len(entity)
@@ -119,16 +120,15 @@ def load_conll_format_file(data_path: str, label2id: Dict = None):
             else:
                 ls = line.split()
                 if len(ls) < 2:
-                    logging.warning(f'skip {ls}: too short')
-                    continue
+                    if line_raw.startswith('O'):
+                        logging.warning(f'skip {ls} (line {n} of file {data_path}): '
+                                        f'missing token (should be word and tag separated by '
+                                        f'a half-space, eg. `London B-LOC`)')
+                        continue
+                    else:
+                        ls = ['', ls[0]]
                 # Examples could have no label for mode = "test"
                 word, tag = ls[0], ls[-1]
-                # if tag in STOPTAGS:
-                #     logging.warning(f'skip tag {tag} from {ls}: STOPTAGS')
-                #     continue
-                # if word in STOPWORDS:
-                #     logging.warning(f'skip word {word} from {ls}: STOPWORDS')
-                #     continue
                 sentence.append(word)
                 entity.append(tag)
 
