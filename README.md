@@ -392,6 +392,8 @@ tner-evaluate -m "tner/roberta-large-wnut2017" -e "metric.json" -d "tner/conll20
 
 ## Google Colab Examples
 
+WARNING: These notebooks are relying on the old version of TNER, and the examples with latest version should be released soon.
+
 | Description               | Link  |
 |---------------------------|-------|
 | Model Finetuning          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing) |
