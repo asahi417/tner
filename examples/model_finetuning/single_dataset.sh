@@ -36,11 +36,3 @@ model_development "btc" "microsoft/deberta-v3-large" 16 4 8
 model_development "ttc" "microsoft/deberta-v3-large" 16 4 8
 model_development "mit_restaurant" "microsoft/deberta-v3-large" 16 4 8
 model_development "mit_movie_trivia" "microsoft/deberta-v3-large" 16 4 8
-
-for DATA in "conll2003" "btc" "wnut2017" "mit_restaurant" "mit-movie-trivia" "tweebank-ner" "bionlp2004" "bc5cdr" # "ttc" "fin" "ontonotes5"
-do
-  D="${DATA//_/-}"
-  git clone "https://huggingface.co/tner/deberta-v3-large-${D}"
-  tner-evaluate -m "deberta-v3-large-${D}" -e "deberta-v3-large-${D}/eval/metric_span.json" -d "tner/${DATA}" -b 32 --return-ci --span-detection-mode
-  tner-push-to-hub -o "tner" -m "deberta-v3-large-${D}" -a "deberta-v3-large-${D}"
-done
