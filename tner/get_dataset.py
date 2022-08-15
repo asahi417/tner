@@ -11,8 +11,8 @@ from os.path import join as pj
 from datasets import load_dataset
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-STOPWORDS = ['None', '#']
-STOPTAGS = ['junk']
+# STOPWORDS = ['None', '#']
+# STOPTAGS = ['junk']
 CACHE_DIR = f"{os.path.expanduser('~')}/.cache/tner"
 CHECKSUM_SHARED_LABEL = '460207e44f2b33737de03c29c7b02a3f'
 
@@ -96,7 +96,7 @@ def get_hf_dataset(dataset: str = 'tner/conll2003', dataset_name: str = None, ca
     return data, label2id
 
 
-def load_coll_format_file(data_path: str, label2id: Dict = None):
+def load_conll_format_file(data_path: str, label2id: Dict = None):
     """ load dataset from local IOB format file
 
     @param data_path: path to iob file
@@ -123,12 +123,12 @@ def load_coll_format_file(data_path: str, label2id: Dict = None):
                     continue
                 # Examples could have no label for mode = "test"
                 word, tag = ls[0], ls[-1]
-                if tag in STOPTAGS:
-                    logging.warning(f'skip tag {tag} from {ls}: STOPTAGS')
-                    continue
-                if word in STOPWORDS:
-                    logging.warning(f'skip word {word} from {ls}: STOPWORDS')
-                    continue
+                # if tag in STOPTAGS:
+                #     logging.warning(f'skip tag {tag} from {ls}: STOPTAGS')
+                #     continue
+                # if word in STOPWORDS:
+                #     logging.warning(f'skip word {word} from {ls}: STOPWORDS')
+                #     continue
                 sentence.append(word)
                 entity.append(tag)
 
@@ -166,7 +166,7 @@ def get_conll_format_dataset(local_dataset: Dict):
     for file_name in sorted(local_dataset.keys()):
         file_path = local_dataset[file_name]
         assert os.path.exists(file_path), file_path
-        _data, label2id = load_coll_format_file(file_path, label2id)
+        _data, label2id = load_conll_format_file(file_path, label2id)
         data[file_name] = _data
     return data, label2id
 
