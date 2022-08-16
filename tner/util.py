@@ -295,5 +295,6 @@ def load_hf(model: str,
             local_files_only=local_files_only)
     else:
         config = AutoConfig.from_pretrained(model, use_auth_token=use_auth_token, local_files_only=local_files_only)
-    return AutoModelForTokenClassification.from_pretrained(model, config=config, local_files_only=local_files_only)
+    return AutoModelForTokenClassification.from_pretrained(
+        model, config=config, use_auth_token=use_auth_token, local_files_only=local_files_only)
 
