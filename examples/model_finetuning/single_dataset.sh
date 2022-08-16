@@ -36,3 +36,44 @@ model_development "btc" "microsoft/deberta-v3-large" 16 4 8
 model_development "ttc" "microsoft/deberta-v3-large" 16 4 8
 model_development "mit_restaurant" "microsoft/deberta-v3-large" 16 4 8
 model_development "mit_movie_trivia" "microsoft/deberta-v3-large" 16 4 8
+
+model_development "wnut2017" "vinai/bertweet-large" 16 4 8
+model_development "wnut2017" "microsoft/deberta-large" 16 4 8
+
+update_readme () {
+  DATA=${1}
+  MODEL=${2}
+  export MODEL_ALIAS="${MODEL##*/}"
+  git clone "https://huggingface.co/tner/${MODEL_ALIAS}-${DATA//_/-}"
+  tner-push-to-hub -o "tner" -m "${MODEL_ALIAS}-${DATA//_/-}" -a "${MODEL_ALIAS}-${DATA//_/-}"
+  rm -rf "${MODEL_ALIAS}-${DATA//_/-}"
+}
+
+
+
+update_readme "conll2003" "roberta-large" 64 1 2
+update_readme "ontonotes5" "roberta-large" 64 1 2
+update_readme "bionlp2004" "roberta-large" 64 1 2
+update_readme "bc5cdr" "roberta-large" 64 1 2
+update_readme "fin" "roberta-large" 64 1 2
+update_readme "wnut2017" "roberta-large" 64 1 2
+update_readme "tweebank_ner" "roberta-large" 64 1 2
+update_readme "btc" "roberta-large" 64 1 2
+update_readme "ttc" "roberta-large" 64 1 2
+update_readme "mit_restaurant" "roberta-large" 64 1 2
+update_readme "mit_movie_trivia" "roberta-large" 64 1 2
+
+update_readme "conll2003" "microsoft/deberta-v3-large" 16 4 8
+#update_readme "ontonotes5" "microsoft/deberta-v3-large" 16 4 8
+update_readme "bionlp2004" "microsoft/deberta-v3-large" 16 4 8
+update_readme "bc5cdr" "microsoft/deberta-v3-large" 16 4 8
+update_readme "fin" "microsoft/deberta-v3-large" 16 4 8
+update_readme "wnut2017" "microsoft/deberta-v3-large" 16 4 8
+update_readme "tweebank_ner" "microsoft/deberta-v3-large" 16 4 8
+update_readme "btc" "microsoft/deberta-v3-large" 16 4 8
+#update_readme "ttc" "microsoft/deberta-v3-large" 16 4 8
+update_readme "mit_restaurant" "microsoft/deberta-v3-large" 16 4 8
+update_readme "mit_movie_trivia" "microsoft/deberta-v3-large" 16 4 8
+
+update_readme "wnut2017" "vinai/bertweet-large" 16 4 8
+update_readme "wnut2017" "microsoft/deberta-large" 16 4 8

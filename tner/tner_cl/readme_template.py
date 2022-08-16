@@ -28,10 +28,7 @@ def get_readme(model_name: str,
     dataset_alias = "custom"
     if config["dataset"] is not None:
         dataset = sorted([i for i in config["dataset"]])
-        if len(dataset) == 1:
-            dataset_alias = os.path.basename(dataset[0])
-        else:
-            dataset_alias = ','.join([os.path.basename(i) for i in dataset])
+        dataset_alias = ','.join(dataset)
     config_text = "\n".join([f" - {k}: {v}" for k, v in config.items()])
     ci_micro = '\n'.join([f'    - {k}%: {v}' for k, v in metric["micro/f1_ci"].items()])
     ci_macro = '\n'.join([f'    - {k}%: {v}' for k, v in metric["micro/f1_ci"].items()])
