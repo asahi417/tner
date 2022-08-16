@@ -116,7 +116,8 @@ class Trainer:
             dataset=self.config['dataset'],
             local_dataset=self.config['local_dataset'],
             dataset_name=self.config['dataset_name'],
-            concat_label2id=self.model.label2id if self.model is not None else None
+            concat_label2id=self.model.label2id if self.model is not None else None,
+            use_auth_token=use_auth_token
         )
         assert self.config['dataset_split'] in data, f"split {self.config['dataset_split']} is not in {data.keys()}"
         self.dataset = data[self.config['dataset_split']]

@@ -78,7 +78,10 @@ def get_hf_label2id(dataset, cache_dir: str = None):
     return label2id
 
 
-def get_hf_dataset(dataset: str = 'tner/conll2003', dataset_name: str = None, cache_dir: str = None):
+def get_hf_dataset(dataset: str = 'tner/conll2003',
+                   dataset_name: str = None,
+                   cache_dir: str = None,
+                   use_auth_token: bool = False):
     """ load dataset from TNER huggingface dataset https://huggingface.co/tner
 
     @param dataset: dataset alias on huggingface dataset hub
@@ -89,9 +92,9 @@ def get_hf_dataset(dataset: str = 'tner/conll2003', dataset_name: str = None, ca
         - label2id: a dictionary mapping from label to id
     """
     if dataset_name is not None:
-        data = load_dataset(dataset, dataset_name)
+        data = load_dataset(dataset, dataset_name, use_auth_token=use_auth_token)
     else:
-        data = load_dataset(dataset)
+        data = load_dataset(dataset, use_auth_token=use_auth_token)
     label2id = get_hf_label2id(dataset, cache_dir)
     data = {k: {"tokens": data[k]["tokens"], "tags": data[k]["tags"]} for k in data.keys()}
     return data, label2id
@@ -174,7 +177,8 @@ def get_conll_format_dataset(local_dataset: Dict):
 def get_dataset_single(dataset: str = None,
                        local_dataset: Dict = None,
                        dataset_name: str = None,
-                       cache_dir: str = None):
+                       cache_dir: str = None,
+                       use_auth_token: bool = False):
     """ get NER dataset
 
     @param dataset: dataset name on huggingface tner organization (https://huggingface.co/datasets?search=tner)
@@ -189,7 +193,9 @@ def get_dataset_single(dataset: str = None,
     if dataset is not None:
         if local_dataset is not None:
             logging.warning(f"local_dataset ({local_dataset}) is provided but ignored as dataset ({dataset}) is given")
-        data, label2id = get_hf_dataset(dataset, dataset_name=dataset_name, cache_dir=cache_dir)
+        data, label2id = get_hf_dataset(
+            dataset, dataset_name=dataset_name, cache_dir=cache_dir, use_auth_token=use_auth_token
+        )
 
     else:
         assert local_dataset is not None, "need either of `dataset` or `local_dataset`"
@@ -267,7 +273,8 @@ def get_dataset(dataset: List or str = None,
                 local_dataset: List or Dict = None,
                 dataset_name: List or str = None,
                 concat_label2id: Dict = None,
-                cache_dir: str = None):
+                cache_dir: str = None,
+                use_auth_token: bool = False):
     """ get NER datasets (concat mutiple datasets)
 
     @param dataset: dataset name (or a list of it) on huggingface tner organization (https://huggingface.co/datasets?search=tner)
@@ -288,7 +295,8 @@ def get_dataset(dataset: List or str = None,
         if type(dataset) is str:
             assert dataset_name is None or type(dataset_name) is str, \
                 f"`dataset_name` should be string but given {dataset_name}"
-            data, label2id = get_dataset_single(dataset=dataset, dataset_name=dataset_name, cache_dir=cache_dir)
+            data, label2id = get_dataset_single(
+                dataset=dataset, dataset_name=dataset_name, cache_dir=cache_dir, use_auth_token=use_auth_token)
             dataset_list.append((data, label2id))
         else:
             assert dataset_name is None or (
