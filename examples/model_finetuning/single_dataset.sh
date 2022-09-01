@@ -64,14 +64,14 @@ update_readme "mit_restaurant" "roberta-large" 64 1 2
 update_readme "mit_movie_trivia" "roberta-large" 64 1 2
 
 update_readme "conll2003" "microsoft/deberta-v3-large" 16 4 8
-#update_readme "ontonotes5" "microsoft/deberta-v3-large" 16 4 8
+update_readme "ontonotes5" "microsoft/deberta-v3-large" 16 4 8
 update_readme "bionlp2004" "microsoft/deberta-v3-large" 16 4 8
 update_readme "bc5cdr" "microsoft/deberta-v3-large" 16 4 8
 update_readme "fin" "microsoft/deberta-v3-large" 16 4 8
 update_readme "wnut2017" "microsoft/deberta-v3-large" 16 4 8
 update_readme "tweebank_ner" "microsoft/deberta-v3-large" 16 4 8
 update_readme "btc" "microsoft/deberta-v3-large" 16 4 8
-#update_readme "ttc" "microsoft/deberta-v3-large" 16 4 8
+update_readme "ttc" "microsoft/deberta-v3-large" 16 4 8
 update_readme "mit_restaurant" "microsoft/deberta-v3-large" 16 4 8
 update_readme "mit_movie_trivia" "microsoft/deberta-v3-large" 16 4 8
 
