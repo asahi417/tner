@@ -1,0 +1,9 @@
+pandas
+seqeval
+torch
+transformers
+allennlp
+whoosh
+sentence-transformers
+tner
+datasets
