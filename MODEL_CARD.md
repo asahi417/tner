@@ -1,6 +1,8 @@
-# MODEL LIST
+# MODEL CARD
+NER models shared on the [huggingface TNER organization](https://huggingface.co/tner).
 
 ## Models for Preset Datasets
+Script to re-produce those released models is [here](https://github.com/asahi417/tner/blob/master/examples/model_finetuning/single_dataset.sh).
 
 | Model (link)                                                                                              | Data                                                                      | Language Model                                                                    |
 |:----------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------|:----------------------------------------------------------------------------------|
@@ -26,8 +28,6 @@
 | [`tner/deberta-v3-large-mit-restaurant`](https://huggingface.co/tner/deberta-v3-large-mit-restaurant)     | [`mit_restaurant`](https://huggingface.co/datasets/tner/mit_restaurant)   | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
 | [`tner/roberta-large-mit-movie-trivia`](https://huggingface.co/tner/roberta-large-mit-movie-trivia)       | [`movie-trivia`](https://huggingface.co/datasets/tner/movie-trivia)       | [`roberta-large`](https://huggingface.co/roberta-large)                           |
 | [`tner/deberta-v3-large-mit-movie-trivia`](https://huggingface.co/tner/deberta-v3-large-mit-movie-trivia) | [`movie-trivia`](https://huggingface.co/datasets/tner/movie-trivia)       | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-
-Script to re-produce those released models is [here](https://github.com/asahi417/tner/blob/master/examples/model_finetuning/single_dataset.sh).
 
 ## Models for TweetNER7
 Script to re-produce those released models is [here](https://github.com/asahi417/tner/tree/master/examples/tweetner7_paper).
