@@ -290,7 +290,7 @@ class GridSearcher:
                  dataset: List or str = None,
                  local_dataset: List or Dict = None,
                  dataset_split_train: str = 'train',
-                 dataset_split_valid: str = 'valid',
+                 dataset_split_valid: str = 'validation',
                  dataset_name: List or str = None,
                  model: str = 'roberta-large',
                  epoch: int = 10,
