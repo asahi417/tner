@@ -3,6 +3,7 @@ import json
 import logging
 import random
 import gc
+import shutil
 from glob import glob
 from os.path import join as pj
 from typing import List, Dict
@@ -539,6 +540,7 @@ class GridSearcher:
             best_model_ckpt = f"{best_model_ckpt.split('epoch_')[0]}epoch_{config['epoch']}"
 
         copy_tree(best_model_ckpt, pj(self.checkpoint_dir, 'best_model'))
+        shutil.rmtree(pj(best_model_ckpt, 'eval'))
         with open(pj(self.checkpoint_dir, 'best_model', 'trainer_config.json'), 'w') as f:
             json.dump(config, f)
 

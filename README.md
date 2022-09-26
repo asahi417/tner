@@ -18,11 +18,14 @@ All models finetuned with T-NER can be deployed on our web app for visualization
 [Our paper demonstrating T-NER](https://www.aclweb.org/anthology/2021.eacl-demos.7/) has been accepted to EACL 2021.
 All the models and datasets are shared via [T-NER HuggingFace group](https://huggingface.co/tner).
 
+- ***NEW (September 2022):*** We released new dataset of NER on Twitter and the paper got accepted by AACL 2022. The scripts to reproduce the experiments can be found at [here](https://github.com/asahi417/tner/tree/master/examples/tweetner7_paper).
+- Model Card: [https://github.com/asahi417/tner/blob/master/MODEL_CARD.md](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)
+- Gradio Online DEMO: [https://huggingface.co/spaces/tner/NER](https://huggingface.co/spaces/tner/NER)
 - GitHub: [https://github.com/asahi417/tner](https://github.com/asahi417/tner)
-- Paper: [https://aclanthology.org/2021.eacl-demos.7/](https://aclanthology.org/2021.eacl-demos.7/)
+- Paper (T-NER): [https://aclanthology.org/2021.eacl-demos.7/](https://aclanthology.org/2021.eacl-demos.7/)
+- Paper (TweetNER7): TBA
 - HuggingFace: [https://huggingface.co/tner](https://huggingface.co/tner)
 - PyPI: [https://pypi.org/project/tner](https://pypi.org/project/tner)
-- ***NEW*** Online DEMO: [https://huggingface.co/spaces/tner/NER](https://huggingface.co/spaces/tner/NER)
 
 Install `tner` via pip to get started!
 ```shell
@@ -69,14 +72,16 @@ with a dictionary to map a label to its index (`label2id`) as below.
 |-------------------|-----------------------------------------------------------------------------------|-----------------------------------------|-------------------------|----------|-------------|
 | Ontonotes5        | [`tner/ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)              | News, Blog, Dialogue                    | 59,924/8,528/8,262      | en       | 18          |
 | CoNLL2003         | [`tner/conll2003`](https://huggingface.co/datasets/tner/conll2003)                | News                                    | 14,041/3,250/3,453      | en       | 4           |
-| WNUT2017          | [`tner/wnut2017`](https://huggingface.co/datasets/tner/wnut2017)                  | Twitter, Reddit, StackExchange, YouTube | 2,395/1,009/1,287       | en       | 6           |
 | BioNLP2004        | [`tner/bionlp2004`](https://huggingface.co/datasets/tner/bionlp2004)              | Biochemical                             | 16,619/1,927/3,856      | en       | 5           |
 | BioCreative V CDR | [`tner/bc5cdr`](https://huggingface.co/datasets/tner/bc5cdr)                      | Biomedical                              | 5,228/5,330/5,865       | en       | 2           |
 | FIN               | [`tner/fin`](https://huggingface.co/datasets/tner/fin)                            | Financial News                          | 1,014/303/150           | en       | 4           |
-| BTC               | [`tner/btc`](https://huggingface.co/datasets/tner/btc)                            | Twitter                                 | 1,014/303/150           | en       | 3           |
-| Tweebank NER      | [`tner/tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner)          | Twitter                                 | 1,639/710/1,201         | en       | 4           |
 | MIT Movie         | [`tner/mit_movie_trivia` ](https://huggingface.co/datasets/tner/mit_movie_trivia) | Movie Review                            | 6,816/1,000/1,953       | en       | 12          |
 | MIT Restaurant    | [`tner/mit_restaurant`](https://huggingface.co/datasets/tner/mit_restaurant)      | Restaurant Review                       | 6,900/760/1,521         | en       | 8           |
+| WNUT2017          | [`tner/wnut2017`](https://huggingface.co/datasets/tner/wnut2017)                  | Twitter, Reddit, StackExchange, YouTube | 2,395/1,009/1,287       | en       | 6           |
+| BTC               | [`tner/btc`](https://huggingface.co/datasets/tner/btc)                            | Twitter                                 | 1,014/303/150           | en       | 3           |
+| Tweebank NER      | [`tner/tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner)          | Twitter                                 | 1,639/710/1,201         | en       | 4           |
+| TTC               | [`tner/ttc`](https://huggingface.co/datasets/tner/ttc), [`tner/ttc_dummy`](https://huggingface.co/datasets/tner/ttc_dummy)| Twitter | 9,995/500/1,477 | en       | 3           |
+| TweetNER7         | [`tner/tweetner7`](https://huggingface.co/datasets/tner/tweetner7)                | Twitter                                 | 7,111/576/2,807         | en       | 7           |
 
 A variety of public NER datasets are available on our [HuggingFace group](https://huggingface.co/tner), which can be used as below. 
 ```python
@@ -88,7 +93,7 @@ User can specify multiple datasets to get a concatenated dataset.
 data, label2id = get_dataset(dataset=["tner/conll2003", "tner/ontonotes5"])
 ```
 In concatenated datasets, we use the [unified label set](https://raw.githubusercontent.com/asahi417/tner/master/unified_label2id.json) to unify the entity label.
-The idea is to share all the available NER datasets on the HuggingFace in a unified format, so let us know if you want any NER datasets to be added there!  
+The idea is to share all the available NER datasets on the HuggingFace in a unified format, so let us know if you want any NER datasets to be added there!
 
 ### Custom Dataset
 To go beyond the public datasets, users can use their own datasets by formatting them into
@@ -130,31 +135,6 @@ data, label2id = get_dataset(local_dataset=[
 ```
 
 ## Model
-
-| Model (link)                                                                                      | Data                                                                | Language Model                                                                    |
-|:--------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------|:----------------------------------------------------------------------------------|
-| [`tner/roberta-large-ontonotes5`](https://huggingface.co/tner/roberta-large-ontonotes5)           | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-ontonotes5`](https://huggingface.co/tner/deberta-v3-large-ontonotes5)     | [`ontonotes5`](https://huggingface.co/datasets/tner/ontonotes5)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-wnut2017`](https://huggingface.co/tner/roberta-large-wnut2017)               | [`wnut2017`](https://huggingface.co/datasets/tner/wnut2017)         | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-wnut2017`](https://huggingface.co/tner/deberta-v3-large-wnut2017)         | [`wnut2017`](https://huggingface.co/datasets/tner/wnut2017)         | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-conll2003`](https://huggingface.co/tner/roberta-large-conll2003)             | [`conll2003`](https://huggingface.co/datasets/tner/conll2003)       | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-conll2003`](https://huggingface.co/tner/deberta-v3-large-conll2003)       | [`conll2003`](https://huggingface.co/datasets/tner/conll2003)       | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-bc5cdr`](https://huggingface.co/tner/roberta-large-bc5cdr)                   | [`bc5cdr`](https://huggingface.co/datasets/tner/bc5cdr)             | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-bc5cdr`](https://huggingface.co/tner/deberta-v3-large-bc5cdr)             | [`bc5cdr`](https://huggingface.co/datasets/tner/bc5cdr)             | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-tweebank_ner`](https://huggingface.co/tner/roberta-large-tweebank_ner)       | [`tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner) | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-tweebank_ner`](https://huggingface.co/tner/deberta-v3-large-tweebank_ner) | [`tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner) | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-btc`](https://huggingface.co/tner/roberta-large-btc)                         | [`btc`](https://huggingface.co/datasets/tner/btc)                   | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-btc`](https://huggingface.co/tner/deberta-v3-large-btc)                   | [`btc`](https://huggingface.co/datasets/tner/btc)                   | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-ttc`](https://huggingface.co/tner/roberta-large-ttc)                         | [`ttc`](https://huggingface.co/datasets/tner/ttc)                   | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-ttc`](https://huggingface.co/tner/deberta-v3-large-ttc)                   | [`ttc`](https://huggingface.co/datasets/tner/ttc)                   | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-fin`](https://huggingface.co/tner/roberta-large-fin)                         | [`fin`](https://huggingface.co/datasets/tner/fin)                   | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-fin`](https://huggingface.co/tner/deberta-v3-large-fin)                   | [`fin`](https://huggingface.co/datasets/tner/fin)                   | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-bionlp2004`](https://huggingface.co/tner/roberta-large-bionlp2004)           | [`bionlp2004`](https://huggingface.co/datasets/tner/bionlp2004)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-bionlp2004`](https://huggingface.co/tner/deberta-v3-large-bionlp2004)     | [`bionlp2004`](https://huggingface.co/datasets/tner/bionlp2004)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-mit-restaurant`](https://huggingface.co/tner/roberta-large-mit-restaurant)   | [`mit_restaurant`](https://huggingface.co/datasets/tner/mit_restaurant)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-mit-restaurant`](https://huggingface.co/tner/deberta-v3-large-mit-restaurant) | [`mit_restaurant`](https://huggingface.co/datasets/tner/mit_restaurant)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
-| [`tner/roberta-large-mit-movie-trivia`](https://huggingface.co/tner/roberta-large-mit-movie-trivia)   | [`movie-trivia`](https://huggingface.co/datasets/tner/movie-trivia)     | [`roberta-large`](https://huggingface.co/roberta-large)                           |
-| [`tner/deberta-v3-large-mit-movie-trivia`](https://huggingface.co/tner/deberta-v3-large-mit-movie-trivia) | [`movie-trivia`](https://huggingface.co/datasets/tner/movie-trivia)     | [`microsoft/deberta-v3-large`](https://huggingface.co/microsoft/deberta-v3-large) |
 
 T-NER currently has shared more than 100 NER models on [HuggingFace group](https://huggingface.co/tner), as shown in the above table, which reports the major models only and see [MODEL_CARD](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md) for full model lists. 
 All the models can be used with `tner` as below.

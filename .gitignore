@@ -21,8 +21,13 @@ tner_ckpt
 ner-dataset
 examples/snap
 notes
-cner
 datasets
 scripts
 dataset_public_tweet
 dataset
+
+examples/tweetner7_paper/cner_output
+examples/tweetner7_paper/metric_files
+examples/tweetner7_paper/output
+examples/tweetner7_paper/MODEL_CARD.md
+check_uploaded_models.py

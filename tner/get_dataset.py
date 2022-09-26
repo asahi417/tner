@@ -64,7 +64,7 @@ def get_hf_label2id(dataset, cache_dir: str = None):
     """
     url = f"https://huggingface.co/datasets/tner/label2id/raw/main/files/{os.path.basename(dataset)}.json"
     cache_dir = CACHE_DIR if cache_dir is None else cache_dir
-    # url = f"https://huggingface.co/datasets/{dataset}/raw/main/dataset/label.json"
+    # url = f"https://huggingface.co/datasets/{dataset}/raw/main/dataset/label.multi.json"
     path = pj(cache_dir, f"{dataset}.label2id.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
