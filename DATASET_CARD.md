@@ -15,3 +15,10 @@ NER dataset shared on the [huggingface TNER organization](https://huggingface.co
 | Tweebank NER      | [`tner/tweebank_ner`](https://huggingface.co/datasets/tner/tweebank_ner)          | Twitter                                 | 1,639/710/1,201         | en       | 4           |
 | TTC               | [`tner/ttc`](https://huggingface.co/datasets/tner/ttc), [`tner/ttc_dummy`](https://huggingface.co/datasets/tner/ttc_dummy)| Twitter | 9,995/500/1,477 | en       | 3           |
 | TweetNER7         | [`tner/tweetner7`](https://huggingface.co/datasets/tner/tweetner7)                | Twitter                                 | 7,111/576/2,807 (*see the dataset page)        | en       | 7           |
+
+Multilingual dataset follows below.
+| Dataset           | Alias (link)                                                                      | Domain                                  | Language | Entity Size |
+|-------------------|-----------------------------------------------------------------------------------|-----------------------------------------|-------------------------|----------|
+| WikiANN (Panx)         | [`tner/wikiann`](https://huggingface.co/datasets/tner/wikiann)                | Wikipedia                                 | 160+       | 3           |
+| WikiNeural         | [`tner/wikineural`](https://huggingface.co/datasets/tner/wikineural)                | Wikipedia                                 | 9       | 16           |
+| MultiNERD         | [`tner/multinerd`](https://huggingface.co/datasets/tner/multinerd)                | Wikipedia, WikiNews                                 | 16       | 18           |
