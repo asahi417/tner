@@ -22,8 +22,8 @@ All the models and datasets are shared via [T-NER HuggingFace group](https://hug
 
 - Model Card: [https://github.com/asahi417/tner/blob/master/MODEL_CARD.md](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)
 - Gradio Online DEMO: [https://huggingface.co/spaces/tner/NER](https://huggingface.co/spaces/tner/NER)
-- GitHub: [https://github.com/asahi417/tner](https://github.com/asahi417/tner)
-- Paper (T-NER): [https://aclanthology.org/2021.eacl-demos.7/](https://aclanthology.org/2021.eacl-demos.7/)
+- GitHub: [**https://github.com/asahi417/tner**](https://github.com/asahi417/tner)
+- Paper (T-NER): [**acl anthology**](https://aclanthology.org/2021.eacl-demos.7/), [**arxiv**](https://arxiv.org/abs/2209.12616)
 - Paper (TweetNER7): TBA
 - HuggingFace: [https://huggingface.co/tner](https://huggingface.co/tner)
 - PyPI: [https://pypi.org/project/tner](https://pypi.org/project/tner)
