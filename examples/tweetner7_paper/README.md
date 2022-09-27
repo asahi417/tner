@@ -1,15 +1,68 @@
-# TweetNER7: Reproduce Experimental Result
+# TweetNER7
 This is an official repository of TweetNER7, an NER dataset on Twitter with 7 entity labels. Each instance of TweetNER7 comes with
 a timestamp which distributes from September 2019 to August 2021. 
 The dataset is available on the huggingface [https://huggingface.co/datasets/tner/tweetner7](https://huggingface.co/datasets/tner/tweetner7), and 
-basic usage follows below. See the huggingface dataset for more detail.
+basic usage follows below. 
+This repository explains how to reproduce the experimental results on our paper. Please visit the huggingface page of the dataset
+[https://huggingface.co/datasets/tner/tweetner7](https://huggingface.co/datasets/tner/tweetner7) to know more about the dataset.
+
+- ***Dataset***
+
 ```python
 from datasets import load_dataset
 dataset = load_dataset("tner/tweetner7")
 ```
 
-This repository explains to reproduce the experimental results on our paper. Please visit the huggingface page of the dataset
-[https://huggingface.co/datasets/tner/tweetner7](https://huggingface.co/datasets/tner/tweetner7) to know more about the dataset.
+- ***Split***
+
+| split             | number of instances | description |
+|:------------------|------:|------:|
+| train_2020        |  4616 | training dataset from September 2019 to August 2020 |
+| train_2021        |  2495 | training dataset from September 2020 to August 2021 |
+| train_all         |  7111 | combined training dataset of `train_2020` and `train_2021` |
+| validation_2020   |   576 | validation dataset from September 2019 to August 2020 |
+| validation_2021   |   310 | validation dataset from September 2020 to August 2021 | 
+| test_2020         |   576 | test dataset from September 2019 to August 2020 |
+| test_2021         |  2807 | test dataset from September 2020 to August 2021 |
+| train_random      |  4616 | randomly sampled training dataset with the same size as `train_2020` from `train_all` |
+| validation_random |   576 | randomly sampled training dataset with the same size as `validation_2020` from `validation_all` |
+| extra_2020        | 87880 | extra tweet without annotations from September 2019 to August 2020 |
+| extra_2021        | 93594 | extra tweet without annotations from September 2020 to August 2021 |
+
+- ***Models:*** Following models are fine-tuned on `train_all` and validated on `validation_2021` of `tner/tweetner7`.
+
+| Model (link)                                                                                                                                | Data                                                          | Language Model                                                                          |
+|:--------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------|:----------------------------------------------------------------------------------------|
+| [`tner/roberta-large-tweetner7-all`](https://huggingface.co/tner/roberta-large-tweetner7-all)                                               | [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) | [`roberta-large`](https://huggingface.co/roberta-large)                                 |
+| [`tner/roberta-base-tweetner7-all`](https://huggingface.co/tner/roberta-base-tweetner7-all)                                                 | [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) | [`roberta-base`](https://huggingface.co/roberta-base)                                   |
+| [`tner/twitter-roberta-base-2019-90m-tweetner7-all`](https://huggingface.co/tner/twitter-roberta-base-2019-90m-tweetner7-all)               | [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) | [`twitter-roberta-base-2019-90m`](https://huggingface.co/twitter-roberta-base-2019-90m) |
+| [`tner/twitter-roberta-base-dec2020-tweetner7-all`](https://huggingface.co/tner/twitter-roberta-base-dec2020-tweetner7-all)                 | [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) | [`twitter-roberta-base-dec2020`](https://huggingface.co/twitter-roberta-base-dec2020)   |
+| [`tner/twitter-roberta-base-dec2021-tweetner7-all`](https://huggingface.co/tner/twitter-roberta-base-dec2021-tweetner7-all)                 | [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) | [`twitter-roberta-base-dec2021`](https://huggingface.co/twitter-roberta-base-dec2021)   |
+
+Basic usage of those models follows below.
+
+```python
+import re
+from urlextract import URLExtract
+from tner import TransformersNER
+
+extractor = URLExtract()
+
+def format_tweet(tweet):
+    # mask web urls
+    urls = extractor.find_urls(tweet)
+    for url in urls:
+        tweet = tweet.replace(url, "{{URL}}")
+    # format twitter account
+    tweet = re.sub(r"\b(\s*)(@[\S]+)\b", r'\1{\2@}', tweet)
+    return tweet
+
+
+text = "Get the all-analog Classic Vinyl Edition of `Takin' Off` Album from @herbiehancock via @bluenoterecords link below: http://bluenote.lnk.to/AlbumOfTheWeek"
+text_format = format_tweet(text)
+model = TransformersNER("tner/roberta-large-tweetner7-all")
+model.predict([text_format])
+```
 
 ## Reference
 If you use the dataset or any of these resources, please cite the following paper:
