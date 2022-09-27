@@ -18,7 +18,7 @@ All models finetuned with T-NER can be deployed on our web app for visualization
 [Our paper demonstrating T-NER](https://www.aclweb.org/anthology/2021.eacl-demos.7/) has been accepted to EACL 2021.
 All the models and datasets are shared via [T-NER HuggingFace group](https://huggingface.co/tner).
 
-- ***NEW (September 2022):*** We released new dataset of NER on Twitter [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) and the paper got accepted by AACL 2022 main conference! We release the dataset along with fine-tuned models, and more detail can be found [repository](https://github.com/asahi417/tner/tree/master/examples/tweetner7_paper) and [dataset page](https://huggingface.co/datasets/tner/tweetner7).
+***NEW (September 2022):*** We released new dataset of NER on Twitter [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) and the paper got accepted by AACL 2022 main conference! We release the dataset along with fine-tuned models, and more detail can be found [repository](https://github.com/asahi417/tner/tree/master/examples/tweetner7_paper) and [dataset page](https://huggingface.co/datasets/tner/tweetner7).
 
 - Model Card: [https://github.com/asahi417/tner/blob/master/MODEL_CARD.md](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)
 - Gradio Online DEMO: [https://huggingface.co/spaces/tner/NER](https://huggingface.co/spaces/tner/NER)
