@@ -20,13 +20,12 @@ All the models and datasets are shared via [T-NER HuggingFace group](https://hug
 
 ***NEW (September 2022):*** We released new dataset of NER on Twitter [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) and the paper got accepted by AACL 2022 main conference! We release the dataset along with fine-tuned models, and more detail can be found [repository](https://github.com/asahi417/tner/tree/master/examples/tweetner7_paper) and [dataset page](https://huggingface.co/datasets/tner/tweetner7).
 
-- Model Card: [https://github.com/asahi417/tner/blob/master/MODEL_CARD.md](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md)
-- Gradio Online DEMO: [https://huggingface.co/spaces/tner/NER](https://huggingface.co/spaces/tner/NER)
+- Resources: [**MODEL_CARD**](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md), [**DATASET_CARD**](https://github.com/asahi417/tner/blob/master/DATASET_CARD.md), [**Gradio Online DEMO**](https://huggingface.co/spaces/tner/NER)
+- HuggingFace: [**https://huggingface.co/tner**](https://huggingface.co/tner)
 - GitHub: [**https://github.com/asahi417/tner**](https://github.com/asahi417/tner)
 - Paper (T-NER): [**acl anthology**](https://aclanthology.org/2021.eacl-demos.7/), [**arxiv**](https://arxiv.org/abs/2209.12616)
 - Paper (TweetNER7): TBA
-- HuggingFace: [https://huggingface.co/tner](https://huggingface.co/tner)
-- PyPI: [https://pypi.org/project/tner](https://pypi.org/project/tner)
+
 
 Install `tner` via pip to get started!
 ```shell
