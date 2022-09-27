@@ -29,7 +29,7 @@ dataset = load_dataset("tner/tweetner7")
 | extra_2020        | 87880 | extra tweet without annotations from September 2019 to August 2020 |
 | extra_2021        | 93594 | extra tweet without annotations from September 2020 to August 2021 |
 
-- ***Models:*** Following models are fine-tuned on `train_all` and validated on `validation_2021` of `tner/tweetner7`.
+- ***Models:*** Following models are fine-tuned on `train_all` and validated on `validation_2021` of `tner/tweetner7`.  See full model list [here](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md#models-for-tweetner7).
 
 | Model (link)                                                                                                                                | Data                                                          | Language Model                                                                          |
 |:--------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------|:----------------------------------------------------------------------------------------|
