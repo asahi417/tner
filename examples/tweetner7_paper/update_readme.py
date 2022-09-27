@@ -55,6 +55,21 @@ bib = """
     abstract = "Language model (LM) pretraining has led to consistent improvements in many NLP downstream tasks, including named entity recognition (NER). In this paper, we present T-NER (Transformer-based Named Entity Recognition), a Python library for NER LM finetuning. In addition to its practical utility, T-NER facilitates the study and investigation of the cross-domain and cross-lingual generalization ability of LMs finetuned on NER. Our library also provides a web app where users can get model predictions interactively for arbitrary text, which facilitates qualitative model evaluation for non-expert programmers. We show the potential of the library by compiling nine public NER datasets into a unified format and evaluating the cross-domain and cross- lingual performance across the datasets. The results from our initial experiments show that in-domain performance is generally competitive across datasets. However, cross-domain generalization is challenging even with a large pretrained LM, which has nevertheless capacity to learn domain-specific features if fine- tuned on a combined dataset. To facilitate future research, we also release all our LM checkpoints via the Hugging Face model hub.",
 }
 """
+bib_tweetner7 = """
+@inproceedings{ushio-etal-2022-tweet,
+    title = "{N}amed {E}ntity {R}ecognition in {T}witter: {A} {D}ataset and {A}nalysis on {S}hort-{T}erm {T}emporal {S}hifts",
+    author = "Ushio, Asahi  and
+        Neves, Leonardo  and
+        Silva, Vitor  and
+        Barbieri, Francesco. and
+        Camacho-Collados, Jose",
+    booktitle = "The 2nd Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics and the 12th International Joint Conference on Natural Language Processing",
+    month = nov,
+    year = "2022",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+}
+"""
 
 
 def get_readme(model_name: str,
@@ -221,11 +236,16 @@ The following hyperparameters were used during training:
 The full configuration can be found at [fine-tuning parameter file](https://huggingface.co/{model_name}/raw/main/trainer_config.json).
 
 ### Reference
-If you use any resource from T-NER, please consider to cite our [paper](https://aclanthology.org/2021.eacl-demos.7/).
-
+If you use the model, please cite T-NER paper and TweetNER7 paper.
+- T-NER
 ```
 {bib}
 ```
+- TweetNER7
+```
+{bib_tweetner7}
+```
+
 
 """
 
