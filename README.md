@@ -43,6 +43,16 @@ pip install tner
 6. **[Colab Examples](#google-colab-examples)**
 7. **[Reference](#reference)**
 
+
+### Google Colab Examples
+
+| Description               | Link  |
+|---------------------------|-------|
+| Model Finetuning & Evaluation          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing) |
+| Model Prediction          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing) |
+| Multilingual NER Workflow | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Mq0UisC2dwlVMP9ar2Cf6h5b1T-7Tdwb?usp=sharing) |
+
+
 ## Dataset
 An NER dataset contains a sequence of tokens and tags for each split (usually `train`/`validation`/`test`),
 ```python
@@ -363,17 +373,6 @@ optional arguments:
 tner-evaluate -m "tner/roberta-large-wnut2017" -e "metric.json" -d "tner/conll2003" -b "32"
 ```
 
-
-## Google Colab Examples
-
-WARNING: These notebooks are relying on the old version of TNER, and the examples with latest version should be released soon.
-
-| Description               | Link  |
-|---------------------------|-------|
-| Model Finetuning          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AlcTbEsp8W11yflT7SyT0L4C4HG6MXYr?usp=sharing) |
-| Model Evaluation          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jHVGnFN4AU8uS-ozWJIXXe2fV8HUj8NZ?usp=sharing) |
-| Model Prediction          | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1mQ_kQWeZkVs6LgV0KawHxHckFraYcFfO?usp=sharing) |
-| Multilingual NER Workflow | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Mq0UisC2dwlVMP9ar2Cf6h5b1T-7Tdwb?usp=sharing) |
 
 ## Reference
 If you use any of these resources, please cite the following [paper](https://aclanthology.org/2021.eacl-demos.7/):
