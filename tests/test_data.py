@@ -40,8 +40,10 @@ class Test(unittest.TestCase):
         print(data)
 
     def test_concat_3(self):
-        data = get_dataset(dataset=["tner/wnut2017", "tner/fin"])
+        data, labels = get_dataset(dataset=["tner/wnut2017", "tner/fin"])
         print(data)
+        print(labels)
+        print(len(labels))
 
 
 if __name__ == "__main__":

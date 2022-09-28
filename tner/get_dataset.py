@@ -230,7 +230,9 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
             else:
                 normalized_entities[entity] = normalized_entity[0]
     all_labels = sorted([i for i in set(all_labels) if i != "O"])
-    normalized_labels = [f"{i.rsplit('-', 1)[0]}-{normalized_entities['-'.join(i.split('-')[1:])]}" for i in all_labels]
+    normalized_labels = [f"{i.split('-')[0]}-{normalized_entities['-'.join(i.split('-')[1:])]}" for i in all_labels]
+    normalized_labels = list(set(normalized_labels))
+    # input(normalized_labels)
     if label2id is not None:
         assert all(i in label2id.keys() for i in normalized_labels),\
             f"missing entity in label2id {label2id.keys()}: {normalized_labels}"
@@ -238,6 +240,7 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
     else:
         normalized_label2id = {k: n for n, k in enumerate(sorted(normalized_labels))}
         normalized_label2id.update({"O": len(normalized_label2id)})
+        # input(normalized_label2id)
 
     # update labels & concat data
     concat_tokens = {}
@@ -252,9 +255,8 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
             for tags in data[_split]['tags']:
                 normalized_tag = []
                 for t in tags:
-                    print(t, id2label)
                     if id2label[t] != 'O':
-                        t = f"{id2label[t].rsplit('-', 1)[0]}-{normalized_entities['-'.join(id2label[t].split('-')[1:])]}"
+                        t = f"{id2label[t].split('-')[0]}-{normalized_entities['-'.join(id2label[t].split('-')[1:])]}"
                     else:
                         t = id2label[t]
                     normalized_tag.append(normalized_label2id[t])
