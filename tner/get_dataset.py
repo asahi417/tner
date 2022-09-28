@@ -219,8 +219,7 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
     normalized_entities = {}
     for _, _label2id in list_of_data:
         all_labels += list(_label2id.keys())
-        entities = set(i.rsplit('-', 1)[-1] for i in _label2id.keys() if i != 'O')
-
+        entities = set('-'.join(i.split('-')[1:]) for i in _label2id.keys() if i != 'O')
         for entity in entities:
             normalized_entity = [k for k, v in unified_label_set.items() if entity in v]
             assert len(normalized_entity) <= 1, f'duplicated entity found in the shared label set\n {normalized_entity} \n {entity}'
@@ -231,7 +230,7 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
             else:
                 normalized_entities[entity] = normalized_entity[0]
     all_labels = sorted([i for i in set(all_labels) if i != "O"])
-    normalized_labels = [f"{i.rsplit('-', 1)[0]}-{normalized_entities[i.rsplit('-', 1)[1]]}" for i in all_labels]
+    normalized_labels = [f"{i.rsplit('-', 1)[0]}-{normalized_entities['-'.join(i.split('-')[1:])]}" for i in all_labels]
     if label2id is not None:
         assert all(i in label2id.keys() for i in normalized_labels),\
             f"missing entity in label2id {label2id.keys()}: {normalized_labels}"
@@ -253,8 +252,9 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
             for tags in data[_split]['tags']:
                 normalized_tag = []
                 for t in tags:
+                    print(t, id2label)
                     if id2label[t] != 'O':
-                        t = f"{id2label[t].rsplit('-', 1)[0]}-{normalized_entities[id2label[t].rsplit('-', 1)[1]]}"
+                        t = f"{id2label[t].rsplit('-', 1)[0]}-{normalized_entities['-'.join(id2label[t].split('-')[1:])]}"
                     else:
                         t = id2label[t]
                     normalized_tag.append(normalized_label2id[t])

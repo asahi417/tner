@@ -25,13 +25,13 @@ class Test(unittest.TestCase):
         # evaluation
         model = tner.TransformersNER(f'{ckpt}_1/epoch_2')
         out = model.evaluate(local_dataset=test_local_dataset,
-                             data_split='valid',
+                             dataset_split='valid',
                              batch_size=4,
                              cache_file_feature=f'{ckpt}_1/epoch_2/cache_feature',
                              cache_file_prediction=f'{ckpt}_1/epoch_2/cache_prediction')
         print(json.dumps(out, indent=4))
         out = model.evaluate(local_dataset=test_local_dataset,
-                             data_split='valid',
+                             dataset_split='valid',
                              batch_size=4,
                              span_detection_mode=True,
                              cache_file_feature=f'{ckpt}_1/epoch_2/cache_feature',
@@ -40,6 +40,15 @@ class Test(unittest.TestCase):
 
     def test_trainer_2(self):
         model = tner.Trainer(f'{ckpt}_2', local_dataset=test_local_dataset, epoch=2, batch_size=4, model=lm, crf=True, max_length=32)
+        # train for one epoch
+        model.train(epoch_partial=1)
+
+        # resume training
+        model = tner.Trainer(f'{ckpt}_2')
+        model.train()
+
+    def test_trainer_3(self):
+        model = tner.Trainer(f'{ckpt}_3', dataset=["tner/wnut2017", "tner/fin"], epoch=2, batch_size=4, model=lm, max_length=32)
         # train for one epoch
         model.train(epoch_partial=1)
 

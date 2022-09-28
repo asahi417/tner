@@ -315,7 +315,7 @@ Evaluation of NER models is done by `model.evaluate` function that takes `datase
 from tner import TransformersNER
 model = TransformersNER("tner/roberta-large-wnut2017")  # provide model alias on huggingface
 # huggingface dataset
-metric = model.evaluate(datasets='tner/wnut2017', dataset_split='test')
+metric = model.evaluate('tner/wnut2017', dataset_split='test')
 # local dataset
 metric = model.evaluate(local_dataset={"test": "examples/local_dataset_sample/test.txt"}, dataset_split='test')
 ```

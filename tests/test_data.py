@@ -39,6 +39,10 @@ class Test(unittest.TestCase):
         data = get_dataset(dataset=test_dataset, local_dataset=[test_local_dataset, test_local_dataset])
         print(data)
 
+    def test_concat_3(self):
+        data = get_dataset(dataset=["tner/wnut2017", "tner/fin"])
+        print(data)
+
 
 if __name__ == "__main__":
     unittest.main()
