@@ -224,8 +224,8 @@ def concat_dataset(list_of_data, cache_dir: str = None, label2id: Dict = None):
             normalized_entity = [k for k, v in unified_label_set.items() if entity in v]
             assert len(normalized_entity) <= 1, f'duplicated entity found in the shared label set\n {normalized_entity} \n {entity}'
             if len(normalized_entity) == 0:
-                logging.warning(f'Entity `{entity}` is not found in the shared label set {unified_label_set}. '
-                                f'Original entity (`{entity}`) will be used as label.')
+                # logging.warning(f'Entity `{entity}` is not found in the shared label set {unified_label_set}. '
+                #               f'Original entity (`{entity}`) will be used as label.')
                 normalized_entities[entity] = entity
             else:
                 normalized_entities[entity] = normalized_entity[0]
