@@ -80,7 +80,10 @@ class TransformersNER:
 
         # GPU setup
         self.device = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
+        # Mac M1 Support https://github.com/asahi417/tner/issues/30
+        self.device = 'mps' if torch.backends.mps.is_available() else 'cpu'
         self.parallel = torch.cuda.device_count() > 1
+
         if self.parallel:
             self.model = torch.nn.DataParallel(self.model)
             if self.crf_layer is not None:
@@ -88,7 +91,8 @@ class TransformersNER:
         self.model.to(self.device)
         if self.crf_layer is not None:
             self.crf_layer.to(self.device)
-        logging.info(f'{torch.cuda.device_count()} GPUs are in use')
+        logging.info(f'device   : {self.device}')
+        logging.info(f'gpus     : {torch.cuda.device_count()}')
 
         # load pre processor
         if self.crf_layer is not None:
