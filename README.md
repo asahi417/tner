@@ -236,10 +236,10 @@ searcher = GridSearcher(
    gradient_accumulation_steps=[4, 8],
    crf=[True, False],
    lr=[1e-4, 1e-5],
-   weight_decay=[None, 1e-7],
-   random_seed=[42, 442],
-   lr_warmup_step_ratio=[None, 0.1],
-   max_grad_norm=[None, 10]  
+   weight_decay=[1e-7],
+   random_seed=[42],
+   lr_warmup_step_ratio=[0.1],
+   max_grad_norm=[10]  
 )
 searcher.train()
 ```
