@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 with open('README.md', 'r') as f:
     readme = f.read()
-version = '0.1.7'
+version = '0.1.8'
 setup(
     name='tner',
     packages=find_packages(exclude=["asset", "examples", "static", "templates", "tests"]),
