@@ -31,3 +31,6 @@ examples/tweetner7_paper/metric_files
 examples/tweetner7_paper/output
 examples/tweetner7_paper/MODEL_CARD.md
 check_uploaded_models.py
+tweetner7
+metric_files
+get_model_list.py
