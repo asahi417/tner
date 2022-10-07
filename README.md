@@ -5,7 +5,7 @@
 
 
 <p align="left">
-  <img src="https://github.com/asahi417/tner/blob/master/asset/tner_logo_horizontal.png" width="350">
+  <img src="https://raw.githubusercontent.com/asahi417/tner/master/asset/tner_logo_horizontal.png" width="350">
 </p>
 
 
@@ -189,7 +189,7 @@ tner-predict -m "tner/roberta-large-wnut2017"
 ## Web App
 
 <p align="center">
-  <img src="https://github.com/asahi417/tner/blob/master/asset/api.gif" width="500">
+  <img src="https://raw.githubusercontent.com/asahi417/tner/master/asset/api.gif" width="500">
 </p>
 
 To install dependencies to run the web app, add option at installation.
@@ -214,7 +214,7 @@ You can specify model to deploy by an environment variable `NER_MODEL`, which is
 ## Fine-Tuning Language Model on NER
 
 <p align="center">
-  <img src="https://github.com/asahi417/tner/blob/master/asset/parameter_search.png" width="800">
+  <img src="https://raw.githubusercontent.com/asahi417/tner/master/asset/parameter_search.png" width="800">
 </p>
 
 T-NER provides an easy API to run language model fine-tuning on NER with an efficient parameter-search as described above.
