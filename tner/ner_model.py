@@ -78,12 +78,15 @@ class TransformersNER:
         logging.info(f'label2id: {self.label2id}')
         assert 'O' in self.label2id, f'invalid label2id {self.label2id}'
 
-        # GPU setup
+        # GPU setup https://github.com/asahi417/tner/issues/33
         try:
             # Mac M1 Support https://github.com/asahi417/tner/issues/30
             self.device = 'mps' if torch.backends.mps.is_available() else 'cpu'
         except Exception:
+            pass
+        if self.device == 'cpu':
             self.device = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
+
         self.parallel = torch.cuda.device_count() > 1
 
         if self.parallel:
