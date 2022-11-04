@@ -83,10 +83,9 @@ class TransformersNER:
             # Mac M1 Support https://github.com/asahi417/tner/issues/30
             self.device = 'mps' if torch.backends.mps.is_available() else 'cpu'
         except Exception:
-            pass
+            self.device = 'cpu'
         if self.device == 'cpu':
             self.device = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
-
         self.parallel = torch.cuda.device_count() > 1
 
         if self.parallel:
