@@ -23,8 +23,9 @@ All the models and datasets are shared via [T-NER HuggingFace group](https://hug
 - Resources: [**MODEL_CARD**](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md), [**DATASET_CARD**](https://github.com/asahi417/tner/blob/master/DATASET_CARD.md), [**Gradio Online DEMO**](https://huggingface.co/spaces/tner/NER)
 - HuggingFace: [**https://huggingface.co/tner**](https://huggingface.co/tner)
 - GitHub: [**https://github.com/asahi417/tner**](https://github.com/asahi417/tner)
-- Paper (T-NER): [**acl anthology**](https://aclanthology.org/2021.eacl-demos.7/), [**arxiv**](https://arxiv.org/abs/2209.12616)
-- Paper (TweetNER7): [**arxiv**](https://arxiv.org/abs/2210.03797)
+- Papers 
+  - T-NER (EACL2021): [**acl anthology**](https://aclanthology.org/2021.eacl-demos.7/), [**arxiv**](https://arxiv.org/abs/2209.12616)
+  - TweetNER7 (AACL 2022): [**arxiv**](https://arxiv.org/abs/2210.03797)
 
 
 Install `tner` via pip to get started!
