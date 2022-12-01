@@ -48,5 +48,6 @@
     "cell_line": ["cell_line"],
     "rna": ["RNA"],
     "chemical": ["Chemical"],
-    "disease": ["Disease"]
+    "disease": ["Disease"],
+    "collection":['collection']
 }
