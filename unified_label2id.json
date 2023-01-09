@@ -49,5 +49,5 @@
     "rna": ["RNA"],
     "chemical": ["Chemical"],
     "disease": ["Disease"],
-    "collection":['collection']
+    "collection":["collection"]
 }
