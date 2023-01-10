@@ -12,10 +12,8 @@ from os.path import join as pj
 from datasets import load_dataset
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-# STOPWORDS = ['None', '#']
-# STOPTAGS = ['junk']
 CACHE_DIR = f"{os.path.expanduser('~')}/.cache/tner"
-CHECKSUM_SHARED_LABEL = '460207e44f2b33737de03c29c7b02a3f'
+CHECKSUM_SHARED_LABEL = 'a6b6bbfd6ddf3f990ee6b335ade46429'
 
 
 __all__ = (
@@ -64,7 +62,6 @@ def get_hf_label2id(dataset, cache_dir: str = None):
     """
     url = f"https://huggingface.co/datasets/tner/label2id/raw/main/files/{os.path.basename(dataset)}.json"
     cache_dir = CACHE_DIR if cache_dir is None else cache_dir
-    # url = f"https://huggingface.co/datasets/{dataset}/raw/main/dataset/label.multi.json"
     path = pj(cache_dir, f"{dataset}.label2id.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
