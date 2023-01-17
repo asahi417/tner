@@ -11,14 +11,14 @@
 
 # T-NER: An All-Round Python Library for Transformer-based Named Entity Recognition  
 
-***T-NER*** is a python tool for language model finetuning on named-entity-recognition (NER) implemented in pytorch, available via [pip](https://pypi.org/project/tner/). 
+***T-NER*** is a Python tool for language model finetuning on named-entity-recognition (NER) implemented in pytorch, available via [pip](https://pypi.org/project/tner/). 
 It has an easy interface to finetune models and test on cross-domain and multilingual datasets.
 T-NER currently integrates high coverage of publicly available NER datasets and enables an easy integration of custom datasets.
 All models finetuned with T-NER can be deployed on our web app for visualization.
 [Our paper demonstrating T-NER](https://www.aclweb.org/anthology/2021.eacl-demos.7/) has been accepted to EACL 2021.
 All the models and datasets are shared via [T-NER HuggingFace group](https://huggingface.co/tner).
 
-***NEW (September 2022):*** We released new dataset of NER on Twitter [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) and the paper got accepted by AACL 2022 main conference! We release the dataset along with fine-tuned models, and more detail can be found [repository](https://github.com/asahi417/tner/tree/master/examples/tweetner7_paper) and [dataset page](https://huggingface.co/datasets/tner/tweetner7).
+***NEW (September 2022):*** We released new NER dataset based on Twitter [`tweetner7`](https://huggingface.co/datasets/tner/tweetner7) and the paper got accepted by AACL 2022 main conference! We release the dataset along with fine-tuned models, and more details can be found at the [paper](https://aclanthology.org/2022.aacl-main.25/), [repository](https://github.com/asahi417/tner/tree/master/examples/tweetner7_paper) and [dataset page](https://huggingface.co/datasets/tner/tweetner7). The Twitter NER model has also been integrated into [TweetNLP](https://github.com/cardiffnlp/tweetnlp), and a demo is available [here](https://tweetnlp.org/demo/).
 
 - Resources: [**MODEL_CARD**](https://github.com/asahi417/tner/blob/master/MODEL_CARD.md), [**DATASET_CARD**](https://github.com/asahi417/tner/blob/master/DATASET_CARD.md), [**Gradio Online DEMO**](https://huggingface.co/spaces/tner/NER)
 - HuggingFace: [**https://huggingface.co/tner**](https://huggingface.co/tner)
