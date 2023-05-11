@@ -147,6 +147,13 @@ def load_conll_format_file(data_path: str, label2id: Dict = None):
             label2id.update({i: len(label2id) + n for n, i in enumerate(labels_not_found)})
         assert all(i in label2id for i in all_labels), \
             f"label2id is not covering all the entity \n \t- {label2id} \n \t- {all_labels}"
+    keys = label2id.copy().keys()
+    for l in keys:
+        if l.startswith('B'):
+            entity = l[2:]
+            if 'I-'+entity not in label2id:
+                label2id.update({'I-'+entity: len(label2id)})
+                logging.warning(f'found entities without I label2id (label2id was updated):\n\t - {entity}')
     labels = [[label2id[__l] for __l in _l] for _l in labels]
     data = {"tokens": inputs, "tags": labels}
     return data, label2id
