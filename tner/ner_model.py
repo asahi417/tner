@@ -9,12 +9,8 @@ from packaging.version import parse
 import torch
 
 # For CRF Layer
-from allennlp import __version__
-from allennlp.modules import ConditionalRandomField
-if parse("2.10.0") > parse(__version__):
-    from allennlp.modules.conditional_random_field import allowed_transitions
-else:
-    from allennlp.modules.conditional_random_field.conditional_random_field import allowed_transitions
+from allennlp_light.modules import ConditionalRandomField
+from allennlp_light.modules.conditional_random_field.conditional_random_field import allowed_transitions
 
 from .get_dataset import get_dataset
 from .util import pickle_save, pickle_load, span_f1, decode_ner_tags, Dataset, load_hf
